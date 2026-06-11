@@ -1,4 +1,7 @@
 node_modules/
 dist/
 .wwebjs_cache/
-FUTURE_FEATURES.md
+
+data/edutrack_data/whatsapp_auth/
+data/edutrack_data/whatsapp_log.json
+data/edutrack_data/whatsapp_settings.json
