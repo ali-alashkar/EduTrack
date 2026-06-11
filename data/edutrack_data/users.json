@@ -1,0 +1,18 @@
+[
+  {
+    "id": "u1",
+    "username": "admin",
+    "password": "admin123",
+    "role": "admin",
+    "name": "System Admin",
+    "createdAt": "2026-06-04T02:40:17.126Z"
+  },
+  {
+    "id": "u1780541841546",
+    "name": "ali",
+    "username": "alihaitham",
+    "password": "123456789",
+    "role": "assistant",
+    "createdAt": "2026-06-04T02:57:21.546Z"
+  }
+]

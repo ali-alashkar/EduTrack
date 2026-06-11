@@ -1,0 +1,17 @@
+[
+  {
+    "id": "c1",
+    "name": "Main Center",
+    "location": "Downtown Avenue"
+  },
+  {
+    "id": "c2",
+    "name": "North Branch",
+    "location": "Uptown District",
+    "contact": "",
+    "grades": [
+      "Grade 10",
+      "Grade 11"
+    ]
+  }
+]

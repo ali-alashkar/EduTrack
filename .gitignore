@@ -1,0 +1,4 @@
+node_modules/
+dist/
+.wwebjs_cache/
+FUTURE_FEATURES.md

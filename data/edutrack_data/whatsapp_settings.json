@@ -1,0 +1,8 @@
+{
+  "autoSendAttendance": false,
+  "autoSendHomework": false,
+  "autoSendQuiz": false,
+  "countryCode": "20",
+  "minDelay": 5000,
+  "maxDelay": 15000
+}

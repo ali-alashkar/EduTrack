@@ -1,0 +1,53 @@
+[
+  {
+    "id": "g1",
+    "name": "G10 Math Advanced",
+    "levelId": "l1",
+    "centerId": "c1",
+    "studentIds": [
+      "s1",
+      "s4",
+      "s1781202276397",
+      "s1781205732540",
+      "s1781213026199",
+      "s1781213130466"
+    ],
+    "createdAt": "2026-06-04T00:00:00.000Z",
+    "level": "Grade 10",
+    "center": "Main Center",
+    "dayOfWeek": "Saturday",
+    "time": "",
+    "capacity": "1000",
+    "notes": ""
+  },
+  {
+    "id": "g2",
+    "name": "G11 Physics Basics",
+    "levelId": "l2",
+    "centerId": "c2",
+    "studentIds": [
+      "s2",
+      "s5",
+      "s1",
+      "s3",
+      "s1780998761486"
+    ],
+    "createdAt": "2026-06-04T00:00:00.000Z",
+    "level": "Grade 12",
+    "center": "Main Center",
+    "dayOfWeek": "",
+    "time": "",
+    "capacity": "",
+    "notes": ""
+  },
+  {
+    "id": "g3",
+    "name": "G12 Chemistry Crash",
+    "levelId": "l3",
+    "centerId": "c1",
+    "studentIds": [
+      "s3"
+    ],
+    "createdAt": "2026-06-04T00:00:00.000Z"
+  }
+]
