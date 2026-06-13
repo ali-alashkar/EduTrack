@@ -8,13 +8,14 @@ const path = require('path');
 const { getRandomTemplate } = require('./whatsapp-templates');
 
 class WhatsAppService {
-  constructor({ dataDir, onQr, onReady, onDisconnected, onMessageSent, onStatusChange }) {
+  constructor({ dataDir, onQr, onReady, onDisconnected, onMessageSent, onStatusChange, getTemplates }) {
     this.dataDir = dataDir;
     this.onQr = onQr || (() => {});
     this.onReady = onReady || (() => {});
     this.onDisconnected = onDisconnected || (() => {});
     this.onMessageSent = onMessageSent || (() => {});
     this.onStatusChange = onStatusChange || (() => {});
+    this.getTemplates = getTemplates || (() => null);
 
     this.client = null;
     this.status = 'disconnected'; // disconnected | connecting | qr_ready | connected
@@ -239,11 +240,28 @@ class WhatsAppService {
 
   // ── Generate Message Record ──
   createMessageRecord({ type, student, session, attendanceRecord, quizScore, quizMax }) {
+    let checkInTimeStr = '';
+    if (attendanceRecord?.checkInTime) {
+      const dt = new Date(attendanceRecord.checkInTime);
+      if (!isNaN(dt.getTime())) {
+        checkInTimeStr = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+
+    let blockReasonStr = '';
+    if (student?.isBlocked) {
+      blockReasonStr = type === 'block'
+        ? (student.blockReason || 'No reason recorded')
+        : `\n🚫 الطالب موقوف: ${student.blockReason || 'بدون سبب'}`;
+    }
+
     const data = {
       studentName: student.name,
       sessionTitle: session.title,
       date: session.date,
       time: session.time || '',
+      checkInTime: checkInTimeStr,
+      blockReason: blockReasonStr,
       homeworkStatus: attendanceRecord?.homeworkStatus || '',
       homeworkNote: attendanceRecord?.homeworkNote || '',
       quizScore: quizScore ?? '',
@@ -257,9 +275,12 @@ class WhatsAppService {
       category = 'attendance_homework';
     } else if (type === 'session_summary') {
       category = 'session_summary';
+    } else if (type === 'absence') {
+      category = 'absence';
     }
 
-    const { text, templateId, templateIndex } = getRandomTemplate(category, data);
+    const customTemplates = this.getTemplates();
+    const { text, templateId, templateIndex } = getRandomTemplate(category, data, customTemplates);
 
     return {
       id: `wm_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,

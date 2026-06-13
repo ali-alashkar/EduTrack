@@ -82,7 +82,9 @@ const mockWaInstance = {
     sessionId: session.id,
     sessionTitle: session.title,
     type,
-    messageText: `Test ${type} message for ${student.name}`,
+    messageText: type === 'block'
+      ? `Test block message for ${student.name}: ${student.blockReason}`
+      : `Test ${type} message for ${student.name}`,
     templateIndex: 0,
     status: 'queued',
     error: '',
@@ -136,6 +138,7 @@ function resetStore() { mockMemStore = {}; }
 describe('AUTH – auth:login', () => {
   beforeEach(() => {
     resetStore();
+    jest.clearAllMocks();
     seed('users', [
       { id: 'u1', username: 'admin', password: 'admin123', role: 'admin', name: 'System Admin', createdAt: '2024-01-01T00:00:00Z' },
       { id: 'u2', username: 'assistant', password: 'asst123', role: 'assistant', name: 'Demo Assistant', createdAt: '2024-01-01T00:00:00Z' },
@@ -298,6 +301,7 @@ describe('CENTERS – CRUD', () => {
 describe('STUDENTS – CRUD + barcode lookup', () => {
   beforeEach(() => {
     resetStore();
+    jest.clearAllMocks();
     seed('students', [
       { id: 's1', name: 'Alice Smith', barcode: 'BC001', phone: '01011112222', parentPhone: '01033334444', levelId: 'lv1', centerId: 'c1', createdAt: '2024-01-01T00:00:00Z' },
       { id: 's2', name: 'Bob Jones', barcode: 'BC002', phone: '01055556666', parentPhone: '01077778888', levelId: 'lv1', centerId: 'c1', createdAt: '2024-01-01T00:00:00Z' },
@@ -379,6 +383,24 @@ describe('STUDENTS – CRUD + barcode lookup', () => {
     stored = read('students').find(s => s.id === 's1');
     expect(stored.isBlocked).toBe(false);
     expect(stored.blockReason).toBe('');
+  });
+
+  test('students:block - queues parent WhatsApp message with block reason', () => {
+    const res = call('students:block', { id: 's1', reason: 'Payment overdue' });
+    expect(res.success).toBe(true);
+    expect(res.blockNotification.status).toBe('queued');
+
+    const log = read('whatsapp_log');
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({
+      studentId: 's1',
+      studentName: 'Alice Smith',
+      parentPhone: '01033334444',
+      type: 'block',
+      status: 'queued',
+    });
+    expect(log[0].messageText).toContain('Payment overdue');
+    expect(mockWaInstance.queueMessage).toHaveBeenCalledWith(log[0]);
   });
 
   test('students:delete – removes student', () => {

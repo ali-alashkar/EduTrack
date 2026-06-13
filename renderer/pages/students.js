@@ -522,7 +522,13 @@ window.blockStudent = async function(id) {
   const reason = el('block-reason')?.value?.trim() || '';
   const res = await window.api.students.block({ id, reason });
   if (!res.success) { toast(res.message || 'Could not block student', 'error'); return; }
-  toast('Student blocked', 'success');
+  if (res.blockNotification?.status === 'queued') {
+    toast('Student blocked and parent message queued', 'success');
+  } else if (res.blockNotification?.reason === 'missing_parent_phone') {
+    toast('Student blocked, but no parent phone was saved', 'warning');
+  } else {
+    toast('Student blocked', 'success');
+  }
   closeModal();
   renderStudents();
 };

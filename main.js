@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const WhatsAppService = require('./whatsapp-service');
+const { TEMPLATES } = require('./whatsapp-templates');
 
 // Disable GPU cache to prevent "Unable to move the cache: Access is denied" errors on Windows
 app.commandLine.appendSwitch('disable-gpu-cache');
@@ -163,6 +164,26 @@ function saveWaLogRecord(record) {
   writeDB('whatsapp_log', log);
 }
 
+function queueStudentBlockNotification(student, reason) {
+  if (!student?.parentPhone) return { status: 'skipped', reason: 'missing_parent_phone' };
+  if (!waService) return { status: 'skipped', reason: 'whatsapp_unavailable' };
+
+  const record = waService.createMessageRecord({
+    type: 'block',
+    student: { ...student, blockReason: reason },
+    session: { id: '', title: '', date: '', time: '' },
+  });
+  saveWaLogRecord(record);
+  waService.queueMessage(record);
+  return { status: 'queued', record };
+}
+
+function readWhatsappTemplates() {
+  const saved = readDB('whatsapp_templates');
+  if (!saved || Array.isArray(saved)) return TEMPLATES;
+  return { ...TEMPLATES, ...saved };
+}
+
 // ─── Seed default admin user ────────────────────────────────────────────────
 function seedData() {
   const users = readDB('users');
@@ -185,6 +206,10 @@ function seedData() {
       minDelay: 5000,
       maxDelay: 15000,
     });
+  }
+  // Seed default WhatsApp templates
+  if (!fs.existsSync(dbPath('whatsapp_templates'))) {
+    writeDB('whatsapp_templates', TEMPLATES);
   }
 }
 
@@ -250,6 +275,7 @@ function initWhatsAppService() {
         mainWindow.webContents.send('whatsapp:status-change', status);
       }
     },
+    getTemplates: () => readWhatsappTemplates(),
   });
   if (settings && typeof settings === 'object') {
     waService.updateSettings(settings);
@@ -377,14 +403,22 @@ ipcMain.handle('students:update', (_, { id, ...data }) => {
 ipcMain.handle('students:block', (_, { id, reason }) => {
   const note = String(reason || '').trim();
   if (!note) return { success: false, message: 'Block reason is required' };
-  const students = readDB('students').map(s => s.id === id ? {
-    ...s,
-    isBlocked: true,
-    blockReason: note,
-    blockedAt: new Date().toISOString(),
-  } : s);
+  let blockedStudent = null;
+  const blockedAt = new Date().toISOString();
+  const students = readDB('students').map(s => {
+    if (s.id !== id) return s;
+    blockedStudent = {
+      ...s,
+      isBlocked: true,
+      blockReason: note,
+      blockedAt,
+    };
+    return blockedStudent;
+  });
+  if (!blockedStudent) return { success: false, message: 'Student not found' };
   writeDB('students', students);
-  return { success: true };
+  const blockNotification = queueStudentBlockNotification(blockedStudent, note);
+  return { success: true, blockNotification };
 });
 ipcMain.handle('students:unblock', (_, id) => {
   const students = readDB('students').map(s => s.id === id ? {
@@ -840,6 +874,49 @@ ipcMain.handle('whatsapp:send-session-batch', (_, { sessionId, type }) => {
   return { success: true, queued, skipped };
 });
 
+ipcMain.handle('whatsapp:send-absence-batch', (_, { sessionId }) => {
+  if (!waService) return { success: false, error: 'Service not initialized' };
+  const session = readDB('sessions').find(s => s.id === sessionId);
+  if (!session) return { success: false, error: 'Session not found' };
+
+  const groups = readDB('groups');
+  const group = groups.find(g => g.id === session.groupId);
+  if (!group || !group.studentIds || !group.studentIds.length) {
+    return { success: false, error: 'No group or no students in group' };
+  }
+
+  const students = readDB('students');
+  const attendance = readDB('attendance').filter(a => a.sessionId === sessionId);
+  const attendedIds = new Set(attendance.map(a => a.studentId));
+  const log = readDB('whatsapp_log');
+
+  let queued = 0;
+  let skipped = 0;
+
+  for (const studentId of group.studentIds) {
+    // Skip students who DID attend
+    if (attendedIds.has(studentId)) { skipped++; continue; }
+
+    const student = students.find(s => s.id === studentId);
+    if (!student) { skipped++; continue; }
+
+    // Deduplication: check if already sent absence for this student+session
+    const alreadySent = log.find(m => m.studentId === studentId && m.sessionId === sessionId && m.type === 'absence' && m.status === 'sent');
+    if (alreadySent) { skipped++; continue; }
+
+    const record = waService.createMessageRecord({
+      type: 'absence',
+      student,
+      session,
+    });
+    saveWaLogRecord(record);
+    waService.queueMessage(record);
+    queued++;
+  }
+
+  return { success: true, queued, skipped };
+});
+
 ipcMain.handle('whatsapp:get-log', (_, filters) => {
   let log = readDB('whatsapp_log');
   if (filters) {
@@ -912,4 +989,49 @@ ipcMain.handle('whatsapp:get-session-status', (_, sessionId) => {
     queued: log.filter(m => m.status === 'queued').length,
     noPhone: log.filter(m => m.status === 'no_phone').length,
   };
+});
+
+// ── Templates ──
+ipcMain.handle('templates:list', () => {
+  return readWhatsappTemplates();
+});
+
+ipcMain.handle('templates:save', (_, { category, id, text }) => {
+  const templates = readWhatsappTemplates();
+  if (!templates[category]) return { success: false, error: 'Invalid category' };
+  
+  if (id) {
+    const idx = templates[category].findIndex(t => t.id === id);
+    if (idx >= 0) {
+      templates[category][idx].text = text;
+    } else {
+      return { success: false, error: 'Template not found' };
+    }
+  } else {
+    // Generate new ID based on category prefix + timestamp
+    const prefix = category.substring(0, 3);
+    const newId = `${prefix}_${Date.now()}`;
+    templates[category].push({ id: newId, text });
+  }
+  
+  writeDB('whatsapp_templates', templates);
+  return { success: true, templates };
+});
+
+ipcMain.handle('templates:delete', (_, { category, id }) => {
+  const templates = readWhatsappTemplates();
+  if (!templates[category]) return { success: false, error: 'Invalid category' };
+  
+  if (templates[category].length <= 1) {
+    return { success: false, error: 'Cannot delete the last template in a category' };
+  }
+  
+  templates[category] = templates[category].filter(t => t.id !== id);
+  writeDB('whatsapp_templates', templates);
+  return { success: true, templates };
+});
+
+ipcMain.handle('templates:reset', () => {
+  writeDB('whatsapp_templates', TEMPLATES);
+  return { success: true, templates: TEMPLATES };
 });

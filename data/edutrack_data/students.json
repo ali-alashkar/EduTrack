@@ -14,7 +14,10 @@
     "notes": "",
     "sessionFee": 100,
     "hasDiscount": true,
-    "discountPercent": 20
+    "discountPercent": 20,
+    "isBlocked": false,
+    "blockReason": "",
+    "blockedAt": ""
   },
   {
     "id": "s2",
@@ -65,7 +68,10 @@
     "parentPhone": "01077778888",
     "levelId": "l2",
     "barcode": "STU-1005",
-    "createdAt": "2026-06-04T00:00:00.000Z"
+    "createdAt": "2026-06-04T00:00:00.000Z",
+    "isBlocked": true,
+    "blockReason": "ضرب صاحبه في الحصه",
+    "blockedAt": "2026-06-13T16:25:17.332Z"
   },
   {
     "id": "s1780998761486",
@@ -80,7 +86,10 @@
     "notes": "",
     "hasDiscount": true,
     "discountPercent": 15,
-    "createdAt": "2026-06-09T09:52:41.486Z"
+    "createdAt": "2026-06-09T09:52:41.486Z",
+    "isBlocked": true,
+    "blockReason": "ضرب صاحبه في الحصه وضحك طول الحصه",
+    "blockedAt": "2026-06-13T16:34:03.601Z"
   },
   {
     "id": "s1781202276397",

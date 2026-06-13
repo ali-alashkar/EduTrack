@@ -10,28 +10,28 @@ const TEMPLATES = {
       text: `السلام عليكم 🌟
 نفيدكم بحضور الطالب/ة *{studentName}* لحصة *{sessionTitle}* اليوم
 📅 التاريخ: {date}
-⏰ الوقت: {time}
+⏰ الحضور: {checkInTime}{blockReason}
 جزاكم الله خيراً`
     },
     {
       id: 'att_2',
       text: `مرحباً 👋
 تم تسجيل حضور *{studentName}* في حصة *{sessionTitle}*
-📅 {date} - ⏰ {time}
+📅 {date} - ⏰ الحضور: {checkInTime}{blockReason}
 شكراً لكم`
     },
     {
       id: 'att_3',
       text: `أهلاً وسهلاً ✅
 نود إعلامكم أن *{studentName}* حضر/ت حصة *{sessionTitle}*
-بتاريخ {date} الساعة {time}
+بتاريخ {date} الساعة {checkInTime}{blockReason}
 مع تحياتنا`
     },
     {
       id: 'att_4',
       text: `تحية طيبة 📚
 *{studentName}* حضر/ت اليوم حصة *{sessionTitle}*
-📅 {date}  ⏰ {time}
+📅 {date}  ⏰ {checkInTime}{blockReason}
 نشكر تعاونكم`
     },
     {
@@ -39,7 +39,7 @@ const TEMPLATES = {
       text: `السلام عليكم ورحمة الله ✨
 يسرنا إبلاغكم بحضور *{studentName}* لحصة *{sessionTitle}* اليوم
 التاريخ: {date}
-الوقت: {time}
+الحضور: {checkInTime}{blockReason}
 بارك الله فيكم`
     },
     {
@@ -48,6 +48,7 @@ const TEMPLATES = {
 نعلمكم أن الطالب/ة *{studentName}* قد حضر/ت حصة اليوم
 📖 الحصة: *{sessionTitle}*
 📅 التاريخ: {date}
+⏰ {checkInTime}{blockReason}
 مع أطيب التحيات`
     },
     {
@@ -55,7 +56,7 @@ const TEMPLATES = {
       text: `أهلا بكم 📝
 تم تأكيد حضور *{studentName}*
 الحصة: *{sessionTitle}*
-التاريخ: {date} | الوقت: {time}
+التاريخ: {date} | الحضور: {checkInTime}{blockReason}
 شكراً لمتابعتكم`
     }
   ],
@@ -167,7 +168,7 @@ const TEMPLATES = {
       id: 'atthw_1',
       text: `السلام عليكم 🌟
 نفيدكم بحضور الطالب/ة *{studentName}* لحصة *{sessionTitle}*
-📅 التاريخ: {date} | ⏰ الوقت: {time}
+📅 التاريخ: {date} | ⏰ الحضور: {checkInTime}{blockReason}
 📋 حالة الواجب: *{homeworkStatus}*
 {homeworkNote}
 جزاكم الله خيراً`
@@ -176,7 +177,7 @@ const TEMPLATES = {
       id: 'atthw_2',
       text: `مرحباً 👋
 *{studentName}* حضر/ت حصة *{sessionTitle}* اليوم
-📅 {date} - ⏰ {time}
+📅 {date} - ⏰ {checkInTime}{blockReason}
 📝 الواجب: *{homeworkStatus}*
 {homeworkNote}
 شكراً لكم`
@@ -186,7 +187,7 @@ const TEMPLATES = {
       text: `أهلاً وسهلاً ✅
 تقرير حصة اليوم للطالب/ة *{studentName}*:
 📖 الحصة: *{sessionTitle}* ({date})
-✅ الحضور: تم التسجيل
+✅ الحضور: الساعة {checkInTime}{blockReason}
 📋 الواجب: *{homeworkStatus}*
 {homeworkNote}
 مع تحياتنا`
@@ -197,18 +198,18 @@ const TEMPLATES = {
 ملخص حصة اليوم:
 الطالب/ة: *{studentName}*
 الحصة: *{sessionTitle}*
-التاريخ: {date} | الوقت: {time}
-حالة الواجب: *{homeworkStatus}*
+التاريخ: {date} | الحضور: {checkInTime}{blockReason}
+الواجب: *{homeworkStatus}*
 {homeworkNote}
 نشكر تعاونكم`
     },
     {
       id: 'atthw_5',
       text: `السلام عليكم ورحمة الله ✨
-إليكم تقرير حضور اليوم:
-*{studentName}* ✅ حاضر/ة
-📖 *{sessionTitle}* - {date}
-📝 الواجب: *{homeworkStatus}*
+يسعدنا إبلاغكم بحضور *{studentName}*
+لحصة *{sessionTitle}* اليوم ({date})
+⏰ الحضور: {checkInTime}{blockReason}
+📋 تقييم الواجب: *{homeworkStatus}*
 {homeworkNote}
 بارك الله فيكم`
     }
@@ -267,7 +268,84 @@ const TEMPLATES = {
 
 بارك الله فيكم`
   },
-]
+],
+
+  // ── Absence (sent to parents of students who did NOT attend) ──
+  block: [
+    {
+      id: 'blk_1',
+      text: `Hello,
+We would like to inform you that *{studentName}* has been blocked.
+
+Reason: {blockReason}
+
+Please contact the administration for more details.`
+    },
+    {
+      id: 'blk_2',
+      text: `Student block notice
+
+Student: *{studentName}*
+Reason: {blockReason}
+
+Please follow up with the administration.`
+    },
+    {
+      id: 'blk_3',
+      text: `Dear parent,
+*{studentName}* is currently blocked in the system.
+
+Reason: {blockReason}
+
+Thank you for your understanding.`
+    },
+  ],
+
+  absence: [
+    {
+      id: 'abs_1',
+      text: `السلام عليكم 🔔
+نود إعلامكم بأن الطالب/ة *{studentName}* لم يحضر/تحضر حصة *{sessionTitle}*
+📅 التاريخ: {date}
+⏰ الوقت: {time}
+نرجو التواصل معنا في حال وجود أي عذر
+جزاكم الله خيراً`
+    },
+    {
+      id: 'abs_2',
+      text: `مرحباً 👋
+للعلم، الطالب/ة *{studentName}* لم يسجل/تسجل حضوراً في حصة *{sessionTitle}*
+📅 {date} - ⏰ {time}
+يرجى إبلاغنا بسبب الغياب
+شكراً لكم`
+    },
+    {
+      id: 'abs_3',
+      text: `أهلاً وسهلاً ⚠️
+نفيدكم بتغيب الطالب/ة *{studentName}* عن حصة *{sessionTitle}*
+بتاريخ {date} الساعة {time}
+نأمل إعلامنا بالسبب
+مع تحياتنا`
+    },
+    {
+      id: 'abs_4',
+      text: `تحية طيبة 📋
+*{studentName}* لم يحضر/تحضر حصة اليوم:
+📖 الحصة: *{sessionTitle}*
+📅 {date} | ⏰ {time}
+نرجو التواصل لمعرفة سبب الغياب
+نشكر تعاونكم`
+    },
+    {
+      id: 'abs_5',
+      text: `السلام عليكم ورحمة الله 🌟
+نود إبلاغكم بغياب الطالب/ة *{studentName}*
+عن حصة *{sessionTitle}* بتاريخ {date}
+⏰ الوقت: {time}
+يرجى التواصل معنا لتوضيح سبب الغياب
+بارك الله فيكم`
+    },
+  ],
 };
 
 // ── Homework status translation map ──
@@ -281,12 +359,15 @@ const HW_STATUS_AR = {
 
 /**
  * Get a random template for the given category, filled with the provided data.
- * @param {'attendance'|'homework'|'quiz'|'attendance_homework'|'session_summary'} category
+ * @param {'attendance'|'homework'|'quiz'|'attendance_homework'|'session_summary'|'absence'|'block'} category
  * @param {Object} data - Placeholder values
+ * @param {Object} customTemplates - User-defined templates from DB (optional)
  * @returns {{ text: string, templateId: string }}
  */
-function getRandomTemplate(category, data = {}) {
-  const templates = TEMPLATES[category];
+function getRandomTemplate(category, data = {}, customTemplates = null) {
+  const templatesSource = customTemplates || TEMPLATES;
+  const templates = templatesSource[category] || TEMPLATES[category];
+  
   if (!templates || !templates.length) {
     throw new Error(`Unknown template category: ${category}`);
   }
@@ -311,6 +392,8 @@ function getRandomTemplate(category, data = {}) {
     .replace(/\{sessionTitle\}/g, data.sessionTitle || '')
     .replace(/\{date\}/g, data.date || '')
     .replace(/\{time\}/g, data.time || '')
+    .replace(/\{checkInTime\}/g, data.checkInTime || '')
+    .replace(/\{blockReason\}/g, data.blockReason || '')
     .replace(/\{homeworkStatus\}/g, hwStatusAr)
     .replace(/\{homeworkNote\}/g, homeworkNote)
     .replace(/\{quizScore\}/g, data.quizScore ?? '')

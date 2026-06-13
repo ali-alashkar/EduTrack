@@ -17,6 +17,7 @@ describe('WhatsApp Templates', () => {
     quizScore: 8,
     quizMax: 10,
     quizPercent: 80,
+    blockReason: 'Payment overdue',
   };
 
   test('attendance category has 5+ template variations', () => {
@@ -33,6 +34,13 @@ describe('WhatsApp Templates', () => {
 
   test('session summary category has 5+ template variations', () => {
     expect(TEMPLATES.session_summary.length).toBeGreaterThanOrEqual(5);
+  });
+
+  test('block category has editable template variations', () => {
+    expect(TEMPLATES.block.length).toBeGreaterThanOrEqual(3);
+    const { text, templateId } = getRandomTemplate('block', sampleData);
+    expect(templateId).toMatch(/^blk_/);
+    expect(text).toContain('Payment overdue');
   });
 
   test('getRandomTemplate fills attendance placeholders', () => {

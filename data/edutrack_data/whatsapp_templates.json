@@ -1,0 +1,148 @@
+{
+  "attendance": [
+    {
+      "id": "att_1",
+      "text": "السلام عليكم 🌟\nنفيدكم بحضور الطالب/ة *{studentName}* لحصة *{sessionTitle}* اليوم\n📅 التاريخ: {date}\n⏰ الوقت: {time}\nجزاكم الله خيراً"
+    },
+    {
+      "id": "att_2",
+      "text": "مرحباً 👋\nتم تسجيل حضور *{studentName}* في حصة *{sessionTitle}*\n📅 {date} - ⏰ {time}\nشكراً لكم"
+    },
+    {
+      "id": "att_3",
+      "text": "أهلاً وسهلاً ✅\nنود إعلامكم أن *{studentName}* حضر/ت حصة *{sessionTitle}*\nبتاريخ {date} الساعة {time}\nمع تحياتنا"
+    },
+    {
+      "id": "att_4",
+      "text": "تحية طيبة 📚\n*{studentName}* حضر/ت اليوم حصة *{sessionTitle}*\n📅 {date}  ⏰ {time}\nنشكر تعاونكم"
+    },
+    {
+      "id": "att_5",
+      "text": "السلام عليكم ورحمة الله ✨\nيسرنا إبلاغكم بحضور *{studentName}* لحصة *{sessionTitle}* اليوم\nالتاريخ: {date}\nالوقت: {time}\nبارك الله فيكم"
+    },
+    {
+      "id": "att_6",
+      "text": "مساء الخير 🌙\nنعلمكم أن الطالب/ة *{studentName}* قد حضر/ت حصة اليوم\n📖 الحصة: *{sessionTitle}*\n📅 التاريخ: {date}\nمع أطيب التحيات"
+    },
+    {
+      "id": "att_7",
+      "text": "أهلا بكم 📝\nتم تأكيد حضور *{studentName}*\nالحصة: *{sessionTitle}*\nالتاريخ: {date} | الوقت: {time}\nشكراً لمتابعتكم"
+    }
+  ],
+  "homework": [
+    {
+      "id": "hw_1",
+      "text": "السلام عليكم 📝\nتحديث الواجب المنزلي للطالب/ة *{studentName}*\n📖 الحصة: *{sessionTitle}*\n📋 حالة الواجب: *{homeworkStatus}*\n{homeworkNote}\nجزاكم الله خيراً"
+    },
+    {
+      "id": "hw_2",
+      "text": "مرحباً 👋\nبخصوص الواجب المنزلي:\nالطالب/ة: *{studentName}*\nالحصة: *{sessionTitle}*\nالحالة: *{homeworkStatus}*\n{homeworkNote}\nشكراً لمتابعتكم"
+    },
+    {
+      "id": "hw_3",
+      "text": "تحية طيبة ✏️\nنود إبلاغكم عن حالة الواجب:\n*{studentName}* - حصة *{sessionTitle}*\n📋 الواجب: *{homeworkStatus}*\n{homeworkNote}\nمع تحياتنا"
+    },
+    {
+      "id": "hw_4",
+      "text": "أهلاً وسهلاً 📚\nتقرير الواجب المنزلي:\nالطالب/ة: *{studentName}*\n📖 *{sessionTitle}*\nالحالة: *{homeworkStatus}*\n{homeworkNote}\nنشكر تعاونكم"
+    },
+    {
+      "id": "hw_5",
+      "text": "السلام عليكم ورحمة الله 🌟\nملاحظة بخصوص الواجب:\n*{studentName}* في حصة *{sessionTitle}*\nحالة الواجب: *{homeworkStatus}*\n{homeworkNote}\nبارك الله فيكم"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "qz_1",
+      "text": "السلام عليكم 📊\nنتيجة الاختبار القصير للطالب/ة *{studentName}*\n📖 الحصة: *{sessionTitle}*\n📝 الدرجة: *{quizScore} / {quizMax}*\n📈 النسبة: *{quizPercent}%*\nجزاكم الله خيراً"
+    },
+    {
+      "id": "qz_2",
+      "text": "مرحباً 🎓\nنتيجة الكويز:\nالطالب/ة: *{studentName}*\nالحصة: *{sessionTitle}*\nالدرجة: *{quizScore}/{quizMax}* ({quizPercent}%)\nشكراً لمتابعتكم"
+    },
+    {
+      "id": "qz_3",
+      "text": "تحية طيبة ✨\nنتائج الاختبار:\n*{studentName}* - *{sessionTitle}*\n📝 حصل/ت على: *{quizScore}* من *{quizMax}*\n📊 النسبة المئوية: *{quizPercent}%*\nمع تحياتنا"
+    },
+    {
+      "id": "qz_4",
+      "text": "أهلاً بكم 📋\nتقرير الاختبار القصير:\nالطالب/ة: *{studentName}*\n📖 *{sessionTitle}*\nالنتيجة: *{quizScore} / {quizMax}* = *{quizPercent}%*\nنشكر تعاونكم"
+    },
+    {
+      "id": "qz_5",
+      "text": "السلام عليكم ورحمة الله 🌟\nإليكم نتيجة الاختبار:\n*{studentName}*\nالحصة: *{sessionTitle}*\nالدرجة: *{quizScore}* من أصل *{quizMax}*\nالنسبة: *{quizPercent}%*\nبارك الله فيكم"
+    }
+  ],
+  "attendance_homework": [
+    {
+      "id": "atthw_1",
+      "text": "السلام عليكم 🌟\nنفيدكم بحضور الطالب/ة *{studentName}* لحصة *{sessionTitle}*\n📅 التاريخ: {date} | ⏰ الوقت: {time}\n📋 حالة الواجب: *{homeworkStatus}*\n{homeworkNote}\nجزاكم الله خيراً"
+    },
+    {
+      "id": "atthw_2",
+      "text": "مرحباً 👋\n*{studentName}* حضر/ت حصة *{sessionTitle}* اليوم\n📅 {date} - ⏰ {time}\n📝 الواجب: *{homeworkStatus}*\n{homeworkNote}\nشكراً لكم"
+    },
+    {
+      "id": "atthw_3",
+      "text": "أهلاً وسهلاً ✅\nتقرير حصة اليوم للطالب/ة *{studentName}*:\n📖 الحصة: *{sessionTitle}* ({date})\n✅ الحضور: تم التسجيل\n📋 الواجب: *{homeworkStatus}*\n{homeworkNote}\nمع تحياتنا"
+    },
+    {
+      "id": "atthw_4",
+      "text": "تحية طيبة 📚\nملخص حصة اليوم:\nالطالب/ة: *{studentName}*\nالحصة: *{sessionTitle}*\nالتاريخ: {date} | الوقت: {time}\nحالة الواجب: *{homeworkStatus}*\n{homeworkNote}\nنشكر تعاونكم"
+    },
+    {
+      "id": "atthw_5",
+      "text": "السلام عليكم ورحمة الله ✨\nإليكم تقرير حضور اليوم:\n*{studentName}* ✅ حاضر/ة\n📖 *{sessionTitle}* - {date}\n📝 الواجب: *{homeworkStatus}*\n{homeworkNote}\nبارك الله فيكم"
+    }
+  ],
+  "session_summary": [
+    {
+      "id": "sum_1",
+      "text": "السلام عليكم 🌟\nتقرير حصة *{sessionTitle}*\n📅 {date}{time_line}\n\n👤 الطالب/ة: *{studentName}*\n✅ الحضور: حاضر/ة{hw_line}{quiz_line}\n\nجزاكم الله خيراً"
+    },
+    {
+      "id": "sum_2",
+      "text": "مرحباً 👋\nملخص حصة اليوم لـ *{studentName}*\n📖 *{sessionTitle}* — {date}{time_line}\n─────────────────\n✅ الحضور: مسجّل{hw_line}{quiz_line}\n─────────────────\nشكراً لمتابعتكم"
+    },
+    {
+      "id": "sum_3",
+      "text": "أهلاً وسهلاً ✨\nتقرير *{studentName}* — *{sessionTitle}*\n📅 {date}{time_line}\n\n- الحضور ✅ حاضر/ة{hw_line}{quiz_line}\n\nمع تحياتنا"
+    },
+    {
+      "id": "sum_4",
+      "text": "تحية طيبة 📚\n*{sessionTitle}* | {date}{time_line}\n\nالطالب/ة: *{studentName}*\nالحضور: ✅ تم التسجيل{hw_line}{quiz_line}\n\nنشكر تعاونكم"
+    },
+    {
+      "id": "sum_5",
+      "text": "السلام عليكم ورحمة الله 🌙\nإليكم تقرير اليوم:\n\n👤 *{studentName}*\n📖 الحصة: *{sessionTitle}*\n📅 {date}{time_line}\n✅ الحضور: حاضر/ة{hw_line}{quiz_line}\n\nبارك الله فيكم"
+    }
+  ],
+  "block": [
+    {
+      "id": "blk_1",
+      "text": "السلام عليكم ولي امر الطالب\\ة: {studentName}\nنحيط علمكم بانه تم طرد الطاالب\\ة وهذا بسبب\n:{blockReason}\nويرجي االتواصل معانا"
+    }
+  ],
+  "absence": [
+    {
+      "id": "abs_1",
+      "text": "السلام عليكم 🔔\nنود إعلامكم بأن الطالب/ة *{studentName}* لم يحضر/تحضر حصة *{sessionTitle}*\n📅 التاريخ: {date}\n⏰ الوقت: {time}\nنرجو التواصل معنا في حال وجود أي عذر\nجزاكم الله خيراً"
+    },
+    {
+      "id": "abs_2",
+      "text": "مرحباً 👋\nللعلم، الطالب/ة *{studentName}* لم يسجل/تسجل حضوراً في حصة *{sessionTitle}*\n📅 {date} - ⏰ {time}\nيرجى إبلاغنا بسبب الغياب\nشكراً لكم"
+    },
+    {
+      "id": "abs_3",
+      "text": "أهلاً وسهلاً ⚠️\nنفيدكم بتغيب الطالب/ة *{studentName}* عن حصة *{sessionTitle}*\nبتاريخ {date} الساعة {time}\nنأمل إعلامنا بالسبب\nمع تحياتنا"
+    },
+    {
+      "id": "abs_4",
+      "text": "تحية طيبة 📋\n*{studentName}* لم يحضر/تحضر حصة اليوم:\n📖 الحصة: *{sessionTitle}*\n📅 {date} | ⏰ {time}\nنرجو التواصل لمعرفة سبب الغياب\nنشكر تعاونكم"
+    },
+    {
+      "id": "abs_5",
+      "text": "السلام عليكم ورحمة الله 🌟\nنود إبلاغكم بغياب الطالب/ة *{studentName}*\nعن حصة *{sessionTitle}* بتاريخ {date}\n⏰ الوقت: {time}\nيرجى التواصل معنا لتوضيح سبب الغياب\nبارك الله فيكم"
+    }
+  ]
+}

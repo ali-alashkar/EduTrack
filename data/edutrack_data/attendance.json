@@ -295,5 +295,49 @@
     "homeworkStatus": "excused",
     "homeworkNote": "",
     "notes": ""
+  },
+  {
+    "id": "att1781366805814",
+    "sessionId": "ss1781366779611",
+    "studentId": "s5",
+    "studentName": "Omar Hassan",
+    "barcode": "STU-1005",
+    "checkInTime": "2026-06-13T16:06:45.814Z",
+    "homeworkStatus": "done",
+    "homeworkNote": "",
+    "notes": ""
+  },
+  {
+    "id": "att1781366820625",
+    "sessionId": "ss1781366779611",
+    "studentId": "s3",
+    "studentName": "Ahmed Ali",
+    "barcode": "STU-1003",
+    "checkInTime": "2026-06-13T16:07:00.625Z",
+    "homeworkStatus": "pending",
+    "homeworkNote": "",
+    "notes": ""
+  },
+  {
+    "id": "att1781366836584",
+    "sessionId": "ss1781366779611",
+    "studentId": "s1",
+    "studentName": "John Doe",
+    "barcode": "STU-1001",
+    "checkInTime": "2026-06-13T16:07:16.584Z",
+    "homeworkStatus": "done",
+    "homeworkNote": "",
+    "notes": ""
+  },
+  {
+    "id": "att1781366867214",
+    "sessionId": "ss1781366779611",
+    "studentId": "s1781202276397",
+    "studentName": "ali haitham",
+    "barcode": "STU-868715",
+    "checkInTime": "2026-06-13T16:07:47.214Z",
+    "homeworkStatus": "missed",
+    "homeworkNote": "",
+    "notes": ""
   }
 ]

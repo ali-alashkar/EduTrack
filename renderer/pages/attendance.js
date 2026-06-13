@@ -61,6 +61,7 @@ async function renderAttendance() {
             </div>
             <button class="btn btn-secondary btn-sm" id="btn-manual-add">+ Manual Add</button>
             <button class="btn btn-secondary btn-sm" id="btn-wa-send-all" style="background:rgba(37,211,102,0.1);color:#25D366;border-color:rgba(37,211,102,0.25)">📱 Send All WhatsApp</button>
+            <button class="btn btn-secondary btn-sm" id="btn-wa-send-absence" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">📵 Send Absence</button>
             <button class="btn btn-secondary btn-sm" id="btn-export-att">Export CSV</button>
           </div>
         </div>
@@ -277,6 +278,7 @@ async function selectSessionForAttendance(sessionId) {
 
   el('btn-manual-add').onclick = () => manualAttAdd();
   el('btn-wa-send-all').onclick = () => batchSendWhatsAppAttendance();
+  el('btn-wa-send-absence').onclick = () => batchSendAbsenceNotifications();
   el('btn-export-att').onclick = () => exportAttCSV();
 
   if (!window._waAttMsgListener) {
@@ -557,6 +559,53 @@ async function batchSendWhatsAppAttendance() {
     loadWaAttendanceStatus();
   } else {
     toast(res.error || 'Failed to queue messages', 'error');
+  }
+}
+
+async function batchSendAbsenceNotifications() {
+  if (!currentSessionId) return;
+  const status = await window.api.whatsapp.status();
+  if (status.status !== 'connected') {
+    toast('WhatsApp is not connected. Go to WhatsApp page to connect.', 'error');
+    return;
+  }
+
+  // Get session info to check group
+  const [sessions, groups, students, attendance] = await Promise.all([
+    window.api.sessions.list(),
+    window.api.groups.list(),
+    window.api.students.list(),
+    window.api.attendance.bySession(currentSessionId)
+  ]);
+
+  const session = sessions.find(s => s.id === currentSessionId);
+  if (!session) { toast('Session not found', 'error'); return; }
+
+  const group = groups.find(g => g.id === session.groupId);
+  if (!group || !group.studentIds || !group.studentIds.length) {
+    toast('No group assigned to this session or group has no students', 'error');
+    return;
+  }
+
+  const attendedIds = new Set(attendance.map(a => a.studentId));
+  const absentStudents = group.studentIds
+    .map(id => students.find(s => s.id === id))
+    .filter(s => s && !attendedIds.has(s.id));
+
+  if (!absentStudents.length) {
+    toast('All group students are present! No absence messages needed.', 'success');
+    return;
+  }
+
+  // Confirm before sending
+  const absentNames = absentStudents.map(s => s.name).join(', ');
+  if (!confirmAction(`Send absence notifications for ${absentStudents.length} student(s)?\n\n${absentNames}`)) return;
+
+  const res = await window.api.whatsapp.sendAbsenceBatch({ sessionId: currentSessionId });
+  if (res.success) {
+    toast(`📵 Queued ${res.queued} absence message${res.queued !== 1 ? 's' : ''}${res.skipped ? ` (${res.skipped} skipped)` : ''}`, 'success');
+  } else {
+    toast(res.error || 'Failed to send absence messages', 'error');
   }
 }
 

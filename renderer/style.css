@@ -1666,3 +1666,119 @@ tbody td {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ── Templates Editor ── */
+.wa-template-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 20px;
+}
+
+@media(max-width: 800px) {
+  .wa-template-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wa-template-sidebar {
+  align-self: start;
+}
+
+.wa-template-cat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  margin-bottom: 4px;
+}
+
+.wa-template-cat:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.wa-template-cat.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.wa-template-cat.active .badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.wa-template-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wa-template-id {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.wa-template-text {
+  font-size: 14px;
+  line-height: 1.6;
+  direction: rtl;
+  text-align: right;
+  background: var(--bg-card);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  color: var(--text-primary);
+}
+
+.wa-template-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Variable Pills */
+.wa-var-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.wa-var-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wa-var-pill span {
+  font-family: monospace;
+  color: var(--accent);
+  background: rgba(99, 102, 241, 0.1);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.wa-var-pill:hover {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.05);
+}

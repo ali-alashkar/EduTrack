@@ -102,5 +102,20 @@
     "quizMaxScore": 10,
     "status": "scheduled",
     "createdAt": "2026-06-11T20:24:39.692Z"
+  },
+  {
+    "id": "ss1781366779611",
+    "title": "try",
+    "groupId": "g2",
+    "date": "2026-06-13",
+    "time": "",
+    "duration": "",
+    "sessionFee": 0,
+    "topic": "",
+    "homework": "",
+    "hasQuiz": false,
+    "quizMaxScore": null,
+    "status": "scheduled",
+    "createdAt": "2026-06-13T16:06:19.611Z"
   }
 ]

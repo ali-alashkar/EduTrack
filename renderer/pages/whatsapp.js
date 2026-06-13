@@ -34,17 +34,23 @@ async function renderWhatsApp() {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Message Log
       </button>
+      <button class="wa-tab ${waCurrentTab === 'templates' ? 'active' : ''}" onclick="switchWaTab('templates')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+        Templates
+      </button>
     </div>
 
     <!-- Tab Content -->
     <div id="wa-tab-connection" class="wa-tab-content ${waCurrentTab === 'connection' ? '' : 'hidden'}"></div>
     <div id="wa-tab-settings" class="wa-tab-content ${waCurrentTab === 'settings' ? '' : 'hidden'}"></div>
     <div id="wa-tab-log" class="wa-tab-content ${waCurrentTab === 'log' ? '' : 'hidden'}"></div>
+    <div id="wa-tab-templates" class="wa-tab-content ${waCurrentTab === 'templates' ? '' : 'hidden'}"></div>
   `;
 
   renderWaConnection(status);
   renderWaSettings(settings);
   renderWaLog();
+  renderWaTemplates();
   setupWaListeners();
 }
 
@@ -56,6 +62,7 @@ window.switchWaTab = function(tab) {
   document.querySelector(`.wa-tab[onclick="switchWaTab('${tab}')"]`)?.classList.add('active');
 
   if (tab === 'log') renderWaLog();
+  if (tab === 'templates') renderWaTemplates();
 };
 
 function waStatusLabel(status) {
@@ -264,6 +271,7 @@ async function renderWaLog() {
         <option value="attendance">📋 Attendance</option>
         <option value="homework">📝 Homework</option>
         <option value="quiz">📊 Quiz</option>
+        <option value="block">Block</option>
       </select>
       <button class="btn btn-secondary btn-sm" onclick="renderWaLog()">🔄 Refresh</button>
     </div>
@@ -367,6 +375,7 @@ function waTypeBadge(type) {
     'attendance': '<span class="badge badge-green" style="font-size:10px">📋 Attendance</span>',
     'homework': '<span class="badge badge-yellow" style="font-size:10px">📝 Homework</span>',
     'quiz': '<span class="badge badge-accent" style="font-size:10px">📊 Quiz</span>',
+    'block': '<span class="badge badge-red" style="font-size:10px">Block</span>',
   };
   return map[type] || `<span class="badge badge-muted" style="font-size:10px">${type}</span>`;
 }
@@ -511,3 +520,211 @@ if (typeof window._waListenerInit === 'undefined') {
   window.api.whatsapp.status().then(s => updateWaGlobalStatus(s.status));
   setupWaListeners();
 }
+
+// ── Templates Tab ──
+let waCurrentTemplateCategory = 'attendance';
+
+async function renderWaTemplates() {
+  const container = el('wa-tab-templates');
+  if (!container) return;
+  const templatesObj = await window.api.whatsapp.listTemplates();
+  
+  const categories = [
+    { id: 'attendance', label: 'Attendance' },
+    { id: 'homework', label: 'Homework' },
+    { id: 'quiz', label: 'Quiz' },
+    { id: 'attendance_homework', label: 'Att. + Homework' },
+    { id: 'session_summary', label: 'Session Summary' },
+    { id: 'block', label: 'Block' },
+    { id: 'absence', label: 'Absence' },
+  ];
+
+  container.innerHTML = `
+    <div class="wa-template-layout">
+      <!-- Sidebar Categories -->
+      <div class="wa-template-sidebar card">
+        <div class="card-header"><span class="card-title">Categories</span></div>
+        <div style="padding:10px">
+          ${categories.map(c => `
+            <div class="wa-template-cat ${waCurrentTemplateCategory === c.id ? 'active' : ''}" onclick="selectWaTemplateCategory('${c.id}')">
+              ${c.label}
+              <span class="badge badge-muted" style="font-size:10px">${(templatesObj[c.id] || []).length}</span>
+            </div>
+          `).join('')}
+          <div style="margin-top:20px;padding:10px;border-top:1px solid var(--border)">
+            <button class="btn btn-secondary btn-sm" style="width:100%" onclick="resetWaTemplates()">
+              🔄 Reset to Defaults
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="wa-template-main card">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="card-title">${categories.find(c => c.id === waCurrentTemplateCategory)?.label || 'Templates'}</span>
+          <button class="btn btn-primary btn-sm" onclick="openWaTemplateModal()">+ Add Template</button>
+        </div>
+        <div class="wa-template-list" style="padding:20px;display:flex;flex-direction:column;gap:16px;">
+          ${(templatesObj[waCurrentTemplateCategory] || []).map(t => `
+            <div class="wa-template-card">
+              <div class="wa-template-id">${t.id}</div>
+              <div class="wa-template-text">${(t.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>
+              <div class="wa-template-actions">
+                <button class="btn btn-secondary btn-sm" onclick="openWaTemplateModal('${t.id}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteWaTemplate('${t.id}')" ${(templatesObj[waCurrentTemplateCategory] || []).length <= 1 ? 'disabled title="Cannot delete the last template"' : ''}>Delete</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+window.selectWaTemplateCategory = function(cat) {
+  waCurrentTemplateCategory = cat;
+  renderWaTemplates();
+};
+
+const WA_VARS = [
+  { id: 'studentName', label: 'Student Name', cats: ['all'] },
+  { id: 'sessionTitle', label: 'Session Title', cats: ['all'] },
+  { id: 'date', label: 'Date', cats: ['all'] },
+  { id: 'time', label: 'Time', cats: ['all'] },
+  { id: 'checkInTime', label: 'Check-In Time', cats: ['attendance', 'attendance_homework'] },
+  { id: 'blockReason', label: 'Block Reason', cats: ['attendance', 'attendance_homework', 'block'] },
+  { id: 'homeworkStatus', label: 'HW Status', cats: ['homework', 'attendance_homework'] },
+  { id: 'homeworkNote', label: 'HW Note', cats: ['homework', 'attendance_homework'] },
+  { id: 'quizScore', label: 'Quiz Score', cats: ['quiz'] },
+  { id: 'quizMax', label: 'Quiz Max', cats: ['quiz'] },
+  { id: 'quizPercent', label: 'Quiz %', cats: ['quiz'] },
+  { id: 'time_line', label: 'Time Line', cats: ['session_summary'] },
+  { id: 'hw_line', label: 'HW Line', cats: ['session_summary'] },
+  { id: 'quiz_line', label: 'Quiz Line', cats: ['session_summary'] },
+];
+
+window.openWaTemplateModal = async function(id = null) {
+  let template = null;
+  if (id) {
+    const templatesObj = await window.api.whatsapp.listTemplates();
+    template = (templatesObj[waCurrentTemplateCategory] || []).find(t => t.id === id);
+  }
+
+  const vars = WA_VARS.filter(v => v.cats.includes('all') || v.cats.includes(waCurrentTemplateCategory));
+
+  openModal({
+    title: template ? 'Edit Template' : 'New Template',
+    wide: true,
+    body: `
+      <div style="display:flex;gap:20px;">
+        <div style="flex:1">
+          <div class="form-group">
+            <label class="form-label">Template Text</label>
+            <textarea id="wa-template-textarea" class="form-textarea" style="height:200px;direction:rtl;text-align:right" oninput="previewWaTemplate()">${template ? (template.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''}</textarea>
+          </div>
+          <div class="wa-var-pills">
+            ${vars.map(v => `<button class="wa-var-pill" onclick="insertWaTemplateVar('{${v.id}}')">${v.label} <span>{${v.id}}</span></button>`).join('')}
+          </div>
+        </div>
+        <div style="flex:1;background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;">
+          <label class="form-label">Live Preview</label>
+          <div id="wa-template-preview" style="flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;white-space:pre-wrap;font-size:14px;line-height:1.7;direction:rtl;text-align:right;"></div>
+        </div>
+      </div>
+    `,
+    footer: `
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWaTemplate('${id || ''}')">Save Template</button>
+    `
+  });
+
+  setTimeout(previewWaTemplate, 50);
+};
+
+window.insertWaTemplateVar = function(variable) {
+  const textarea = el('wa-template-textarea');
+  if (!textarea) return;
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const text = textarea.value;
+  textarea.value = text.substring(0, start) + variable + text.substring(end);
+  textarea.focus();
+  textarea.selectionStart = textarea.selectionEnd = start + variable.length;
+  previewWaTemplate();
+};
+
+window.previewWaTemplate = function() {
+  const textarea = el('wa-template-textarea');
+  const preview = el('wa-template-preview');
+  if (!textarea || !preview) return;
+
+  const mockData = {
+    studentName: 'أحمد محمود',
+    sessionTitle: 'الرياضيات - الفصل الأول',
+    date: '2023-10-25',
+    time: '14:00',
+    checkInTime: '14:05',
+    blockReason: '\n🚫 الطالب موقوف: لم يدفع المصروفات',
+    homeworkStatus: '✅ تم التسليم',
+    homeworkNote: '📌 ملاحظة: ممتاز جداً',
+    quizScore: '9',
+    quizMax: '10',
+    quizPercent: '90',
+    time_line: ' | 14:00',
+    hw_line: '\n📋 الواجب: *✅ تم التسليم*\n📌 ملاحظة: ممتاز جداً',
+    quiz_line: '\n📊 الكويز: *9/10* (90%)'
+  };
+
+  let text = textarea.value || '';
+  for (const [key, val] of Object.entries(mockData)) {
+    text = text.replace(new RegExp(`\\{${key}\\}`, 'g'), val);
+  }
+  
+  text = text.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+  preview.innerHTML = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+};
+
+window.saveWaTemplate = async function(id) {
+  const text = el('wa-template-textarea')?.value.trim();
+  if (!text) {
+    toast('Template text cannot be empty', 'error');
+    return;
+  }
+
+  const res = await window.api.whatsapp.saveTemplate({
+    category: waCurrentTemplateCategory,
+    id: id || null,
+    text
+  });
+
+  if (res.success) {
+    toast('Template saved', 'success');
+    closeModal();
+    renderWaTemplates();
+  } else {
+    toast(res.error || 'Failed to save', 'error');
+  }
+};
+
+window.deleteWaTemplate = async function(id) {
+  if (!confirmAction('Delete this template?')) return;
+  const res = await window.api.whatsapp.deleteTemplate({ category: waCurrentTemplateCategory, id });
+  if (res.success) {
+    toast('Template deleted', 'success');
+    renderWaTemplates();
+  } else {
+    toast(res.error || 'Failed to delete', 'error');
+  }
+};
+
+window.resetWaTemplates = async function() {
+  if (!confirmAction('WARNING: This will delete ALL custom templates and restore the defaults. Are you sure?')) return;
+  const res = await window.api.whatsapp.resetTemplates();
+  if (res.success) {
+    toast('Templates reset to defaults', 'success');
+    renderWaTemplates();
+  } else {
+    toast('Failed to reset templates', 'error');
+  }
+};

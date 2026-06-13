@@ -93,6 +93,7 @@ contextBridge.exposeInMainWorld('api', {
     sendQuiz: (data) => ipcRenderer.invoke('whatsapp:send-quiz', data),
     sendSessionSummary: (data) => ipcRenderer.invoke('whatsapp:send-session-summary', data),
     sendSessionBatch: (data) => ipcRenderer.invoke('whatsapp:send-session-batch', data),
+    sendAbsenceBatch: (data) => ipcRenderer.invoke('whatsapp:send-absence-batch', data),
     getLog: (filters) => ipcRenderer.invoke('whatsapp:get-log', filters),
     retry: (messageId) => ipcRenderer.invoke('whatsapp:retry', messageId),
     resend: (messageId) => ipcRenderer.invoke('whatsapp:resend', messageId),
@@ -102,5 +103,11 @@ contextBridge.exposeInMainWorld('api', {
     onDisconnected: (cb) => ipcRenderer.on('whatsapp:disconnected', () => cb()),
     onMessageSent: (cb) => ipcRenderer.on('whatsapp:message-sent', (_, data) => cb(data)),
     onStatusChange: (cb) => ipcRenderer.on('whatsapp:status-change', (_, status) => cb(status)),
+    
+    // Templates
+    listTemplates: () => ipcRenderer.invoke('templates:list'),
+    saveTemplate: (data) => ipcRenderer.invoke('templates:save', data),
+    deleteTemplate: (data) => ipcRenderer.invoke('templates:delete', data),
+    resetTemplates: () => ipcRenderer.invoke('templates:reset'),
   }
 });
