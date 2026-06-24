@@ -638,6 +638,14 @@ async function editStudent(id) {
   if (s) openStudentModal(s, levels, centers, groups);
 }
 
+window.deleteStudent = async function(id) {
+  if (!confirmAction('Delete this student?')) return;
+  await window.api.students.delete(id);
+  selectedStudentIds.delete(id);
+  toast('Student deleted', 'success');
+  await renderStudents();
+};
+
 function formatStudentDiscount(s) {
   if (!s.hasDiscount) return '<span style="color:var(--text-muted)">None</span>';
   return `<span class="badge badge-yellow">-${s.discountPercent || 0}%</span>`;

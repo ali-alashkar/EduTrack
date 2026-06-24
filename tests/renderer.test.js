@@ -66,6 +66,7 @@ global.window = {
       byBarcode: jest.fn(),
       block: jest.fn(),
       unblock: jest.fn(),
+      delete: jest.fn(),
     },
     groups: {
       list: jest.fn(),
@@ -117,6 +118,7 @@ global.el = (id) => global.document.getElementById(id);
 global.toast = jest.fn();
 global.openModal = jest.fn();
 global.closeModal = jest.fn();
+global.confirmAction = jest.fn((msg) => window.confirm(msg));
 global.formatDate = jest.fn((d) => d);
 global.formatTime = jest.fn((t) => t);
 global.hwBadge = jest.fn((s) => s);
@@ -256,6 +258,24 @@ describe('EduTrack Renderer – Search & Filtration Scenarios', () => {
       html = el('students-tbody').innerHTML;
       expect(html).toContain('Mona Solo');
       expect(html).not.toContain('Ali One');
+    });
+
+    test('delete student button handler confirms, deletes, and refreshes the table', async () => {
+      const beforeDelete = [
+        { id: 's1', name: 'Alice Smith', barcode: 'BC001', phone: '123', level: 'Grade 10', center: 'Center A', createdAt: '2024-01-01' },
+      ];
+      window.api.students.list
+        .mockResolvedValueOnce(beforeDelete)
+        .mockResolvedValueOnce([]);
+      window.api.students.delete.mockResolvedValue({ success: true });
+
+      await renderStudents();
+      await window.deleteStudent('s1');
+
+      expect(confirmAction).toHaveBeenCalledWith('Delete this student?');
+      expect(window.api.students.delete).toHaveBeenCalledWith('s1');
+      expect(toast).toHaveBeenCalledWith('Student deleted', 'success');
+      expect(el('students-tbody').innerHTML).toContain('No students found.');
     });
   });
 

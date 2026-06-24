@@ -13,6 +13,7 @@ The goal is to turn the current working system into a professional product that 
 - Admin/assistant account separation.
 - Local JSON data makes the app simple to install and run without a server.
 - Automated tests cover core IPC handlers, renderer workflows, and WhatsApp template behavior.
+- Student table actions now include a working, confirmed delete flow with renderer regression coverage.
 
 ## Phase 1 - Make It Safe To Sell
 
@@ -47,15 +48,16 @@ The app already stores session fees and student discounts. To sell to tutoring c
 
 These features make the app feel faster and more professional for front-desk use.
 
-- **Bulk student import** - Import students from Excel/CSV with validation for names, phones, levels, centers, groups, and barcodes.
-- **Excel export** - Export students, attendance, quiz scores, reports, payments, and WhatsApp logs.
-- **Advanced barcode assignment** - Generate barcodes directly for selected students and save them back to student records.
-- **Student profile timeline** - Combine attendance, homework, quizzes, payments, WhatsApp messages, blocks, and notes in one history view.
-- **Block history** - Store every block/unblock event with reason, date, and user instead of only the latest block state.
-- **Bulk group actions** - Move selected students between groups, assign level/center, or add notes in one action.
-- **Session duplication** - Duplicate previous sessions to create weekly schedules faster.
-- **Recurring sessions** - Generate repeated sessions for a group across a date range.
-- **Attendance import correction** - Add safe tools to correct wrong check-ins without deleting important history silently.
+- [COMPLETED] **Bulk student import** - Import students from Excel/CSV with validation, preview, template download, and automatic creation of missing levels/centers.
+- [PARTIAL] **Excel/CSV export** - Export students and payments to Excel, and attendance to CSV. Still pending: quiz scores, reports, and WhatsApp logs.
+- [COMPLETED] **Advanced barcode assignment** - Generate barcodes for individual students or all students missing barcodes.
+- [COMPLETED] **Student profile timeline** - Combine attendance, homework, quizzes, payments, WhatsApp messages, blocks, and notes in one history view.
+- [COMPLETED] **Block history** - Store block/unblock events with reason, date, and user-aware fields.
+- [PARTIAL] **Bulk group actions** - Assign selected students to a group and bulk update level/center. Still pending: bulk notes and move-between-groups helper.
+- [COMPLETED] **Session duplication** - Duplicate previous sessions to create weekly schedules faster.
+- [COMPLETED] **Recurring sessions** - Generate repeated sessions for a group across a date range.
+- [COMPLETED] **Student delete action reliability** - Delete button now confirms, removes the student through the existing IPC API, refreshes the table, and has renderer regression coverage.
+- [COMPLETED] **Attendance correction tools** - Transfer attendance records between sessions and reassign records to the correct student.
 
 ## Phase 4 - Professional Reports
 
