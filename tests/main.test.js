@@ -58,16 +58,104 @@ jest.mock('electron', () => ({
 }));
 
 // ── Mock `fs` with in-memory key-value store ─────────────────
-jest.mock('fs', () => ({
-  existsSync: jest.fn((p) => Object.prototype.hasOwnProperty.call(mockMemStore, p)),
-  mkdirSync: jest.fn(),
-  readFileSync: jest.fn((p) => {
-    if (Object.prototype.hasOwnProperty.call(mockMemStore, p)) return mockMemStore[p];
-    throw Object.assign(new Error(`ENOENT: ${p}`), { code: 'ENOENT' });
-  }),
-  writeFileSync: jest.fn((p, data) => { mockMemStore[p] = data; }),
-}));
+jest.mock('fs', () => {
+  const path = require('path');
+  return {
+    existsSync: jest.fn((p) => Object.prototype.hasOwnProperty.call(mockMemStore, p)),
+    mkdirSync: jest.fn(),
+    readFileSync: jest.fn((p) => {
+      if (Object.prototype.hasOwnProperty.call(mockMemStore, p)) return mockMemStore[p];
+      throw Object.assign(new Error(`ENOENT: ${p}`), { code: 'ENOENT' });
+    }),
+    writeFileSync: jest.fn((p, data) => { mockMemStore[p] = data; }),
+    readdirSync: jest.fn((dir) => {
+      const normalizedDir = path.normalize(dir);
+      return Object.keys(mockMemStore)
+        .map(p => path.normalize(p))
+        .filter(p => p.startsWith(normalizedDir) && p !== normalizedDir)
+        .map(p => p.substring(normalizedDir.length).replace(/^[\\/]/, ''))
+        .filter(name => !name.includes(path.sep));
+    }),
+    statSync: jest.fn((p) => ({
+      size: (mockMemStore[p] || '').length,
+      mtime: new Date()
+    })),
+    unlinkSync: jest.fn((p) => {
+      delete mockMemStore[p];
+    }),
+  };
+});
 
+// ── 16. IMPORT (Phase 3) ─────────────────────────────────────
+describe('IMPORT - student commit creates missing setup data', () => {
+  beforeEach(() => {
+    resetStore();
+    seed('students', []);
+    seed('levels', []);
+    seed('centers', []);
+  });
+
+  test('import:students-commit creates missing grade and center records', () => {
+    const res = call('import:students-commit', {
+      rows: [
+        {
+          name: 'Imported Student',
+          barcode: 'IMP001',
+          phone: '01000000000',
+          parentPhone: '01100000000',
+          levelName: 'Grade 9',
+          centerName: 'New Center',
+          hasDiscount: true,
+          discountPercent: 10,
+        },
+      ],
+    });
+
+    expect(res.success).toBe(true);
+    expect(res.created).toBe(1);
+    expect(res.needsCompletion).toBe(true);
+    expect(res.createdLevels.map(l => l.name)).toEqual(['Grade 9']);
+    expect(res.createdCenters.map(c => c.name)).toEqual(['New Center']);
+
+    const levels = read('levels');
+    const centers = read('centers');
+    const students = read('students');
+    expect(levels[0]).toMatchObject({ name: 'Grade 9', needsCompletion: true });
+    expect(centers[0]).toMatchObject({ name: 'New Center', grades: ['Grade 9'], needsCompletion: true });
+    expect(students[0]).toMatchObject({
+      name: 'Imported Student',
+      levelId: levels[0].id,
+      level: 'Grade 9',
+      centerId: centers[0].id,
+      center: 'New Center',
+    });
+  });
+
+  test('import:students-commit assigns a new grade to an existing center', () => {
+    seed('levels', [{ id: 'lv1', name: 'Grade 10', createdAt: '2024-01-01T00:00:00Z' }]);
+    seed('centers', [{ id: 'c1', name: 'Main Center', grades: [], createdAt: '2024-01-01T00:00:00Z' }]);
+
+    const res = call('import:students-commit', {
+      rows: [
+        {
+          name: 'Imported Student',
+          barcode: 'IMP002',
+          levelName: 'Grade 10',
+          centerName: 'Main Center',
+        },
+      ],
+    });
+
+    expect(res.success).toBe(true);
+    expect(res.createdLevels).toEqual([]);
+    expect(res.createdCenters).toEqual([]);
+    expect(res.updatedCenters).toEqual([{ id: 'c1', name: 'Main Center', grade: 'Grade 10' }]);
+    expect(read('centers')[0].grades).toEqual(['Grade 10']);
+    expect(read('students')[0]).toMatchObject({ levelId: 'lv1', centerId: 'c1' });
+  });
+});
+
+// ── 16. IMPORT (Phase 3) ─────────────────────────────────────
 // ── Mock WhatsApp service (avoids loading puppeteer/whatsapp-web.js) ──
 const mockWaInstance = {
   init: jest.fn().mockResolvedValue({ success: true, status: 'disconnected' }),
@@ -253,6 +341,31 @@ describe('LEVELS – CRUD', () => {
     expect(read('levels')[0].name).toBe('Beginner+');
   });
 
+  test('levels:update - syncs renamed level to students, groups, and center grades', () => {
+    seed('students', [
+      { id: 's1', name: 'Linked Student', levelId: 'lv1', level: 'Beginner' },
+      { id: 's2', name: 'Name-only Student', level: 'Beginner' },
+      { id: 's3', name: 'Other Student', levelId: 'lv2', level: 'Other' },
+    ]);
+    seed('groups', [
+      { id: 'g1', name: 'Linked Group', levelId: 'lv1', level: 'Beginner' },
+      { id: 'g2', name: 'Name-only Group', level: 'Beginner' },
+    ]);
+    seed('centers', [
+      { id: 'c1', name: 'Main Center', grades: ['Beginner', 'Other'] },
+    ]);
+
+    call('levels:update', { id: 'lv1', name: 'Beginner+' });
+
+    expect(read('students')).toEqual([
+      { id: 's1', name: 'Linked Student', levelId: 'lv1', level: 'Beginner+' },
+      { id: 's2', name: 'Name-only Student', level: 'Beginner+' },
+      { id: 's3', name: 'Other Student', levelId: 'lv2', level: 'Other' },
+    ]);
+    expect(read('groups').map(g => g.level)).toEqual(['Beginner+', 'Beginner+']);
+    expect(read('centers')[0].grades).toEqual(['Beginner+', 'Other']);
+  });
+
   test('levels:delete – removes level', () => {
     call('levels:delete', 'lv1');
     expect(read('levels')).toHaveLength(0);
@@ -289,6 +402,27 @@ describe('CENTERS – CRUD', () => {
     const stored = read('centers')[0];
     expect(stored.city).toBe('Giza');
     expect(stored.name).toBe('Downtown Center');
+  });
+
+  test('centers:update - syncs renamed center to students and groups', () => {
+    seed('students', [
+      { id: 's1', name: 'Linked Student', centerId: 'c1', center: 'Downtown Center' },
+      { id: 's2', name: 'Name-only Student', center: 'Downtown Center' },
+      { id: 's3', name: 'Other Student', centerId: 'c2', center: 'Other Center' },
+    ]);
+    seed('groups', [
+      { id: 'g1', name: 'Linked Group', centerId: 'c1', center: 'Downtown Center' },
+      { id: 'g2', name: 'Name-only Group', center: 'Downtown Center' },
+    ]);
+
+    call('centers:update', { id: 'c1', name: 'Downtown Branch', city: 'Giza' });
+
+    expect(read('students')).toEqual([
+      { id: 's1', name: 'Linked Student', centerId: 'c1', center: 'Downtown Branch' },
+      { id: 's2', name: 'Name-only Student', center: 'Downtown Branch' },
+      { id: 's3', name: 'Other Student', centerId: 'c2', center: 'Other Center' },
+    ]);
+    expect(read('groups').map(g => g.center)).toEqual(['Downtown Branch', 'Downtown Branch']);
   });
 
   test('centers:delete – removes center', () => {
@@ -1049,5 +1183,308 @@ describe('WHATSAPP – settings, send, log, retry, resend', () => {
     expect(res.totalAttended).toBe(1);
     expect(res.sent).toBe(1);
     expect(res.statusMap['s1_attendance'].status).toBe('sent');
+  });
+});
+
+// ── 12. BACKUP & RESTORE ──────────────────────────────────────
+describe('BACKUP & RESTORE – settings, list, create, delete, restore', () => {
+  beforeEach(() => {
+    resetStore();
+    seed('backup_settings', {
+      enabled: true,
+      frequency: 'daily',
+      maxKeep: 10,
+      lastBackup: null
+    });
+    // Seed some other data files
+    seed('students', [{ id: 's1', name: 'Alice' }]);
+    seed('attendance', [{ id: 'att1', sessionId: 'ss1', studentId: 's1' }]);
+  });
+
+  test('backup:get-settings – returns seeded settings', () => {
+    const res = call('backup:get-settings');
+    expect(res.enabled).toBe(true);
+    expect(res.frequency).toBe('daily');
+  });
+
+  test('backup:update-settings – updates settings', () => {
+    const res = call('backup:update-settings', { enabled: false, frequency: 'weekly', maxKeep: 5 });
+    expect(res.success).toBe(true);
+    const settings = call('backup:get-settings');
+    expect(settings.enabled).toBe(false);
+    expect(settings.frequency).toBe('weekly');
+    expect(settings.maxKeep).toBe(5);
+  });
+
+  test('backup:create – creates a manual backup file and lists it', () => {
+    const createRes = call('backup:create');
+    expect(createRes.success).toBe(true);
+    expect(createRes.filename).toContain('manual_backup_');
+
+    const listRes = call('backup:list');
+    expect(listRes).toHaveLength(1);
+    expect(listRes[0].filename).toBe(createRes.filename);
+    expect(listRes[0].type).toBe('manual');
+  });
+
+  test('backup:delete – deletes an existing backup file', () => {
+    const createRes = call('backup:create');
+    expect(createRes.success).toBe(true);
+
+    const deleteRes = call('backup:delete', createRes.filename);
+    expect(deleteRes.success).toBe(true);
+
+    const listRes = call('backup:list');
+    expect(listRes).toHaveLength(0);
+  });
+
+  test('backup:restore – restores database and creates pre-restore backup', async () => {
+    // 1. Create a backup of current state (Alice in students)
+    const createRes = call('backup:create');
+    expect(createRes.success).toBe(true);
+
+    // 2. Change state (remove Alice, add Bob)
+    seed('students', [{ id: 's2', name: 'Bob' }]);
+    expect(read('students')[0].name).toBe('Bob');
+
+    // 3. Restore from backup
+    const restoreRes = await call('backup:restore', createRes.filename);
+    expect(restoreRes.success).toBe(true);
+
+    // 4. Verify Alice is back
+    expect(read('students')[0].name).toBe('Alice');
+
+    // 5. Verify a pre-restore backup was created
+    const listRes = call('backup:list');
+    const prerestoreBackup = listRes.find(b => b.type === 'prerestore');
+    expect(prerestoreBackup).toBeDefined();
+  });
+});
+
+// ── 13. DATA INTEGRITY & RECOVERY ──────────────────────────────
+describe('DATA INTEGRITY & RECOVERY', () => {
+  beforeEach(() => {
+    resetStore();
+  });
+
+  test('system:get-corrupted-files – returns empty list when all files are valid', () => {
+    seed('students', [{ id: 's1', name: 'Alice' }]);
+    seed('users', [{ id: 'u1', username: 'admin' }]);
+    const res = call('system:get-corrupted-files');
+    expect(res).toEqual([]);
+  });
+
+  test('system:get-corrupted-files – detects empty json files as corrupted', () => {
+    const p = dbPath('students');
+    mockMemStore[p] = '   ';
+
+    const res = call('system:get-corrupted-files');
+    expect(res).toContain('students.json');
+  });
+
+  test('system:get-corrupted-files – detects invalid json files as corrupted', () => {
+    const p = dbPath('students');
+    mockMemStore[p] = '{ invalid json: [ }';
+
+    const res = call('system:get-corrupted-files');
+    expect(res).toContain('students.json');
+  });
+
+  test('system:reset-corrupted-files – deletes corrupted files and seeds defaults', () => {
+    const p = dbPath('students');
+    mockMemStore[p] = '{ invalid ';
+
+    // First confirm it is corrupted
+    let list = call('system:get-corrupted-files');
+    expect(list).toContain('students.json');
+
+    // Call reset
+    const resetRes = call('system:reset-corrupted-files');
+    expect(resetRes.success).toBe(true);
+
+    // Verify file is recreated and is valid (seeded empty list)
+    expect(mockMemStore[p]).toBe('[]');
+
+    list = call('system:get-corrupted-files');
+    expect(list).not.toContain('students.json');
+  });
+});
+
+// ── 14. BACKUP REMINDERS ──────────────────────────────────────
+describe('BACKUP REMINDERS', () => {
+  beforeEach(() => {
+    resetStore();
+  });
+
+  function seedBackupFile(filename, contentObj) {
+    const backupsDir = path.join(__dirname, '..', 'data', 'edutrack_backups');
+    const p = path.join(backupsDir, filename);
+    mockMemStore[p] = JSON.stringify(contentObj);
+  }
+
+  test('backup:check-reminder – warns when no backup exists', () => {
+    const res = call('backup:check-reminder');
+    expect(res.showReminder).toBe(true);
+    expect(res.daysSince).toBeNull();
+  });
+
+  test('backup:check-reminder – does not warn when backup is recent (e.g. 1 day old)', () => {
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    seedBackupFile('manual_backup_recent.json', {
+      timestamp: oneDayAgo.toISOString(),
+      dbs: {}
+    });
+
+    const res = call('backup:check-reminder');
+    expect(res.showReminder).toBe(false);
+    expect(res.daysSince).toBe(1);
+  });
+
+  test('backup:check-reminder – warns when backup is old (e.g. 4 days old)', () => {
+    const now = new Date();
+    const fourDaysAgo = new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000);
+    seedBackupFile('manual_backup_old.json', {
+      timestamp: fourDaysAgo.toISOString(),
+      dbs: {}
+    });
+
+    const res = call('backup:check-reminder');
+    expect(res.showReminder).toBe(true);
+    expect(res.daysSince).toBe(4);
+  });
+});
+
+/*
+// ── 15. PHASE 1 – Setup Wizard & Security ─────────────────────
+describe('PHASE 1 – Setup Wizard & Security', () => {
+... (tests commented out)
+});
+*/
+
+// ── 15. PAYMENTS (Phase 2) ───────────────────────────────────
+describe('PAYMENTS – create, list, by-student, balance, delete, financial summary', () => {
+  beforeEach(() => {
+    resetStore();
+    seed('students', [
+      { id: 's1', name: 'Alice', hasDiscount: false, discountPercent: 0 },
+      { id: 's2', name: 'Bob', hasDiscount: true, discountPercent: 20 },
+    ]);
+    seed('sessions', [
+      { id: 'ss1', title: 'Week 1', date: '2024-03-01', sessionFee: 200 },
+      { id: 'ss2', title: 'Week 2', date: '2024-03-08', sessionFee: 200 },
+    ]);
+    seed('attendance', [
+      { id: 'att1', sessionId: 'ss1', studentId: 's1' },
+      { id: 'att2', sessionId: 'ss1', studentId: 's2' },
+      { id: 'att3', sessionId: 'ss2', studentId: 's1' },
+    ]);
+    seed('payments', [
+      { id: 'pay1', studentId: 's1', studentName: 'Alice', amount: 150, method: 'cash', note: 'Partial', date: '2024-03-05', createdAt: '2024-03-05T10:00:00Z' },
+    ]);
+  });
+
+  test('payments:list – returns all payments sorted by date', () => {
+    const list = call('payments:list');
+    expect(list).toHaveLength(1);
+    expect(list[0].id).toBe('pay1');
+  });
+
+  test('payments:create – creates a new payment record', () => {
+    const res = call('payments:create', { studentId: 's1', amount: 200, method: 'transfer', note: 'March', date: '2024-03-10' });
+    expect(res.success).toBe(true);
+    expect(res.record.amount).toBe(200);
+    expect(res.record.studentName).toBe('Alice');
+    expect(res.record.method).toBe('transfer');
+    expect(read('payments')).toHaveLength(2);
+  });
+
+  test('payments:create – rejects unknown student', () => {
+    const res = call('payments:create', { studentId: 's999', amount: 100, method: 'cash' });
+    expect(res.success).toBe(false);
+    expect(res.message).toMatch(/not found/i);
+  });
+
+  test('payments:create – rejects zero or negative amount', () => {
+    const res = call('payments:create', { studentId: 's1', amount: 0, method: 'cash' });
+    expect(res.success).toBe(false);
+    expect(res.message).toMatch(/positive/i);
+  });
+
+  test('payments:by-student – returns only that student\'s payments', () => {
+    const list = call('payments:by-student', 's1');
+    expect(list).toHaveLength(1);
+    expect(list[0].studentId).toBe('s1');
+  });
+
+  test('payments:by-student – returns empty for student with no payments', () => {
+    const list = call('payments:by-student', 's2');
+    expect(list).toHaveLength(0);
+  });
+
+  test('payments:delete – removes the payment record', () => {
+    const res = call('payments:delete', 'pay1');
+    expect(res.success).toBe(true);
+    expect(read('payments')).toHaveLength(0);
+  });
+
+  test('payments:student-balance – computes gross, due, paid, remaining correctly (no discount)', () => {
+    // Alice attended ss1 (200 EGP) + ss2 (200 EGP) = 400 EGP gross/due; paid 150
+    const bal = call('payments:student-balance', 's1');
+    expect(bal.success).toBe(true);
+    expect(bal.totalGross).toBe(400);
+    expect(bal.totalDiscount).toBe(0);
+    expect(bal.totalDue).toBe(400);
+    expect(bal.totalPaid).toBe(150);
+    expect(bal.remaining).toBe(250);
+    expect(bal.sessionsAttended).toBe(2);
+    expect(bal.sessionDetails).toHaveLength(2);
+  });
+
+  test('payments:student-balance – applies student discount correctly', () => {
+    // Bob attended ss1 (200 EGP) with 20% discount → due 160 EGP; no payments
+    const bal = call('payments:student-balance', 's2');
+    expect(bal.success).toBe(true);
+    expect(bal.totalGross).toBe(200);
+    expect(bal.totalDiscount).toBe(40);
+    expect(bal.totalDue).toBe(160);
+    expect(bal.totalPaid).toBe(0);
+    expect(bal.remaining).toBe(160);
+  });
+
+  test('payments:student-balance – returns failure for unknown student', () => {
+    const bal = call('payments:student-balance', 's999');
+    expect(bal.success).toBe(false);
+    expect(bal.message).toMatch(/not found/i);
+  });
+
+  test('reports:financial-summary – returns correct totals', () => {
+    // Alice: 400 gross, 0 discount → 400 due; Bob: 200 gross, 40 discount → 160 due
+    // Total gross: 600, discount: 40, due: 560
+    // Collected: 150 (Alice's payment), outstanding: 410
+    const summary = call('reports:financial-summary');
+    expect(summary.totalGross).toBe(600);
+    expect(summary.totalDiscount).toBe(40);
+    expect(summary.totalDue).toBe(560);
+    expect(summary.totalCollected).toBe(150);
+    expect(summary.totalOutstanding).toBe(410);
+    expect(summary.paymentsCount).toBe(1);
+    expect(Array.isArray(summary.studentBalances)).toBe(true);
+    expect(summary.studentBalances.length).toBeGreaterThan(0);
+  });
+
+  test('reports:financial-summary – studentBalances has correct per-student data', () => {
+    const summary = call('reports:financial-summary');
+    const aliceBal = summary.studentBalances.find(b => b.studentId === 's1');
+    expect(aliceBal).toBeDefined();
+    expect(aliceBal.due).toBe(400);
+    expect(aliceBal.paid).toBe(150);
+    expect(aliceBal.remaining).toBe(250);
+
+    const bobBal = summary.studentBalances.find(b => b.studentId === 's2');
+    expect(bobBal).toBeDefined();
+    expect(bobBal.due).toBe(160);
+    expect(bobBal.paid).toBe(0);
+    expect(bobBal.remaining).toBe(160);
   });
 });

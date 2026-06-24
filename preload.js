@@ -38,10 +38,17 @@ contextBridge.exposeInMainWorld('api', {
     list: () => ipcRenderer.invoke('students:list'),
     create: (data) => ipcRenderer.invoke('students:create', data),
     update: (data) => ipcRenderer.invoke('students:update', data),
+    block: (data) => ipcRenderer.invoke('students:block', data),
+    unblock: (data) => ipcRenderer.invoke('students:unblock', data),
     delete: (id) => ipcRenderer.invoke('students:delete', id),
     byBarcode: (barcode) => ipcRenderer.invoke('students:by-barcode', barcode),
-    block: (data) => ipcRenderer.invoke('students:block', data),
-    unblock: (id) => ipcRenderer.invoke('students:unblock', id),
+    bulkAssignGroup: (data) => ipcRenderer.invoke('students:bulk-assign-group', data),
+    bulkUpdateLevel: (data) => ipcRenderer.invoke('students:bulk-update-level', data),
+    bulkUpdateCenter: (data) => ipcRenderer.invoke('students:bulk-update-center', data),
+    timeline: (studentId) => ipcRenderer.invoke('students:timeline', studentId),
+    blockHistory: (studentId) => ipcRenderer.invoke('students:block-history', studentId),
+    generateBarcode: (studentId) => ipcRenderer.invoke('students:generate-barcode', studentId),
+    bulkGenerateBarcodes: () => ipcRenderer.invoke('students:bulk-generate-barcodes'),
   },
   // Groups
   groups: {
@@ -58,6 +65,8 @@ contextBridge.exposeInMainWorld('api', {
     create: (data) => ipcRenderer.invoke('sessions:create', data),
     update: (data) => ipcRenderer.invoke('sessions:update', data),
     delete: (id) => ipcRenderer.invoke('sessions:delete', id),
+    duplicate: (data) => ipcRenderer.invoke('sessions:duplicate', data),
+    createRecurring: (data) => ipcRenderer.invoke('sessions:create-recurring', data),
   },
   // Attendance
   attendance: {
@@ -67,6 +76,8 @@ contextBridge.exposeInMainWorld('api', {
     update: (data) => ipcRenderer.invoke('attendance:update', data),
     manualAdd: (data) => ipcRenderer.invoke('attendance:manual-add', data),
     remove: (id) => ipcRenderer.invoke('attendance:remove', id),
+    transfer: (data) => ipcRenderer.invoke('attendance:transfer', data),
+    reassignStudent: (data) => ipcRenderer.invoke('attendance:reassign-student', data),
   },
   // Quiz Scores
   quizzes: {
@@ -80,6 +91,7 @@ contextBridge.exposeInMainWorld('api', {
     studentSummary: (studentId) => ipcRenderer.invoke('reports:student-summary', studentId),
     sessionSummary: (sessionId) => ipcRenderer.invoke('reports:session-summary', sessionId),
     dashboard: () => ipcRenderer.invoke('reports:dashboard'),
+    financialSummary: () => ipcRenderer.invoke('reports:financial-summary'),
   },
   // WhatsApp
   whatsapp: {
@@ -103,11 +115,53 @@ contextBridge.exposeInMainWorld('api', {
     onDisconnected: (cb) => ipcRenderer.on('whatsapp:disconnected', () => cb()),
     onMessageSent: (cb) => ipcRenderer.on('whatsapp:message-sent', (_, data) => cb(data)),
     onStatusChange: (cb) => ipcRenderer.on('whatsapp:status-change', (_, status) => cb(status)),
-    
+
     // Templates
     listTemplates: () => ipcRenderer.invoke('templates:list'),
     saveTemplate: (data) => ipcRenderer.invoke('templates:save', data),
     deleteTemplate: (data) => ipcRenderer.invoke('templates:delete', data),
     resetTemplates: () => ipcRenderer.invoke('templates:reset'),
-  }
+  },
+  // Backup
+  backup: {
+    getSettings: () => ipcRenderer.invoke('backup:get-settings'),
+    updateSettings: (settings) => ipcRenderer.invoke('backup:update-settings', settings),
+    list: () => ipcRenderer.invoke('backup:list'),
+    create: () => ipcRenderer.invoke('backup:create'),
+    delete: (filename) => ipcRenderer.invoke('backup:delete', filename),
+    restore: (filename) => ipcRenderer.invoke('backup:restore', filename),
+    export: () => ipcRenderer.invoke('backup:export'),
+    import: () => ipcRenderer.invoke('backup:import'),
+    checkReminder: () => ipcRenderer.invoke('backup:check-reminder'),
+  },
+  // System Data Integrity / Recovery + Phase 1 Setup
+  system: {
+    getCorruptedFiles: () => ipcRenderer.invoke('system:get-corrupted-files'),
+    resetCorruptedFiles: () => ipcRenderer.invoke('system:reset-corrupted-files'),
+    relaunch: () => ipcRenderer.send('system:relaunch'),
+    quit: () => ipcRenderer.send('system:quit'),
+    // Setup Wizard (Phase 1)
+    getSetupState: () => ipcRenderer.invoke('system:get-setup-state'),
+    completeSetup: (data) => ipcRenderer.invoke('system:complete-setup', data),
+    // Security (Phase 1)
+    hasDefaultCredentials: () => ipcRenderer.invoke('system:has-default-credentials'),
+  },
+  // Payments (Admin-Only – Phase 2)
+  payments: {
+    list:           ()         => ipcRenderer.invoke('payments:list'),
+    byStudent:      (id)       => ipcRenderer.invoke('payments:by-student', id),
+    create:         (data)     => ipcRenderer.invoke('payments:create', data),
+    delete:         (id)       => ipcRenderer.invoke('payments:delete', id),
+    studentBalance: (id)       => ipcRenderer.invoke('payments:student-balance', id),
+  },
+  // Phase 3 – Excel Export
+  export: {
+    excel: (data) => ipcRenderer.invoke('export:excel', data),
+  },
+  // Phase 3 – Import
+  import: {
+    studentsPreview: ()       => ipcRenderer.invoke('import:students-preview'),
+    studentsCommit:  (data)   => ipcRenderer.invoke('import:students-commit', data),
+    studentsTemplate: ()      => ipcRenderer.invoke('import:students-template'),
+  },
 });

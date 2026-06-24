@@ -3,6 +3,14 @@ async function renderDashboard() {
   const stats = await window.api.reports.dashboard();
   const sessions = await window.api.sessions.list();
   const attendance = await window.api.attendance.list();
+  const reminder = await window.api.backup.checkReminder();
+
+  // Admin-only: fetch financial summary
+  const isAdmin = State.user?.role === 'admin';
+  let financeSummary = null;
+  if (isAdmin) {
+    try { financeSummary = await window.api.reports.financialSummary(); } catch (_) {}
+  }
 
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = sessions
@@ -18,6 +26,29 @@ async function renderDashboard() {
   const hwRate = attendance.length ? Math.round(homeworkDone / attendance.length * 100) : 0;
   const sessionInsights = stats.sessionRevenue || [];
 
+  let reminderHtml = '';
+  if (reminder && reminder.showReminder) {
+    const message = reminder.daysSince === null
+      ? 'No backups have been created yet. Please create a backup to protect your data.'
+      : `No backup has been created in the last ${reminder.daysSince} days. Please create a backup to protect your data.`;
+    reminderHtml = `
+      <div style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-left: 4px solid var(--yellow); border-radius: var(--radius-md); padding: 16px; animation: slide-up 0.3s ease;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px; color: var(--yellow); flex-shrink: 0;">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <div>
+            <div style="font-weight: 600; font-size: 13px; color: var(--text-primary);">Backup Reminder</div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${message}</div>
+          </div>
+        </div>
+        <button class="btn btn-warning btn-sm" onclick="navigate('backup')" style="flex-shrink: 0;">Backup Now</button>
+      </div>
+    `;
+  }
+
   el('page-dashboard').innerHTML = `
     <div class="page-header">
       <div>
@@ -25,6 +56,8 @@ async function renderDashboard() {
         <p class="page-header-sub">Welcome back, ${State.user?.name} &middot; ${new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</p>
       </div>
     </div>
+
+    ${reminderHtml}
 
     <div class="stats-grid">
       ${statCard('Students', stats.students, '#6366f1', `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>`)}
@@ -77,6 +110,37 @@ async function renderDashboard() {
         </div>
       </div>
     </div>
+
+    ${isAdmin && financeSummary ? `
+    <div class="card" style="margin-top:20px;border:1px solid rgba(99,102,241,0.25);background:rgba(99,102,241,0.04);">
+      <div class="card-header">
+        <span class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Financial Overview
+        </span>
+        <button class="btn btn-secondary btn-sm" onclick="navigate('payments')">View Payments</button>
+      </div>
+      <div class="card-body" style="padding:16px 20px;">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+          <div style="text-align:center;">
+            <div style="font-size:20px;font-weight:800;color:#6366f1;">${(Number(financeSummary.totalGross)||0).toLocaleString()} EGP</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">Gross Revenue</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:20px;font-weight:800;color:#f59e0b;">${(Number(financeSummary.totalDiscount)||0).toLocaleString()} EGP</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">Discounts</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:20px;font-weight:800;color:#22c55e;">${(Number(financeSummary.totalCollected)||0).toLocaleString()} EGP</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">Collected</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:20px;font-weight:800;color:${financeSummary.totalOutstanding > 0 ? 'var(--red)' : 'var(--green)'};">${(Number(financeSummary.totalOutstanding)||0).toLocaleString()} EGP</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">Outstanding</div>
+          </div>
+        </div>
+      </div>
+    </div>` : ''}
 
     <div class="card" style="margin-top:20px;">
       <div class="card-header">

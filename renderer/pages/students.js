@@ -1,11 +1,13 @@
 // ── Students ─────────────────────────────────────────────────────────────────
 let studentsData = [];
+let studentsLookup = null;
 
 async function renderStudents() {
   const [students, levels, centers, groups] = await Promise.all([
     window.api.students.list(), window.api.levels.list(), window.api.centers.list(), window.api.groups.list()
   ]);
   studentsData = students;
+  studentsLookup = buildStudentsLookup(students, groups);
 
   el('page-students').innerHTML = `
     <div class="page-header">
@@ -20,6 +22,18 @@ async function renderStudents() {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input id="student-search" type="text" placeholder="Search by name, barcode or phone…" />
       </div>
+      <button class="btn btn-secondary" onclick="exportStudentsExcel()" title="Export to Excel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="btn btn-secondary" onclick="generateMissingBarcodes()" title="Generate Missing Barcodes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M3 5v14M21 5v14M8 5v14M12 5v14M16 5v14"/></svg>
+      </button>
+      <select class="form-select" id="bulk-action-select" style="width:140px; display:none;">
+        <option value="">Bulk Actions</option>
+        <option value="group">Assign Group</option>
+        <option value="level">Update Level</option>
+        <option value="center">Update Center</option>
+      </select>
       <select class="form-select" id="student-level-filter" style="width:160px">
         <option value="">All Levels</option>
         ${levels.map(l=>`<option value="${l.name}">${l.name}</option>`).join('')}
@@ -50,26 +64,92 @@ async function renderStudents() {
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>#</th><th>Name</th><th>Barcode</th><th>Phone</th><th>Level</th><th>Center</th><th>Discount</th><th>Groups</th><th>Registered</th><th>Actions</th></tr>
+            <tr>
+              <th style="width:30px"><input type="checkbox" id="selectAllStudents" onchange="toggleAllStudents(this)" /></th>
+              <th>#</th><th>Name</th><th>Barcode</th><th>Phone</th><th>Level</th><th>Center</th><th>Discount</th><th>Groups</th><th>Registered</th><th>Actions</th>
+            </tr>
           </thead>
           <tbody id="students-tbody"></tbody>
         </table>
       </div>
     </div>`;
 
-  renderStudentsTable(students, groups);
+  renderStudentsTable(students, groups, studentsLookup);
   el('btn-add-student').addEventListener('click', () => openStudentModal(null, levels, centers, groups));
   el('student-search').addEventListener('input', () => filterStudents(groups));
   el('student-level-filter').addEventListener('change', () => filterStudents(groups));
   el('student-center-filter').addEventListener('change', () => filterStudents(groups));
   el('student-property-filter').addEventListener('change', () => filterStudents(groups));
+  el('bulk-action-select')?.addEventListener('change', (e) => handleBulkAction(e.target.value, levels, centers, groups));
+}
+
+let selectedStudentIds = new Set();
+
+window.toggleAllStudents = function(checkbox) {
+  const checkboxes = document.querySelectorAll('.student-checkbox');
+  checkboxes.forEach(cb => {
+    cb.checked = checkbox.checked;
+    if (checkbox.checked) selectedStudentIds.add(cb.value);
+    else selectedStudentIds.delete(cb.value);
+  });
+  updateBulkActionsVisibility();
+};
+
+window.toggleStudent = function(checkbox) {
+  if (checkbox.checked) selectedStudentIds.add(checkbox.value);
+  else selectedStudentIds.delete(checkbox.value);
+  const allChecked = document.querySelectorAll('.student-checkbox:not(:checked)').length === 0;
+  el('selectAllStudents').checked = allChecked;
+  updateBulkActionsVisibility();
+};
+
+function updateBulkActionsVisibility() {
+  const select = el('bulk-action-select');
+  if (select) {
+    select.style.display = selectedStudentIds.size > 0 ? '' : 'none';
+    select.value = ''; // Reset
+  }
 }
 
 function normalizeStudentPhone(phone) {
   return String(phone || '').replace(/\D/g, '');
 }
 
-function getStudentPropertyMeta(student, allStudents, groups) {
+function buildStudentsLookup(students, groups) {
+  const parentPhoneCounts = new Map();
+  const parentPhoneLevelCounts = new Map();
+  const groupsByStudent = new Map();
+
+  (students || []).forEach(student => {
+    const parentPhone = normalizeStudentPhone(student.parentPhone);
+    if (parentPhone) {
+      parentPhoneCounts.set(parentPhone, (parentPhoneCounts.get(parentPhone) || 0) + 1);
+      const levelKey = `${parentPhone}::${student.level || ''}`;
+      parentPhoneLevelCounts.set(levelKey, (parentPhoneLevelCounts.get(levelKey) || 0) + 1);
+    }
+  });
+
+  (groups || []).forEach(group => {
+    (group.studentIds || []).forEach(studentId => {
+      if (!groupsByStudent.has(studentId)) groupsByStudent.set(studentId, []);
+      groupsByStudent.get(studentId).push(group);
+    });
+  });
+
+  return { parentPhoneCounts, parentPhoneLevelCounts, groupsByStudent };
+}
+
+function getStudentPropertyMeta(student, allStudents, groups, lookup = null) {
+  if (lookup) {
+    const parentPhone = normalizeStudentPhone(student.parentPhone);
+    const levelKey = `${parentPhone}::${student.level || ''}`;
+    return {
+      hasSiblings: !!parentPhone && (lookup.parentPhoneCounts.get(parentPhone) || 0) > 1,
+      hasTwins: !!parentPhone && !!student.level && (lookup.parentPhoneLevelCounts.get(levelKey) || 0) > 1,
+      groupCount: (lookup.groupsByStudent.get(student.id) || []).length,
+    };
+  }
+
   const parentPhone = normalizeStudentPhone(student.parentPhone);
   const siblings = parentPhone
     ? allStudents.filter(s => s.id !== student.id && normalizeStudentPhone(s.parentPhone) === parentPhone)
@@ -83,9 +163,9 @@ function getStudentPropertyMeta(student, allStudents, groups) {
   };
 }
 
-function studentMatchesPropertyFilter(student, prop, allStudents, groups) {
+function studentMatchesPropertyFilter(student, prop, allStudents, groups, lookup = null) {
   if (!prop) return true;
-  const meta = getStudentPropertyMeta(student, allStudents, groups);
+  const meta = getStudentPropertyMeta(student, allStudents, groups, lookup);
   const map = {
     siblings: meta.hasSiblings,
     twins: meta.hasTwins,
@@ -105,32 +185,39 @@ function studentMatchesPropertyFilter(student, prop, allStudents, groups) {
   return !!map[prop];
 }
 
-function renderStudentsTable(students, groups) {
+function renderStudentsTable(students, groups, lookup = null) {
   const tbody = el('students-tbody');
   if (!students.length) {
-    tbody.innerHTML = `<tr><td colspan="10" class="table-empty">No students found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="table-empty">No students found.</td></tr>`;
     return;
   }
   tbody.innerHTML = students.map((s, i) => {
     // Find groups this student belongs to
-    const studentGroups = (groups || []).filter(g => (g.studentIds || []).includes(s.id));
+    const studentGroups = lookup
+      ? (lookup.groupsByStudent.get(s.id) || [])
+      : (groups || []).filter(g => (g.studentIds || []).includes(s.id));
     const groupBadges = studentGroups.length
       ? studentGroups.map(g => `<span class="badge badge-purple" style="margin:1px 2px;font-size:10px">${g.name}</span>`).join('')
       : '<span style="color:var(--text-muted)">—</span>';
 
     return `
     <tr>
+      <td><input type="checkbox" class="student-checkbox" value="${s.id}" ${selectedStudentIds.has(s.id) ? 'checked' : ''} onchange="toggleStudent(this)" /></td>
       <td style="color:var(--text-muted)">${i+1}</td>
       <td>
         <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">${s.name[0].toUpperCase()}</div>
+          <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;color:white">${s.name[0].toUpperCase()}</div>
           <div>
-            <div style="font-weight:600">${s.name}</div>
+            <div style="font-weight:600">${s.name} ${s.isBlocked ? '<span style="color:var(--red);margin-left:4px">●</span>' : ''}</div>
             <div style="font-size:11px;color:var(--text-muted)">${s.email||''}</div>
           </div>
         </div>
       </td>
-      <td><code style="color:var(--accent);font-size:12px;background:var(--bg-hover);padding:2px 8px;border-radius:4px">${s.barcode||'—'}</code></td>
+      <td>
+        ${s.barcode
+          ? `<code style="color:var(--accent);font-size:12px;background:var(--bg-hover);padding:2px 8px;border-radius:4px">${s.barcode}</code>`
+          : `<button class="btn btn-secondary btn-sm" onclick="generateBarcode('${s.id}')">Generate</button>`}
+      </td>
       <td style="color:var(--text-secondary)">${s.phone||'—'}</td>
       <td><span class="badge badge-cyan">${s.level||'—'}</span></td>
       <td style="color:var(--text-secondary)">${s.center||'—'}</td>
@@ -139,7 +226,7 @@ function renderStudentsTable(students, groups) {
       <td style="color:var(--text-muted);font-size:12px">${formatDate(s.createdAt)}</td>
       <td>
         <div style="display:flex;gap:5px;">
-          <button class="btn btn-secondary btn-sm" onclick="viewStudent('${s.id}')">View</button>
+          <button class="btn btn-secondary btn-sm" onclick="viewStudentProfile('${s.id}')">Profile</button>
           <button class="btn btn-secondary btn-sm" onclick="editStudent('${s.id}')">Edit</button>
           <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">✕</button>
         </div>
@@ -155,6 +242,7 @@ async function filterStudents(groups) {
   const prop = el('student-property-filter')?.value || '';
   // Refresh groups if not passed
   const grps = groups || await window.api.groups.list();
+  const lookup = groups ? (studentsLookup || buildStudentsLookup(studentsData, grps)) : buildStudentsLookup(studentsData, grps);
   const filtered = studentsData.filter(s =>
     (!q ||
       s.name.toLowerCase().includes(q) ||
@@ -165,9 +253,9 @@ async function filterStudents(groups) {
       (s.notes||'').toLowerCase().includes(q)) &&
     (!lvl || s.level === lvl) &&
     (!ctr || s.center === ctr) &&
-    studentMatchesPropertyFilter(s, prop, studentsData, grps)
+    studentMatchesPropertyFilter(s, prop, studentsData, grps, lookup)
   );
-  renderStudentsTable(filtered, grps);
+  renderStudentsTable(filtered, grps, lookup);
 }
 
 function openStudentModal(student = null, levels = [], centers = [], allGroups = []) {
@@ -555,15 +643,182 @@ function formatStudentDiscount(s) {
   return `<span class="badge badge-yellow">-${s.discountPercent || 0}%</span>`;
 }
 
-async function deleteStudent(id) {
-  if (!confirmAction('Delete this student? All attendance records will remain.')) return;
-
-  // Also remove the student from all groups
+// ── Phase 3: Export & Barcodes ──
+async function exportStudentsExcel() {
+  const q = el('student-search').value.toLowerCase();
+  const lvl = el('student-level-filter').value;
+  const ctr = el('student-center-filter').value;
+  const prop = el('student-property-filter')?.value || '';
   const groups = await window.api.groups.list();
-  const groupsWithStudent = groups.filter(g => (g.studentIds || []).includes(id));
-  await Promise.all(groupsWithStudent.map(g => window.api.groups.removeStudent({ groupId: g.id, studentId: id })));
+  const lookup = buildStudentsLookup(studentsData, groups);
+  const filtered = studentsData.filter(s =>
+    (!q || s.name.toLowerCase().includes(q) || (s.barcode||'').toLowerCase().includes(q) || (s.phone||'').toLowerCase().includes(q) || (s.parentPhone||'').toLowerCase().includes(q) || (s.email||'').toLowerCase().includes(q) || (s.notes||'').toLowerCase().includes(q)) &&
+    (!lvl || s.level === lvl) && (!ctr || s.center === ctr) && studentMatchesPropertyFilter(s, prop, studentsData, groups, lookup)
+  );
+  if (!filtered.length) return toast('No students to export', 'error');
 
-  await window.api.students.delete(id);
-  toast('Student deleted', 'success');
-  renderStudents();
+  const rows = filtered.map(s => {
+    const studentGroups = (lookup.groupsByStudent.get(s.id) || []).map(g => g.name).join(', ');
+    return {
+      name: s.name, barcode: s.barcode || '', phone: s.phone || '', parentPhone: s.parentPhone || '',
+      level: s.level || '', center: s.center || '', discount: s.hasDiscount ? (s.discountPercent + '%') : '0%',
+      groups: studentGroups, email: s.email || '', notes: s.notes || '',
+      registered: s.createdAt.slice(0, 10),
+      status: s.isBlocked ? `Blocked (${s.blockReason})` : 'Active'
+    };
+  });
+  const cols = [
+    { key: 'name', label: 'Name' }, { key: 'barcode', label: 'Barcode' }, { key: 'phone', label: 'Phone' },
+    { key: 'parentPhone', label: 'Parent Phone' }, { key: 'level', label: 'Level' }, { key: 'center', label: 'Center' },
+    { key: 'groups', label: 'Groups' }, { key: 'discount', label: 'Discount' }, { key: 'email', label: 'Email' },
+    { key: 'status', label: 'Status' }, { key: 'registered', label: 'Registered' }, { key: 'notes', label: 'Notes' }
+  ];
+  const res = await window.api.export.excel({ sheetName: 'Students', columns: cols, rows, filename: 'Students_Export.xlsx' });
+  if (res?.success) toast('Exported successfully', 'success');
+  else if (res && !res.canceled) toast(res.error || 'Export failed', 'error');
 }
+
+async function generateBarcode(id) {
+  const res = await window.api.students.generateBarcode(id);
+  if (res.success) {
+    toast('Barcode generated', 'success');
+    renderStudents();
+  } else {
+    toast(res.message, 'error');
+  }
+}
+
+async function generateMissingBarcodes() {
+  if (!confirmAction('Generate random barcodes for all students missing one?')) return;
+  const res = await window.api.students.bulkGenerateBarcodes();
+  if (res.success) {
+    toast(`Generated ${res.count} barcodes`, 'success');
+    renderStudents();
+  } else {
+    toast(res.message, 'error');
+  }
+}
+
+// ── Phase 3: Bulk Actions ──
+async function handleBulkAction(action, levels, centers, groups) {
+  const select = el('bulk-action-select');
+  if (!action || selectedStudentIds.size === 0) { select.value = ''; return; }
+  const studentIds = [...selectedStudentIds];
+
+  if (action === 'group') {
+    openModal({
+      title: `Assign ${studentIds.length} Students to Group`,
+      body: `<select id="bulk-group-id" class="form-select"><option value="">— Select Group —</option>${groups.map(g => `<option value="${g.id}">${g.name} (${g.level || 'Any'} / ${g.center || 'Any'})</option>`).join('')}</select>`,
+      footer: `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="btn-bulk-group">Assign</button>`
+    });
+    el('btn-bulk-group').addEventListener('click', async () => {
+      const groupId = el('bulk-group-id').value;
+      if (!groupId) return;
+      const res = await window.api.students.bulkAssignGroup({ studentIds, groupId });
+      if (res.success) { toast(`Assigned ${res.count} students`, 'success'); selectedStudentIds.clear(); el('selectAllStudents').checked = false; closeModal(); renderStudents(); }
+    });
+  } else if (action === 'level') {
+    openModal({
+      title: `Update Level for ${studentIds.length} Students`,
+      body: `<select id="bulk-level-id" class="form-select"><option value="">— Select Level —</option>${levels.map(l => `<option value="${l.id}">${l.name}</option>`).join('')}</select>`,
+      footer: `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="btn-bulk-level">Update</button>`
+    });
+    el('btn-bulk-level').addEventListener('click', async () => {
+      const levelId = el('bulk-level-id').value;
+      if (!levelId) return;
+      const levelName = levels.find(l => l.id === levelId)?.name || '';
+      const res = await window.api.students.bulkUpdateLevel({ studentIds, levelId, levelName });
+      if (res.success) { toast(`Updated ${res.count} students`, 'success'); selectedStudentIds.clear(); el('selectAllStudents').checked = false; closeModal(); renderStudents(); }
+    });
+  } else if (action === 'center') {
+    openModal({
+      title: `Update Center for ${studentIds.length} Students`,
+      body: `<select id="bulk-center-id" class="form-select"><option value="">— Select Center —</option>${centers.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}</select>`,
+      footer: `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="btn-bulk-center">Update</button>`
+    });
+    el('btn-bulk-center').addEventListener('click', async () => {
+      const centerId = el('bulk-center-id').value;
+      if (!centerId) return;
+      const centerName = centers.find(c => c.id === centerId)?.name || '';
+      const res = await window.api.students.bulkUpdateCenter({ studentIds, centerId, centerName });
+      if (res.success) { toast(`Updated ${res.count} students`, 'success'); selectedStudentIds.clear(); el('selectAllStudents').checked = false; closeModal(); renderStudents(); }
+    });
+  }
+
+  // Reset dropdown
+  select.value = '';
+}
+
+// ── Phase 3: Comprehensive Profile Timeline ──
+window.viewStudentProfile = async function(id) {
+  const res = await window.api.students.timeline(id);
+  if (!res.success) return toast(res.message, 'error');
+  const { student: s, events } = res;
+
+  const getEventIcon = (type) => {
+    switch (type) {
+      case 'attendance': return '<div style="width:28px;height:28px;border-radius:50%;background:rgba(16,185,129,0.1);color:var(--green);display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>';
+      case 'quiz': return '<div style="width:28px;height:28px;border-radius:50%;background:rgba(139,92,246,0.1);color:var(--purple);display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>';
+      case 'payment': return '<div style="width:28px;height:28px;border-radius:50%;background:rgba(59,130,246,0.1);color:var(--primary);display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>';
+      case 'whatsapp': return '<div style="width:28px;height:28px;border-radius:50%;background:rgba(34,197,94,0.1);color:var(--green);display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>';
+      case 'block': return '<div style="width:28px;height:28px;border-radius:50%;background:rgba(239,68,68,0.1);color:var(--red);display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>';
+      case 'unblock': return '<div style="width:28px;height:28px;border-radius:50%;background:rgba(16,185,129,0.1);color:var(--green);display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></div>';
+      default: return '<div style="width:28px;height:28px;border-radius:50%;background:var(--bg-hover);color:var(--text-secondary);display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg></div>';
+    }
+  };
+
+  const timelineHtml = events.length ? events.map(e => `
+    <div style="display:flex;gap:12px;margin-bottom:16px;">
+      <div style="padding-top:2px;">${getEventIcon(e.type)}</div>
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+          <strong style="font-size:13px;color:var(--text-main)">${e.title}</strong>
+          <span style="font-size:11px;color:var(--text-muted)">${formatDate(e.date)}</span>
+        </div>
+        ${e.detail ? `<div style="font-size:12px;color:var(--text-secondary)">${e.detail}</div>` : ''}
+      </div>
+    </div>
+  `).join('') : '<div style="text-align:center;padding:24px;color:var(--text-muted)">No history available for this student.</div>';
+
+  openModal({
+    title: `Student Profile`,
+    wide: true,
+    body: `
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;background:var(--bg-card-alt);padding:16px;border-radius:12px;border:1px solid var(--border)">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;flex-shrink:0;color:white;box-shadow:0 4px 12px rgba(139,92,246,0.25)">${s.name[0].toUpperCase()}</div>
+        <div style="flex:1">
+          <div style="font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px">${s.name} ${s.isBlocked ? '<span class="badge badge-red">Blocked</span>' : ''}</div>
+          <div style="color:var(--text-secondary);margin-top:2px;display:flex;gap:12px;font-size:13px">
+            <span>${s.level||'No Level'}</span>
+            <span style="color:var(--border)">|</span>
+            <span>${s.center||'No Center'}</span>
+            <span style="color:var(--border)">|</span>
+            <span>📞 ${s.phone||'N/A'}</span>
+            ${s.parentPhone ? `<span style="color:var(--border)">|</span><span>👪 ${s.parentPhone}</span>` : ''}
+          </div>
+          <div style="margin-top:8px"><code style="color:var(--accent);font-size:12px;background:var(--bg-hover);padding:3px 8px;border-radius:6px;border:1px solid rgba(99,102,241,0.2)">${s.barcode || 'NO BARCODE'}</code></div>
+        </div>
+      </div>
+
+      ${s.isBlocked ? `
+        <div style="margin-bottom:20px;padding:12px 16px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.05);border-radius:8px">
+          <div style="font-weight:600;color:var(--red);font-size:13px;margin-bottom:4px;display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Blocked
+          </div>
+          <div style="color:var(--text-main);font-size:13px;white-space:pre-wrap">${s.blockReason || 'No reason provided'}</div>
+        </div>` : ''}
+
+      <div style="margin-bottom:20px;">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border)">History Timeline</h3>
+        <div style="max-height:400px;overflow-y:auto;padding-right:8px;" class="custom-scrollbar">
+          ${timelineHtml}
+        </div>
+      </div>`,
+    footer: `
+      ${s.isBlocked
+        ? `<button class="btn btn-secondary" onclick="unblockStudent('${s.id}')">Remove Block</button>`
+        : `<button class="btn btn-danger" onclick="openBlockStudentModal('${s.id}', '${s.name.replace(/'/g, "\\'")}')">Block Student</button>`}
+      <button class="btn btn-secondary" onclick="closeModal()">Close</button>`,
+  });
+};

@@ -61,8 +61,11 @@ async function renderPage(page) {
     case 'quizzes':    await renderQuizzes();   break;
     case 'whatsapp':   await renderWhatsApp();  break;
     case 'users':      await renderUsers();     break;
+    case 'backup':     await renderBackup();    break;
     case 'reports':    await renderReports();   break;
     case 'barcodes':   renderBarcodes();        break;
+    case 'payments':   await renderPayments();  break;
+    case 'import':     await renderImport();    break;
   }
 }
 
@@ -105,6 +108,30 @@ document.getElementById('login-form').addEventListener('submit', async e => {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-screen').classList.remove('hidden');
   navigate('dashboard');
+
+  // Phase 1: Check for default credentials and show warning banner (admins only)
+  if (isAdmin) {
+    try {
+      const credCheck = await window.api.system.hasDefaultCredentials();
+      const banner = document.getElementById('default-creds-banner');
+      if (credCheck.hasDefault && banner) {
+        banner.classList.remove('hidden');
+        const changePwBtn = document.getElementById('default-creds-change-btn');
+        if (changePwBtn) {
+          changePwBtn.addEventListener('click', () => {
+            // Navigate to Users page and open password change modal for current user
+            navigate('users');
+            // Small delay to ensure the page renders first
+            setTimeout(() => changePassword(State.user.id, State.user.name), 300);
+          });
+        }
+      } else if (banner) {
+        banner.classList.add('hidden');
+      }
+    } catch (e) {
+      console.error('Failed to check default credentials:', e);
+    }
+  }
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => {
@@ -132,3 +159,76 @@ function formatTime(iso) {
 }
 function el(id) { return document.getElementById(id); }
 function confirmAction(msg) { return window.confirm(msg); }
+
+// On Startup, check for data integrity issues, then setup state
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    // Step 1: Data integrity check (takes priority over everything)
+    const corrupted = await window.api.system.getCorruptedFiles();
+    if (corrupted && corrupted.length > 0) {
+      // Hide all standard screens
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app-screen').classList.add('hidden');
+      document.getElementById('setup-screen').classList.add('hidden');
+
+      // Display Recovery Screen
+      const recoveryScreen = document.getElementById('recovery-screen');
+      recoveryScreen.classList.remove('hidden');
+
+      // List corrupted files
+      const listEl = document.getElementById('corrupted-files-list');
+      listEl.innerHTML = corrupted.map(f => `<li>${f}</li>`).join('');
+
+      // Recovery Action Handlers
+      document.getElementById('recovery-btn-restore').addEventListener('click', async () => {
+        const res = await window.api.backup.import();
+        if (res.success) {
+          toast('Backup restored successfully!', 'success');
+          // Wait briefly for the toast to be seen before relaunching
+          setTimeout(() => {
+            window.api.system.relaunch();
+          }, 1500);
+        } else if (!res.canceled) {
+          toast(`Restore failed: ${res.error}`, 'error');
+        }
+      });
+
+      document.getElementById('recovery-btn-reset').addEventListener('click', async () => {
+        if (window.confirm('Are you absolutely sure you want to reset all corrupted files? This will delete all existing data in those files and recreate them as empty tables. This action CANNOT be undone!')) {
+          const res = await window.api.system.resetCorruptedFiles();
+          if (res.success) {
+            toast('Corrupted files have been reset successfully.', 'success');
+            setTimeout(() => {
+              window.api.system.relaunch();
+            }, 1500);
+          } else {
+            toast(`Reset failed: ${res.error}`, 'error');
+          }
+        }
+      });
+
+      document.getElementById('recovery-btn-quit').addEventListener('click', () => {
+        window.api.system.quit();
+      });
+      return; // Stop here — do not proceed to setup or login
+    }
+
+    // Step 2: First-run setup wizard check (Phase 1)
+    try {
+      const setupState = await window.api.system.getSetupState();
+      if (setupState && setupState.needsSetup) {
+        if (typeof window.initSetupWizard === 'function') {
+          window.initSetupWizard();
+        }
+        return; // Stop here — wizard handles the rest
+      }
+    } catch (setupErr) {
+      console.error('Failed to check setup state:', setupErr);
+      // Non-fatal: fall through to normal login
+    }
+
+  } catch (err) {
+    console.error('Failed to run startup data integrity check:', err);
+  }
+});
+

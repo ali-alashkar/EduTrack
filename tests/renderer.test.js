@@ -49,6 +49,13 @@ global.document = {
   }),
   querySelectorAll: jest.fn(() => []),
   querySelector: jest.fn(() => null),
+  createElement: jest.fn((tag) => ({
+    className: '',
+    innerHTML: '',
+    style: {},
+    appendChild: jest.fn(),
+    remove: jest.fn(),
+  })),
 };
 
 global.window = {
@@ -92,6 +99,16 @@ global.window = {
       sendQuiz: jest.fn().mockResolvedValue({ success: false }),
       getSessionStatus: jest.fn().mockResolvedValue({ statusMap: {}, log: [] }),
       onMessageSent: jest.fn(),
+    },
+    backup: {
+      checkReminder: jest.fn().mockResolvedValue({ showReminder: false, daysSince: 0 }),
+      import: jest.fn().mockResolvedValue({ success: true }),
+    },
+    system: {
+      getCorruptedFiles: jest.fn().mockResolvedValue([]),
+      resetCorruptedFiles: jest.fn().mockResolvedValue({ success: true }),
+      relaunch: jest.fn(),
+      quit: jest.fn(),
     }
   }
 };
@@ -563,6 +580,178 @@ describe('EduTrack Renderer – Search & Filtration Scenarios', () => {
       });
       expect(searchInput.value).toBe('');
       expect(suggestionsBox.classList.containsMock.has('hidden')).toBe(true);
+    });
+  });
+
+  // ── Scenario 10: Backup Reminder Display ──────────────────────
+  describe('Backup Reminder Display', () => {
+    test('✓ Renders Backup Reminder warning banner when backup is overdue', async () => {
+      window.api.reports.dashboard.mockResolvedValue({
+        students: 2, groups: 1, sessions: 3, centers: 1, levels: 2,
+        totalAttendance: 4,
+        sessionRevenue: [],
+      });
+      window.api.sessions.list.mockResolvedValue([]);
+      window.api.attendance.list.mockResolvedValue([]);
+      
+      // Overdue backup (5 days)
+      window.api.backup.checkReminder.mockResolvedValue({ showReminder: true, daysSince: 5 });
+
+      await renderDashboard();
+
+      const html = el('page-dashboard').innerHTML;
+      expect(html).toContain('Backup Reminder');
+      expect(html).toContain('No backup has been created in the last 5 days.');
+      expect(html).toContain('Backup Now');
+    });
+
+    test('✓ Renders Backup Reminder warning banner when no backup ever created', async () => {
+      window.api.reports.dashboard.mockResolvedValue({
+        students: 2, groups: 1, sessions: 3, centers: 1, levels: 2,
+        totalAttendance: 4,
+        sessionRevenue: [],
+      });
+      window.api.sessions.list.mockResolvedValue([]);
+      window.api.attendance.list.mockResolvedValue([]);
+      
+      // No backup exists
+      window.api.backup.checkReminder.mockResolvedValue({ showReminder: true, daysSince: null });
+
+      await renderDashboard();
+
+      const html = el('page-dashboard').innerHTML;
+      expect(html).toContain('Backup Reminder');
+      expect(html).toContain('No backups have been created yet.');
+    });
+
+    test('✓ Does not render Backup Reminder banner when backup is recent', async () => {
+      window.api.reports.dashboard.mockResolvedValue({
+        students: 2, groups: 1, sessions: 3, centers: 1, levels: 2,
+        totalAttendance: 4,
+        sessionRevenue: [],
+      });
+      window.api.sessions.list.mockResolvedValue([]);
+      window.api.attendance.list.mockResolvedValue([]);
+      
+      // Recent backup
+      window.api.backup.checkReminder.mockResolvedValue({ showReminder: false, daysSince: 1 });
+
+      await renderDashboard();
+
+      const html = el('page-dashboard').innerHTML;
+      expect(html).not.toContain('Backup Reminder');
+    });
+  });
+
+  // ── Scenario 11: Data Recovery Overlay & Actions ───────────────
+  describe('Data Recovery Overlay & Actions', () => {
+    let domContentLoadedCallback = null;
+
+    beforeAll(() => {
+      jest.useFakeTimers();
+      // Mock document.addEventListener to capture DOMContentLoaded
+      document.addEventListener = jest.fn((event, callback) => {
+        if (event === 'DOMContentLoaded') {
+          domContentLoadedCallback = callback;
+        }
+      });
+
+      // Load app.js dynamically
+      const appPath = path.join(__dirname, '..', 'renderer', 'app.js');
+      let code = fs.readFileSync(appPath, 'utf8');
+      code = code.replace(/^let\s+/gm, 'var ');
+      code = code.replace(/^const\s+/gm, 'var ');
+      const context = vm.isContext(global) ? global : vm.createContext(global);
+      vm.runInContext(code, context);
+    });
+
+    afterAll(() => {
+      jest.useRealTimers();
+    });
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      // Reset button click maps and elements
+      for (const key in documentMocks) {
+        documentMocks[key].addEventListener = jest.fn();
+        documentMocks[key].classList.containsMock.clear();
+      }
+    });
+
+    test('✓ Displays fullscreen Recovery screen and lists files when database is corrupted', async () => {
+      window.api.system.getCorruptedFiles.mockResolvedValue(['students.json', 'users.json']);
+
+      // Trigger the startup listener
+      await domContentLoadedCallback();
+
+      // Check standard screens are hidden
+      expect(el('login-screen').classList.containsMock.has('hidden')).toBe(true);
+      expect(el('app-screen').classList.containsMock.has('hidden')).toBe(true);
+
+      // Check recovery screen is visible
+      expect(el('recovery-screen').classList.containsMock.has('hidden')).toBe(false);
+
+      // Check corrupted files list contains the names
+      const listHtml = el('corrupted-files-list').innerHTML;
+      expect(listHtml).toContain('students.json');
+      expect(listHtml).toContain('users.json');
+    });
+
+    test('✓ Restore Backup button triggers backup import and relaunch', async () => {
+      window.api.system.getCorruptedFiles.mockResolvedValue(['students.json']);
+      window.api.backup.import.mockResolvedValue({ success: true });
+
+      // Trigger startup
+      await domContentLoadedCallback();
+
+      // Retrieve registered handler for Restore button
+      const restoreBtn = el('recovery-btn-restore');
+      expect(restoreBtn.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
+      
+      const clickHandler = restoreBtn.addEventListener.mock.calls[0][1];
+      
+      // Trigger click
+      await clickHandler();
+
+      expect(window.api.backup.import).toHaveBeenCalled();
+      
+      // Wait for relaunch timeout
+      jest.advanceTimersByTime(1600);
+      expect(window.api.system.relaunch).toHaveBeenCalled();
+    });
+
+    test('✓ Reset Corrupted Files button asks for confirmation, triggers reset and relaunch', async () => {
+      window.api.system.getCorruptedFiles.mockResolvedValue(['students.json']);
+      window.api.system.resetCorruptedFiles.mockResolvedValue({ success: true });
+      window.confirm = jest.fn(() => true); // Confirm yes
+
+      await domContentLoadedCallback();
+
+      const resetBtn = el('recovery-btn-reset');
+      expect(resetBtn.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
+      
+      const clickHandler = resetBtn.addEventListener.mock.calls[0][1];
+      
+      await clickHandler();
+
+      expect(window.confirm).toHaveBeenCalled();
+      expect(window.api.system.resetCorruptedFiles).toHaveBeenCalled();
+      
+      jest.advanceTimersByTime(1600);
+      expect(window.api.system.relaunch).toHaveBeenCalled();
+    });
+
+    test('✓ Quit App button triggers quit', async () => {
+      window.api.system.getCorruptedFiles.mockResolvedValue(['students.json']);
+
+      await domContentLoadedCallback();
+
+      const quitBtn = el('recovery-btn-quit');
+      const clickHandler = quitBtn.addEventListener.mock.calls[0][1];
+      
+      await clickHandler();
+
+      expect(window.api.system.quit).toHaveBeenCalled();
     });
   });
 });

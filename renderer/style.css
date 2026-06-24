@@ -143,10 +143,34 @@ body {
   justify-content: center;
 }
 
+/* Setup screen — flex column to center the wizard card */
+#setup-screen:not(.hidden) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-base);
+  position: relative;
+  overflow: hidden;
+}
+
 /* App screen — JS only removes/adds .hidden (never adds .active) */
 #app-screen:not(.hidden) {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* App screen inner layout: banner on top, then sidebar+content row */
+#app-screen:not(.hidden) > #sidebar,
+#app-screen:not(.hidden) > #main-content {
+  /* handled by the flex column on app-screen */
+}
+
+#app-content-row {
+  display: flex;
+  flex: 1;
+  min-height: 0;
   align-items: stretch;
 }
 
@@ -1781,4 +1805,547 @@ tbody td {
 .wa-var-pill:hover {
   border-color: var(--accent);
   background: rgba(99, 102, 241, 0.05);
+}
+
+/* ── Spin Animation ── */
+@keyframes animate-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: animate-spin 1s linear infinite;
+}
+
+/* ── Warning Button ── */
+.btn-warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--yellow);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+.btn-warning:hover {
+  background: var(--yellow);
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+}
+
+/* ── Data Recovery Screen ── */
+#recovery-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-base);
+  z-index: 10000;
+  padding: 20px;
+}
+
+#recovery-screen:not(.hidden) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recovery-container {
+  width: 100%;
+  max-width: 520px;
+  animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.recovery-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.recovery-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.recovery-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--red);
+}
+
+.recovery-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.recovery-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.corrupted-files-section {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.corrupted-files-section h3 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#corrupted-files-list {
+  list-style: none;
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--red);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#corrupted-files-list li::before {
+  content: "• ";
+  margin-right: 4px;
+}
+
+.recovery-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.recovery-actions .btn {
+  width: 100%;
+  height: 42px;
+  font-weight: 600;
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PHASE 1 — Setup Wizard Styles
+═══════════════════════════════════════════════════════════ */
+
+/* ── Wizard background ── */
+.wiz-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.wiz-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  animation: wiz-float 8s ease-in-out infinite;
+}
+.wiz-glow-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(99,102,241,0.5) 0%, transparent 70%);
+  top: -100px; left: -100px;
+}
+.wiz-glow-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(139,92,246,0.4) 0%, transparent 70%);
+  bottom: -80px; right: -80px;
+  animation-delay: -4s;
+}
+@keyframes wiz-float {
+  0%, 100% { transform: translate(0,0); }
+  50% { transform: translate(20px, 20px); }
+}
+
+/* ── Wizard container & card ── */
+.wiz-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.wiz-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 44px;
+  width: 500px;
+  max-width: 100%;
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(99,102,241,0.1);
+  animation: slide-up 0.4s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Step dots ── */
+.wiz-steps {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.wiz-step-dot {
+  width: 28px; height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  transition: background 0.3s, width 0.3s;
+}
+.wiz-step-dot-inner { display: none; }
+.wiz-step-dot.active {
+  width: 40px;
+  background: linear-gradient(90deg, var(--accent), var(--purple));
+}
+.wiz-step-dot.completed {
+  background: rgba(99,102,241,0.4);
+}
+
+/* ── Step body ── */
+.wiz-step-body {
+  min-height: 320px;
+  position: relative;
+  overflow: hidden;
+}
+.wiz-step-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* ── Step hero icon ── */
+.wiz-hero {
+  margin-bottom: 20px;
+}
+.wizard-hero-icon {
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 4px 20px rgba(99,102,241,0.35));
+}
+
+/* ── Wizard titles ── */
+.wiz-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.wiz-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  max-width: 360px;
+  line-height: 1.5;
+}
+
+/* ── Wizard form fields ── */
+.wiz-fields {
+  width: 100%;
+  text-align: left;
+}
+.wiz-form-group {
+  margin-bottom: 16px;
+}
+.wiz-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 6px;
+}
+.wiz-input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.wiz-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.wiz-input::placeholder { color: var(--text-muted); }
+.wiz-hint {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ── Password eye toggle ── */
+.wiz-input-eye-wrap {
+  position: relative;
+}
+.wiz-input-eye-wrap .wiz-input { padding-right: 40px; }
+.wiz-eye-btn {
+  position: absolute;
+  right: 10px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  color: var(--text-muted);
+  cursor: pointer; padding: 4px;
+  display: flex; align-items: center;
+}
+.wiz-eye-btn svg { width: 16px; height: 16px; }
+
+/* ── Password strength ── */
+.wiz-strength-bar {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.wiz-strength-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 2px;
+  transition: width 0.3s, background 0.3s;
+}
+.wiz-strength-label {
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 3px;
+  display: block;
+  min-height: 14px;
+}
+
+/* ── Country code row ── */
+.wiz-country-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.wiz-country-prefix {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+}
+.wiz-country-row .wiz-input {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* ── Summary ── */
+.wiz-summary {
+  width: 100%;
+  text-align: left;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: 8px;
+}
+.wiz-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.wiz-summary-row:last-child { border-bottom: none; }
+.wiz-summary-key {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+.wiz-summary-val {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+  text-align: right;
+}
+.wiz-summary-val code {
+  color: var(--accent);
+  font-size: 12px;
+}
+
+/* ── Navigation bar ── */
+.wiz-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.wiz-step-counter {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.wiz-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  font-family: inherit;
+}
+.wiz-btn-ghost {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.wiz-btn-ghost:hover { color: var(--text-primary); }
+.wiz-btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+}
+.wiz-btn-primary:hover {
+  box-shadow: 0 6px 24px rgba(99,102,241,0.5);
+  transform: translateY(-1px);
+}
+.wiz-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+.wiz-btn-launch {
+  background: linear-gradient(135deg, #22c55e, #06b6d4) !important;
+  box-shadow: 0 4px 16px rgba(34,197,94,0.35) !important;
+}
+.wiz-btn-launch:hover {
+  box-shadow: 0 6px 24px rgba(34,197,94,0.5) !important;
+}
+
+/* ── Error message ── */
+.wiz-error {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: var(--radius-sm);
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 500;
+  animation: wiz-shake 0.35s ease;
+}
+.wiz-error.hidden { display: none; }
+@keyframes wiz-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  60% { transform: translateX(6px); }
+}
+
+/* ── Slide transitions ── */
+.wiz-slide-out-left {
+  animation: wizOutLeft 0.28s ease forwards;
+}
+.wiz-slide-in-right {
+  animation: wizInRight 0.28s ease forwards;
+}
+.wiz-slide-out-right {
+  animation: wizOutRight 0.28s ease forwards;
+}
+.wiz-slide-in-left {
+  animation: wizInLeft 0.28s ease forwards;
+}
+@keyframes wizOutLeft  { to { opacity:0; transform: translateX(-40px); } }
+@keyframes wizInRight  { from { opacity:0; transform: translateX(40px); } }
+@keyframes wizOutRight { to { opacity:0; transform: translateX(40px); } }
+@keyframes wizInLeft   { from { opacity:0; transform: translateX(-40px); } }
+
+/* ── Success overlay ── */
+.wiz-success-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 0.3s ease;
+}
+.wiz-success-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 48px 56px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  animation: slide-up 0.35s ease;
+}
+.wiz-success-icon svg {
+  width: 80px;
+  height: 80px;
+}
+.wiz-success-ring {
+  stroke-dasharray: 188;
+  stroke-dashoffset: 188;
+  animation: wiz-ring 0.6s ease 0.1s forwards;
+}
+.wiz-success-check {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: wiz-check 0.4s ease 0.5s forwards;
+}
+@keyframes wiz-ring {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes wiz-check {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ── Default Credentials Banner ── */
+.default-creds-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: rgba(245, 158, 11, 0.08);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+  font-size: 13px;
+  color: var(--text-primary);
+  flex-shrink: 0;
+  animation: fade-in 0.3s ease;
+}
+.default-creds-banner.hidden { display: none; }
+.default-creds-banner strong { color: #f59e0b; }
+
+/* When banner is visible, the sidebar+content row still fills remaining space */
+#app-screen:not(.hidden) #sidebar {
+  flex-shrink: 0;
 }

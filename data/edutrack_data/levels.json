@@ -13,5 +13,12 @@
     "id": "l3",
     "name": "Grade 12",
     "description": "Third Year Secondary"
+  },
+  {
+    "id": "lv1782309706665_1",
+    "name": "Grade 12",
+    "description": "2 Sec",
+    "needsCompletion": true,
+    "createdAt": "2026-06-24T14:01:46.664Z"
   }
 ]

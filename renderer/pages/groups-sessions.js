@@ -223,10 +223,16 @@ async function renderSessions() {
   el('page-sessions').innerHTML = `
     <div class="page-header">
       <div><h2>Sessions</h2><p class="page-header-sub">Schedule and manage teaching sessions</p></div>
-      <button class="btn btn-primary" id="btn-add-session">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        New Session
-      </button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" id="btn-recurring-sessions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          Recurring
+        </button>
+        <button class="btn btn-primary" id="btn-add-session">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Session
+        </button>
+      </div>
     </div>
     <div class="toolbar">
       <div class="search-box">
@@ -255,6 +261,7 @@ async function renderSessions() {
 
   renderSessionsTable(sessions, groups);
   el('btn-add-session').addEventListener('click', () => openSessionModal(null, groups));
+  el('btn-recurring-sessions').addEventListener('click', () => openRecurringSessionsModal(groups));
   el('session-search').addEventListener('input', () => filterSessions(groups));
   el('session-group-filter').addEventListener('change', () => filterSessions(groups));
   el('session-date-filter').addEventListener('change', () => filterSessions(groups));
@@ -285,6 +292,7 @@ function renderSessionsTable(sessions, groups) {
             <button class="btn btn-success btn-sm" onclick="navigate('attendance');setTimeout(()=>selectSessionForAttendance('${s.id}'),200)">Attend</button>
             ${s.hasQuiz ? `<button class="btn btn-secondary btn-sm" onclick="navigate('quizzes');setTimeout(()=>selectSessionForQuizzes('${s.id}'),200)">Quiz</button>` : ''}
             <button class="btn btn-secondary btn-sm" onclick="editSession('${s.id}')">Edit</button>
+            <button class="btn btn-secondary btn-sm" onclick="duplicateSession('${s.id}')" title="Duplicate Session">Dup</button>
             <button class="btn btn-danger btn-sm" onclick="deleteSession('${s.id}')">✕</button>
           </div>
         </td>
@@ -414,3 +422,152 @@ async function deleteSession(id) {
   toast('Session deleted', 'success');
   renderSessions();
 }
+
+// ── Phase 3: Duplicate & Recurring Sessions ──
+window.duplicateSession = async function(id) {
+  openModal({
+    title: 'Duplicate Session',
+    body: `
+      <p style="margin-bottom:16px;font-size:14px;color:var(--text-secondary)">Select a new date for the duplicated session.</p>
+      <div class="form-group">
+        <label class="form-label">New Date *</label>
+        <input id="dup-session-date" type="date" class="form-input" value="${new Date().toISOString().slice(0, 10)}" />
+      </div>`,
+    footer: `
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="btn-confirm-duplicate">Duplicate</button>
+    `
+  });
+
+  el('btn-confirm-duplicate').addEventListener('click', async () => {
+    const newDate = el('dup-session-date').value;
+    if (!newDate) return toast('New date is required', 'error');
+    const btn = el('btn-confirm-duplicate');
+    btn.disabled = true;
+    btn.innerText = 'Duplicating...';
+    const res = await window.api.sessions.duplicate({ sessionId: id, newDate });
+    if (!res.success) {
+      toast(res.message, 'error');
+      btn.disabled = false;
+      btn.innerText = 'Duplicate';
+      return;
+    }
+    toast('Session duplicated successfully', 'success');
+    closeModal();
+    renderSessions();
+  });
+};
+
+window.openRecurringSessionsModal = function(groups) {
+  openModal({
+    title: 'Create Recurring Sessions',
+    wide: true,
+    body: `
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label class="form-label">Group *</label>
+          <select id="rec-group" class="form-select">
+            <option value="">— Select Group —</option>
+            ${groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group" style="flex:3">
+          <label class="form-label">Title Template *</label>
+          <input id="rec-title" class="form-input" placeholder="e.g. Session {n} - {date}" value="Session {n} - {group}" />
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Variables: {n}, {date}, {group}</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Start Date *</label>
+          <input id="rec-start" type="date" class="form-input" value="${new Date().toISOString().slice(0,10)}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">End Date *</label>
+          <input id="rec-end" type="date" class="form-input" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Days of Week *</label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap" id="rec-days">
+          ${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map(day => `
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer">
+              <input type="checkbox" value="${day}" style="accent-color:var(--primary)" /> ${day.slice(0,3)}
+            </label>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Time</label>
+          <input id="rec-time" type="time" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duration</label>
+          <input id="rec-duration" class="form-input" placeholder="e.g. 2 hours" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Session Fee (EGP)</label>
+          <input id="rec-fee" type="number" class="form-input" placeholder="0" min="0" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="rec-has-quiz" style="accent-color:var(--primary)" />
+          Include Quiz by default
+        </label>
+      </div>
+      <div class="form-group" id="rec-quiz-max-wrap" style="display:none">
+        <label class="form-label">Max Quiz Score</label>
+        <input id="rec-quiz-max" type="number" class="form-input" value="10" min="1" />
+      </div>`,
+    footer: `
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="btn-generate-recurring">Generate Sessions</button>`
+  });
+
+  const hasQuizEl = el('rec-has-quiz');
+  const quizMaxWrap = el('rec-quiz-max-wrap');
+  hasQuizEl.addEventListener('change', () => {
+    quizMaxWrap.style.display = hasQuizEl.checked ? '' : 'none';
+  });
+
+  el('btn-generate-recurring').addEventListener('click', async () => {
+    const groupId = el('rec-group').value;
+    const titleTemplate = el('rec-title').value.trim();
+    const startDate = el('rec-start').value;
+    const endDate = el('rec-end').value;
+    const daysOfWeek = Array.from(document.querySelectorAll('#rec-days input:checked')).map(cb => cb.value);
+
+    if (!groupId || !titleTemplate || !startDate || !endDate || !daysOfWeek.length) {
+      return toast('Group, Title, Start/End Dates, and at least one Day are required', 'error');
+    }
+
+    const data = {
+      groupId, titleTemplate, startDate, endDate, daysOfWeek,
+      time: el('rec-time').value, duration: el('rec-duration').value,
+      sessionFee: el('rec-fee').value,
+      hasQuiz: hasQuizEl.checked, quizMaxScore: el('rec-quiz-max').value
+    };
+
+    const btn = el('btn-generate-recurring');
+    btn.disabled = true;
+    btn.innerText = 'Generating...';
+
+    const res = await window.api.sessions.createRecurring(data);
+    if (!res.success) {
+      toast(res.message, 'error');
+      btn.disabled = false;
+      btn.innerText = 'Generate Sessions';
+      return;
+    }
+
+    toast(`Successfully created ${res.count} sessions`, 'success');
+    closeModal();
+    renderSessions();
+  });
+};

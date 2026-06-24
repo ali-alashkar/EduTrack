@@ -3,6 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const WhatsAppService = require('./whatsapp-service');
 const { TEMPLATES } = require('./whatsapp-templates');
+let XLSX;
+try { XLSX = require('xlsx'); } catch (_) { XLSX = null; }
 
 // Disable GPU cache to prevent "Unable to move the cache: Access is denied" errors on Windows
 app.commandLine.appendSwitch('disable-gpu-cache');
@@ -18,6 +20,126 @@ function getDataDir() {
   return dir;
 }
 
+function getBackupsDir() {
+  const base = app.isPackaged
+    ? path.dirname(process.execPath)
+    : path.join(__dirname, 'data');
+  const dir = path.join(base, 'edutrack_backups');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+function createBackupData() {
+  const files = fs.readdirSync(getDataDir());
+  const jsonFiles = files.filter(f => f.endsWith('.json'));
+  const dbs = {};
+  for (const file of jsonFiles) {
+    const dbName = path.basename(file, '.json');
+    const filePath = path.join(getDataDir(), file);
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      dbs[dbName] = JSON.parse(content);
+    } catch (e) {
+      console.error(`Error reading ${file} for backup:`, e);
+    }
+  }
+  return {
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    dbs
+  };
+}
+
+function restoreBackupData(backupObj) {
+  if (!backupObj || typeof backupObj !== 'object' || !backupObj.dbs) {
+    throw new Error('Invalid backup file structure.');
+  }
+  const { dbs } = backupObj;
+
+  // Write each db to disk
+  for (const [dbName, dbData] of Object.entries(dbs)) {
+    const filePath = path.join(getDataDir(), `${dbName}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(dbData, null, 2), 'utf-8');
+  }
+}
+
+function getBackupsList() {
+  const dir = getBackupsDir();
+  const files = fs.readdirSync(dir);
+  const list = [];
+  for (const file of files) {
+    if (!file.endsWith('.json')) continue;
+    const filePath = path.join(dir, file);
+    try {
+      const stats = fs.statSync(filePath);
+      const content = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      list.push({
+        filename: file,
+        path: filePath,
+        size: stats.size,
+        timestamp: content.timestamp || stats.mtime.toISOString(),
+        type: file.startsWith('auto_') ? 'auto' : file.startsWith('prerestore_') ? 'prerestore' : 'manual'
+      });
+    } catch (e) {
+      // ignore invalid/partial files
+    }
+  }
+  return list.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+}
+
+function checkScheduledBackup() {
+  try {
+    const settings = readDB('backup_settings');
+    if (!settings || !settings.enabled) return;
+
+    const now = new Date();
+    let isDue = false;
+
+    if (!settings.lastBackup) {
+      isDue = true;
+    } else {
+      const last = new Date(settings.lastBackup);
+      const diffMs = now - last;
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+      if (settings.frequency === 'daily' && diffDays >= 1) isDue = true;
+      else if (settings.frequency === 'weekly' && diffDays >= 7) isDue = true;
+      else if (settings.frequency === 'monthly' && diffDays >= 30) isDue = true;
+    }
+
+    if (isDue) {
+      const backupData = createBackupData();
+      const dir = getBackupsDir();
+      const pad = (num) => String(num).padStart(2, '0');
+      const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+      const filename = `auto_backup_${dateStr}.json`;
+      const filePath = path.join(dir, filename);
+
+      fs.writeFileSync(filePath, JSON.stringify(backupData, null, 2), 'utf-8');
+
+      // Update settings
+      settings.lastBackup = now.toISOString();
+      writeDB('backup_settings', settings);
+
+      // Prune old auto backups
+      const list = getBackupsList().filter(b => b.type === 'auto');
+      const maxKeep = settings.maxKeep || 10;
+      if (list.length > maxKeep) {
+        const toDelete = list.slice(maxKeep);
+        for (const item of toDelete) {
+          try {
+            fs.unlinkSync(item.path);
+          } catch (e) {
+            console.error('Failed to delete old automatic backup:', e);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error running scheduled backup:', e);
+  }
+}
+
 function dbPath(name) {
   return path.join(getDataDir(), `${name}.json`);
 }
@@ -30,6 +152,32 @@ function readDB(name) {
 
 function writeDB(name, data) {
   fs.writeFileSync(dbPath(name), JSON.stringify(data, null, 2), 'utf-8');
+}
+
+function syncLevelNameReferences(levelId, previousName, nextName) {
+  if (!nextName || previousName === nextName) return;
+  const matchesLevel = (item) => item?.levelId === levelId || (!item?.levelId && item?.level === previousName);
+  writeDB('students', readDB('students').map(student => (
+    matchesLevel(student) ? { ...student, level: nextName } : student
+  )));
+  writeDB('groups', readDB('groups').map(group => (
+    matchesLevel(group) ? { ...group, level: nextName } : group
+  )));
+  writeDB('centers', readDB('centers').map(center => ({
+    ...center,
+    grades: (center.grades || []).map(grade => grade === previousName ? nextName : grade),
+  })));
+}
+
+function syncCenterNameReferences(centerId, previousName, nextName) {
+  if (!nextName || previousName === nextName) return;
+  const matchesCenter = (item) => item?.centerId === centerId || (!item?.centerId && item?.center === previousName);
+  writeDB('students', readDB('students').map(student => (
+    matchesCenter(student) ? { ...student, center: nextName } : student
+  )));
+  writeDB('groups', readDB('groups').map(group => (
+    matchesCenter(group) ? { ...group, center: nextName } : group
+  )));
 }
 
 function normalizeStudentDiscount(data) {
@@ -193,7 +341,7 @@ function seedData() {
       { id: 'u2', username: 'assistant', password: 'asst123', role: 'assistant', name: 'Demo Assistant', createdAt: new Date().toISOString() }
     ]);
   }
-  ['levels', 'centers', 'students', 'groups', 'sessions', 'attendance', 'quiz_scores', 'whatsapp_log'].forEach(db => {
+  ['levels', 'centers', 'students', 'groups', 'sessions', 'attendance', 'quiz_scores', 'whatsapp_log', 'payments', 'block_history', 'audit_log'].forEach(db => {
     if (!fs.existsSync(dbPath(db))) writeDB(db, []);
   });
   // Seed default WhatsApp settings
@@ -210,6 +358,109 @@ function seedData() {
   // Seed default WhatsApp templates
   if (!fs.existsSync(dbPath('whatsapp_templates'))) {
     writeDB('whatsapp_templates', TEMPLATES);
+  }
+  // Seed default backup settings
+  if (!fs.existsSync(dbPath('backup_settings'))) {
+    writeDB('backup_settings', {
+      enabled: true,
+      frequency: 'daily',
+      maxKeep: 10,
+      lastBackup: null
+    });
+  }
+}
+
+let corruptedFiles = [];
+
+function verifyDataIntegrity() {
+  corruptedFiles = [];
+  const dir = getDataDir();
+  let files;
+  try {
+    files = fs.readdirSync(dir);
+  } catch (err) {
+    console.error('Failed to read data directory:', err);
+    return corruptedFiles;
+  }
+
+  for (const file of files) {
+    if (!file.endsWith('.json')) continue;
+    const filePath = path.join(dir, file);
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      if (content.trim() === '') {
+        corruptedFiles.push(file);
+        continue;
+      }
+      JSON.parse(content);
+    } catch (e) {
+      corruptedFiles.push(file);
+    }
+  }
+  return corruptedFiles;
+}
+
+const TARGET_VERSION = 1;
+
+function getSystemSettings() {
+  const p = dbPath('system');
+  if (!fs.existsSync(p)) {
+    return { schemaVersion: 1 };
+  }
+  try {
+    const content = fs.readFileSync(p, 'utf-8');
+    const data = JSON.parse(content);
+    return { schemaVersion: 1, ...data };
+  } catch {
+    return { schemaVersion: 1 };
+  }
+}
+
+function writeSystemSettings(settings) {
+  fs.writeFileSync(dbPath('system'), JSON.stringify(settings, null, 2), 'utf-8');
+}
+
+const MIGRATIONS = [
+  // Registry of future schema migration functions
+  // {
+  //   version: 2,
+  //   run: () => { ... }
+  // }
+];
+
+function runMigrations() {
+  const systemSettings = getSystemSettings();
+  let currentVersion = systemSettings.schemaVersion || 1;
+  const targetVersion = TARGET_VERSION;
+
+  if (currentVersion < targetVersion) {
+    try {
+      const backupData = createBackupData();
+      const dir = getBackupsDir();
+      const now = new Date();
+      const pad = (num) => String(num).padStart(2, '0');
+      const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+      const filename = `premigration_backup_v${currentVersion}_to_v${targetVersion}_${dateStr}.json`;
+      const filePath = path.join(dir, filename);
+      fs.writeFileSync(filePath, JSON.stringify(backupData, null, 2), 'utf-8');
+    } catch (err) {
+      console.error('Failed to create pre-migration backup:', err);
+      throw new Error(`Pre-migration backup failed: ${err.message}`);
+    }
+
+    for (const migration of MIGRATIONS) {
+      if (migration.version > currentVersion && migration.version <= targetVersion) {
+        try {
+          migration.run();
+          currentVersion = migration.version;
+          systemSettings.schemaVersion = currentVersion;
+          writeSystemSettings(systemSettings);
+        } catch (migrationErr) {
+          console.error(`Migration to v${migration.version} failed:`, migrationErr);
+          throw migrationErr;
+        }
+      }
+    }
   }
 }
 
@@ -283,9 +534,34 @@ function initWhatsAppService() {
 }
 
 app.whenReady().then(() => {
-  seedData();
-  initWhatsAppService();
+  verifyDataIntegrity();
+
+  if (corruptedFiles.length === 0) {
+    try {
+      runMigrations();
+      seedData();
+      initWhatsAppService();
+    } catch (err) {
+      console.error('Error running migrations or seeding data:', err);
+    }
+  }
+
   createWindow();
+
+  // Initial scheduled backup check
+  setTimeout(() => {
+    if (corruptedFiles.length === 0) {
+      checkScheduledBackup();
+    }
+  }, 5000);
+
+  // Hourly check for scheduled backup
+  setInterval(() => {
+    if (corruptedFiles.length === 0) {
+      checkScheduledBackup();
+    }
+  }, 60 * 60 * 1000);
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -344,8 +620,10 @@ ipcMain.handle('levels:create', (_, data) => {
   return { success: true, level };
 });
 ipcMain.handle('levels:update', (_, { id, ...data }) => {
+  const existingLevel = readDB('levels').find(l => l.id === id);
   const levels = readDB('levels').map(l => l.id === id ? { ...l, ...data } : l);
   writeDB('levels', levels);
+  syncLevelNameReferences(id, existingLevel?.name, data.name);
   return { success: true };
 });
 ipcMain.handle('levels:delete', (_, id) => {
@@ -362,8 +640,10 @@ ipcMain.handle('centers:create', (_, data) => {
   return { success: true, center };
 });
 ipcMain.handle('centers:update', (_, { id, ...data }) => {
+  const existingCenter = readDB('centers').find(c => c.id === id);
   const centers = readDB('centers').map(c => c.id === id ? { ...c, ...data } : c);
   writeDB('centers', centers);
+  syncCenterNameReferences(id, existingCenter?.name, data.name);
   return { success: true };
 });
 ipcMain.handle('centers:delete', (_, id) => {
@@ -400,34 +680,53 @@ ipcMain.handle('students:update', (_, { id, ...data }) => {
   writeDB('students', students);
   return { success: true, warning: duplicatePhone?.message || '', warningField: duplicatePhone?.field || '' };
 });
-ipcMain.handle('students:block', (_, { id, reason }) => {
+ipcMain.handle('students:block', (_, { id, reason, actorId, actorName }) => {
   const note = String(reason || '').trim();
   if (!note) return { success: false, message: 'Block reason is required' };
   let blockedStudent = null;
   const blockedAt = new Date().toISOString();
   const students = readDB('students').map(s => {
     if (s.id !== id) return s;
-    blockedStudent = {
-      ...s,
-      isBlocked: true,
-      blockReason: note,
-      blockedAt,
-    };
+    blockedStudent = { ...s, isBlocked: true, blockReason: note, blockedAt };
     return blockedStudent;
   });
   if (!blockedStudent) return { success: false, message: 'Student not found' };
   writeDB('students', students);
+  // Log block history
+  const history = readDB('block_history');
+  writeDB('block_history', [...history, {
+    id: `bh${Date.now()}`,
+    studentId: id,
+    studentName: blockedStudent.name,
+    action: 'block',
+    reason: note,
+    actorId: actorId || '',
+    actorName: actorName || '',
+    timestamp: blockedAt,
+  }]);
   const blockNotification = queueStudentBlockNotification(blockedStudent, note);
   return { success: true, blockNotification };
 });
-ipcMain.handle('students:unblock', (_, id) => {
-  const students = readDB('students').map(s => s.id === id ? {
-    ...s,
-    isBlocked: false,
-    blockReason: '',
-    blockedAt: '',
+ipcMain.handle('students:unblock', (_, payload) => {
+  const studentId = typeof payload === 'string' ? payload : (payload?.id || '');
+  const actorId = typeof payload === 'object' ? (payload?.actorId || '') : '';
+  const actorName = typeof payload === 'object' ? (payload?.actorName || '') : '';
+  const students = readDB('students').map(s => s.id === studentId ? {
+    ...s, isBlocked: false, blockReason: '', blockedAt: '',
   } : s);
+  const student = readDB('students').find(s => s.id === studentId);
   writeDB('students', students);
+  const history = readDB('block_history');
+  writeDB('block_history', [...history, {
+    id: `bh${Date.now()}`,
+    studentId,
+    studentName: student?.name || '',
+    action: 'unblock',
+    reason: '',
+    actorId,
+    actorName,
+    timestamp: new Date().toISOString(),
+  }]);
   return { success: true };
 });
 ipcMain.handle('students:delete', (_, id) => {
@@ -501,7 +800,7 @@ ipcMain.handle('attendance:by-session', (_, sessionId) => readDB('attendance').f
 ipcMain.handle('attendance:scan', (_, { sessionId, barcode }) => {
   const student = readDB('students').find(s => s.barcode === barcode);
   if (!student) return { success: false, message: 'Student not found for this barcode' };
- 
+
 
   const attendance = readDB('attendance');
   const existing = attendance.find(a => a.sessionId === sessionId && a.studentId === student.id);
@@ -529,7 +828,7 @@ ipcMain.handle('attendance:update', (_, { id, ...data }) => {
 ipcMain.handle('attendance:manual-add', (_, { sessionId, studentId }) => {
   const student = readDB('students').find(s => s.id === studentId);
   if (!student) return { success: false, message: 'Student not found' };
-  
+
   const attendance = readDB('attendance');
   const existing = attendance.find(a => a.sessionId === sessionId && a.studentId === studentId);
   if (existing) return { success: false, message: 'Already added' };
@@ -999,7 +1298,7 @@ ipcMain.handle('templates:list', () => {
 ipcMain.handle('templates:save', (_, { category, id, text }) => {
   const templates = readWhatsappTemplates();
   if (!templates[category]) return { success: false, error: 'Invalid category' };
-  
+
   if (id) {
     const idx = templates[category].findIndex(t => t.id === id);
     if (idx >= 0) {
@@ -1013,7 +1312,7 @@ ipcMain.handle('templates:save', (_, { category, id, text }) => {
     const newId = `${prefix}_${Date.now()}`;
     templates[category].push({ id: newId, text });
   }
-  
+
   writeDB('whatsapp_templates', templates);
   return { success: true, templates };
 });
@@ -1021,11 +1320,11 @@ ipcMain.handle('templates:save', (_, { category, id, text }) => {
 ipcMain.handle('templates:delete', (_, { category, id }) => {
   const templates = readWhatsappTemplates();
   if (!templates[category]) return { success: false, error: 'Invalid category' };
-  
+
   if (templates[category].length <= 1) {
     return { success: false, error: 'Cannot delete the last template in a category' };
   }
-  
+
   templates[category] = templates[category].filter(t => t.id !== id);
   writeDB('whatsapp_templates', templates);
   return { success: true, templates };
@@ -1034,4 +1333,824 @@ ipcMain.handle('templates:delete', (_, { category, id }) => {
 ipcMain.handle('templates:reset', () => {
   writeDB('whatsapp_templates', TEMPLATES);
   return { success: true, templates: TEMPLATES };
+});
+
+// ── Backup IPC Handlers ──
+
+ipcMain.handle('backup:get-settings', () => {
+  return readDB('backup_settings');
+});
+
+ipcMain.handle('backup:update-settings', (_, settings) => {
+  const current = readDB('backup_settings');
+  const updated = { ...current, ...settings };
+  writeDB('backup_settings', updated);
+  return { success: true };
+});
+
+ipcMain.handle('backup:list', () => {
+  return getBackupsList();
+});
+
+ipcMain.handle('backup:create', () => {
+  try {
+    const backupData = createBackupData();
+    const dir = getBackupsDir();
+    const now = new Date();
+    const pad = (num) => String(num).padStart(2, '0');
+    const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const filename = `manual_backup_${dateStr}.json`;
+    const filePath = path.join(dir, filename);
+
+    fs.writeFileSync(filePath, JSON.stringify(backupData, null, 2), 'utf-8');
+    return { success: true, filename };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('backup:delete', (_, filename) => {
+  try {
+    const filePath = path.join(getBackupsDir(), filename);
+    if (path.dirname(filePath) !== getBackupsDir()) {
+      return { success: false, error: 'Invalid path' };
+    }
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      return { success: true };
+    }
+    return { success: false, error: 'File not found' };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('backup:restore', async (_, filename) => {
+  try {
+    const filePath = path.join(getBackupsDir(), filename);
+    if (path.dirname(filePath) !== getBackupsDir() || !fs.existsSync(filePath)) {
+      return { success: false, error: 'Backup file not found' };
+    }
+
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const backupObj = JSON.parse(content);
+
+    // Create a pre-restore backup first for safety!
+    try {
+      const currentBackup = createBackupData();
+      const now = new Date();
+      const pad = (num) => String(num).padStart(2, '0');
+      const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+      const preRestorePath = path.join(getBackupsDir(), `prerestore_backup_${dateStr}.json`);
+      fs.writeFileSync(preRestorePath, JSON.stringify(currentBackup, null, 2), 'utf-8');
+    } catch (err) {
+      console.error('Failed to create pre-restore backup, but continuing:', err);
+    }
+
+    restoreBackupData(backupObj);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('backup:export', async () => {
+  try {
+    const now = new Date();
+    const pad = (num) => String(num).padStart(2, '0');
+    const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const defaultName = `edutrack_backup_${dateStr}.json`;
+
+    const { filePath, canceled } = await dialog.showSaveDialog(mainWindow, {
+      title: 'Export Backup',
+      defaultPath: defaultName,
+      filters: [{ name: 'EduTrack Backup (*.json)', extensions: ['json'] }]
+    });
+
+    if (canceled || !filePath) return { success: false, canceled: true };
+
+    const backupData = createBackupData();
+    fs.writeFileSync(filePath, JSON.stringify(backupData, null, 2), 'utf-8');
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('backup:import', async () => {
+  try {
+    const { filePaths, canceled } = await dialog.showOpenDialog(mainWindow, {
+      title: 'Import Backup',
+      filters: [{ name: 'EduTrack Backup (*.json)', extensions: ['json'] }],
+      properties: ['openFile']
+    });
+
+    if (canceled || !filePaths || filePaths.length === 0) return { success: false, canceled: true };
+
+    const content = fs.readFileSync(filePaths[0], 'utf-8');
+    const backupObj = JSON.parse(content);
+
+    if (!backupObj || typeof backupObj !== 'object' || !backupObj.dbs) {
+      return { success: false, error: 'Invalid file format. This is not a valid EduTrack backup.' };
+    }
+
+    // Create a pre-restore backup first for safety!
+    try {
+      const currentBackup = createBackupData();
+      const now = new Date();
+      const pad = (num) => String(num).padStart(2, '0');
+      const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+      const preRestorePath = path.join(getBackupsDir(), `prerestore_backup_${dateStr}.json`);
+      fs.writeFileSync(preRestorePath, JSON.stringify(currentBackup, null, 2), 'utf-8');
+    } catch (err) {
+      console.error('Failed to create pre-restore backup, but continuing:', err);
+    }
+
+    restoreBackupData(backupObj);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+// ── System Data Integrity & Recovery IPC Handlers ──
+ipcMain.handle('system:get-corrupted-files', () => {
+  verifyDataIntegrity();
+  return corruptedFiles;
+});
+
+ipcMain.handle('system:reset-corrupted-files', () => {
+  try {
+    for (const file of corruptedFiles) {
+      const filePath = path.join(getDataDir(), file);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+    verifyDataIntegrity();
+    if (corruptedFiles.length === 0) {
+      seedData();
+    }
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.on('system:relaunch', () => {
+  app.relaunch();
+  app.exit(0);
+});
+
+ipcMain.on('system:quit', () => {
+  app.quit();
+});
+
+// ── Backup Reminder IPC Handler ──
+ipcMain.handle('backup:check-reminder', () => {
+  try {
+    const list = getBackupsList();
+    if (list.length === 0) {
+      return { showReminder: true, daysSince: null };
+    }
+
+    // Sort logic is already in getBackupsList (descending timestamp)
+    const latest = list[0];
+    const lastBackupDate = new Date(latest.timestamp);
+    const now = new Date();
+    const diffMs = now - lastBackupDate;
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+    if (diffDays >= 3) {
+      return { showReminder: true, daysSince: Math.floor(diffDays) };
+    }
+    return { showReminder: false, daysSince: Math.floor(diffDays) };
+  } catch (e) {
+    console.error('Error in backup:check-reminder handler:', e);
+    return { showReminder: false, error: e.message };
+  }
+});
+
+// ── Phase 1 – Setup Wizard & Security IPC Handlers ──────────────────────────
+
+// The two default seeded user IDs created by seedData()
+const DEFAULT_USER_IDS = new Set(['u1', 'u2']);
+const DEFAULT_ADMIN_USERNAME = 'admin';
+const DEFAULT_ADMIN_PASSWORD = 'admin123';
+
+/**
+ * Returns { needsSetup: boolean }.
+ * needsSetup is true when:
+ *   1. system.json does NOT have setupCompleted = true, AND
+ *   2. All existing users are the two default seeded accounts (or there are none).
+ */
+ipcMain.handle('system:get-setup-state', () => {
+  try {
+    const system = getSystemSettings();
+    if (system.setupCompleted === true) return { needsSetup: false };
+
+    const users = readDB('users');
+    // If every user is one of the two defaults, setup has not been completed
+    const hasRealUser = users.some(u => !DEFAULT_USER_IDS.has(u.id));
+    return { needsSetup: !hasRealUser };
+  } catch (e) {
+    console.error('Error in system:get-setup-state:', e);
+    return { needsSetup: false };
+  }
+});
+
+/**
+ * Completes the first-run setup wizard.
+ * Expects: { ownerName, centerName, adminUsername, adminPassword, countryCode, defaultLevel }
+ * Returns: { success: boolean, message?: string }
+ */
+ipcMain.handle('system:complete-setup', (_, data) => {
+  try {
+    const { ownerName, centerName, adminUsername, adminPassword, countryCode, defaultLevel } = data || {};
+
+    // Validate required fields
+    if (!ownerName || !String(ownerName).trim()) return { success: false, message: 'Owner name is required' };
+    if (!centerName || !String(centerName).trim()) return { success: false, message: 'Center name is required' };
+    if (!adminUsername || !String(adminUsername).trim()) return { success: false, message: 'Admin username is required' };
+    if (!adminPassword || String(adminPassword).length < 6) return { success: false, message: 'Password must be at least 6 characters' };
+
+    // 1. Remove default seeded users
+    const existingUsers = readDB('users').filter(u => !DEFAULT_USER_IDS.has(u.id));
+
+    // 2. Create the first real admin
+    if (existingUsers.find(u => u.username === adminUsername.trim())) {
+      return { success: false, message: 'Username already exists' };
+    }
+    const firstAdmin = {
+      id: `u${Date.now()}`,
+      username: adminUsername.trim(),
+      password: adminPassword,
+      role: 'admin',
+      name: ownerName.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    writeDB('users', [...existingUsers, firstAdmin]);
+
+    // 3. Seed center from setup input
+    if (centerName.trim()) {
+      const centers = readDB('centers');
+      if (!centers.find(c => c.name === centerName.trim())) {
+        const center = { id: `c${Date.now()}`, name: centerName.trim(), grades: [], createdAt: new Date().toISOString() };
+        writeDB('centers', [...centers, center]);
+      }
+    }
+
+    // 4. Seed default academic level from setup input
+    if (defaultLevel && String(defaultLevel).trim()) {
+      const levels = readDB('levels');
+      if (!levels.find(l => l.name === defaultLevel.trim())) {
+        const level = { id: `lv${Date.now()}`, name: defaultLevel.trim(), createdAt: new Date().toISOString() };
+        writeDB('levels', [...levels, level]);
+      }
+    }
+
+    // 5. Update WhatsApp country code
+    if (countryCode) {
+      const waSettings = readDB('whatsapp_settings') || {};
+      writeDB('whatsapp_settings', { ...waSettings, countryCode: String(countryCode).trim() });
+    }
+
+    // 6. Mark setup as completed in system settings
+    const system = getSystemSettings();
+    writeSystemSettings({ ...system, setupCompleted: true, ownerName: ownerName.trim(), centerName: centerName.trim() });
+
+    return { success: true };
+  } catch (e) {
+    console.error('Error in system:complete-setup:', e);
+    return { success: false, message: e.message };
+  }
+});
+
+/**
+ * Returns { hasDefault: boolean }.
+ * true when any user still has the original default admin credentials.
+ */
+ipcMain.handle('system:has-default-credentials', () => {
+  try {
+    const users = readDB('users');
+    const hasDefault = users.some(
+      u => u.username === DEFAULT_ADMIN_USERNAME && u.password === DEFAULT_ADMIN_PASSWORD
+    );
+    return { hasDefault };
+  } catch (e) {
+    console.error('Error in system:has-default-credentials:', e);
+    return { hasDefault: false };
+  }
+});
+
+// ── Payments (Admin-Only) ────────────────────────────────────────────────────
+
+ipcMain.handle('payments:list', () => {
+  return readDB('payments').sort((a, b) => (b.date || b.createdAt || '').localeCompare(a.date || a.createdAt || ''));
+});
+
+ipcMain.handle('payments:by-student', (_, studentId) => {
+  return readDB('payments')
+    .filter(p => p.studentId === studentId)
+    .sort((a, b) => (b.date || b.createdAt || '').localeCompare(a.date || a.createdAt || ''));
+});
+
+ipcMain.handle('payments:create', (_, data) => {
+  const { studentId, amount, method, note, date } = data || {};
+  const student = readDB('students').find(s => s.id === studentId);
+  if (!student) return { success: false, message: 'Student not found' };
+  const numAmount = Number(amount);
+  if (isNaN(numAmount) || numAmount <= 0) return { success: false, message: 'Amount must be a positive number' };
+  const payments = readDB('payments');
+  const record = {
+    id: `pay${Date.now()}`,
+    studentId,
+    studentName: student.name,
+    amount: roundMoney(numAmount),
+    method: method || 'cash',
+    note: String(note || '').trim(),
+    date: date || new Date().toISOString().slice(0, 10),
+    createdAt: new Date().toISOString(),
+  };
+  writeDB('payments', [...payments, record]);
+  return { success: true, record };
+});
+
+ipcMain.handle('payments:delete', (_, id) => {
+  writeDB('payments', readDB('payments').filter(p => p.id !== id));
+  return { success: true };
+});
+
+ipcMain.handle('payments:student-balance', (_, studentId) => {
+  const student = readDB('students').find(s => s.id === studentId);
+  if (!student) return { success: false, message: 'Student not found' };
+
+  const attendance = readDB('attendance').filter(a => a.studentId === studentId);
+  const sessions = readDB('sessions');
+  const sessionMap = Object.fromEntries(sessions.map(s => [s.id, s]));
+
+  let totalGross = 0;
+  let totalDiscount = 0;
+  const sessionDetails = [];
+
+  for (const att of attendance) {
+    const session = sessionMap[att.sessionId];
+    if (!session) continue;
+    const fee = Number(session.sessionFee) || 0;
+    const net = getAttendanceFee(fee, student);
+    totalGross += fee;
+    totalDiscount += (fee - net);
+    sessionDetails.push({
+      sessionId: session.id,
+      sessionTitle: session.title,
+      sessionDate: session.date,
+      fee,
+      netFee: roundMoney(net),
+      discount: roundMoney(fee - net),
+    });
+  }
+
+  const totalDue = roundMoney(totalGross - totalDiscount);
+  const payments = readDB('payments').filter(p => p.studentId === studentId);
+  const totalPaid = roundMoney(payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0));
+  const remaining = roundMoney(totalDue - totalPaid);
+
+  return {
+    success: true,
+    student,
+    totalGross: roundMoney(totalGross),
+    totalDiscount: roundMoney(totalDiscount),
+    totalDue,
+    totalPaid,
+    remaining,
+    sessionsAttended: attendance.length,
+    sessionDetails: sessionDetails.sort((a, b) => (b.sessionDate || '').localeCompare(a.sessionDate || '')),
+    payments,
+  };
+});
+
+ipcMain.handle('reports:financial-summary', () => {
+  const students = readDB('students');
+  const studentMap = Object.fromEntries(students.map(s => [s.id, s]));
+  const sessions = readDB('sessions');
+  const sessionMap = Object.fromEntries(sessions.map(s => [s.id, s]));
+  const attendance = readDB('attendance');
+  const payments = readDB('payments');
+
+  let totalGross = 0;
+  let totalDiscount = 0;
+  const attendanceTotalsByStudent = new Map();
+  const paymentsByStudent = new Map();
+
+  for (const att of attendance) {
+    const student = studentMap[att.studentId];
+    const session = sessionMap[att.sessionId];
+    if (!student || !session) continue;
+    const fee = Number(session.sessionFee) || 0;
+    const discount = fee - getAttendanceFee(fee, student);
+    totalGross += fee;
+    totalDiscount += discount;
+    const current = attendanceTotalsByStudent.get(student.id) || { gross: 0, discount: 0, count: 0 };
+    current.gross += fee;
+    current.discount += discount;
+    current.count += 1;
+    attendanceTotalsByStudent.set(student.id, current);
+  }
+
+  const totalDue = roundMoney(totalGross - totalDiscount);
+  let collected = 0;
+  for (const payment of payments) {
+    const amount = Number(payment.amount) || 0;
+    collected += amount;
+    paymentsByStudent.set(payment.studentId, (paymentsByStudent.get(payment.studentId) || 0) + amount);
+  }
+  const totalCollected = roundMoney(collected);
+  const totalOutstanding = roundMoney(totalDue - totalCollected);
+
+  const studentBalances = students.map(student => {
+    const totals = attendanceTotalsByStudent.get(student.id) || { gross: 0, discount: 0, count: 0 };
+    const gross = totals.gross;
+    const discount = totals.discount;
+    const due = roundMoney(gross - discount);
+    const paid = roundMoney(paymentsByStudent.get(student.id) || 0);
+    const remaining = roundMoney(due - paid);
+    return { studentId: student.id, studentName: student.name, sessionsAttended: totals.count, due, paid, remaining };
+  }).filter(b => b.due > 0 || b.paid > 0);
+
+  return {
+    totalGross: roundMoney(totalGross),
+    totalDiscount: roundMoney(totalDiscount),
+    totalDue,
+    totalCollected,
+    totalOutstanding,
+    studentBalances,
+    paymentsCount: payments.length,
+  };
+});
+
+// ── Phase 3 – Daily Operations ───────────────────────────────────────────────
+
+// ── Excel Export ──
+ipcMain.handle('export:excel', async (_, { sheetName, columns, rows, filename }) => {
+  try {
+    if (!XLSX) return { success: false, error: 'xlsx not available — run: npm install xlsx' };
+    const defaultName = filename || `${sheetName || 'export'}_${new Date().toISOString().slice(0,10)}.xlsx`;
+    const { filePath, canceled } = await dialog.showSaveDialog(mainWindow, {
+      title: 'Export to Excel', defaultPath: defaultName,
+      filters: [{ name: 'Excel Workbook (*.xlsx)', extensions: ['xlsx'] }],
+    });
+    if (canceled || !filePath) return { success: false, canceled: true };
+    const header = columns.map(c => c.label || c.key);
+    const data = rows.map(row => columns.map(c => row[c.key] ?? ''));
+    const ws = XLSX.utils.aoa_to_sheet([header, ...data]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Sheet1');
+    XLSX.writeFile(wb, filePath);
+    return { success: true };
+  } catch (e) { return { success: false, error: e.message }; }
+});
+
+// ── Student Import Preview ──
+ipcMain.handle('import:students-preview', async () => {
+  try {
+    if (!XLSX) return { success: false, error: 'xlsx not available — run: npm install xlsx' };
+    const { filePaths, canceled } = await dialog.showOpenDialog(mainWindow, {
+      title: 'Import Students from Excel',
+      filters: [{ name: 'Excel / CSV', extensions: ['xlsx', 'xls', 'csv'] }],
+      properties: ['openFile'],
+    });
+    if (canceled || !filePaths?.length) return { success: false, canceled: true };
+    const wb = XLSX.readFile(filePaths[0]);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    const existingStudents = readDB('students');
+    const existingBarcodes = new Set(existingStudents.map(s => s.barcode).filter(Boolean));
+    const levels = readDB('levels');
+    const centers = readDB('centers');
+    const valid = [], invalid = [];
+    for (let i = 0; i < raw.length; i++) {
+      const row = raw[i];
+      const rowNum = i + 2;
+      const name = String(row['name'] || row['Name'] || row['الاسم'] || '').trim();
+      const barcode = String(row['barcode'] || row['Barcode'] || row['الباركود'] || '').trim();
+      const phone = String(row['phone'] || row['Phone'] || row['هاتف'] || '').trim();
+      const parentPhone = String(row['parentPhone'] || row['parent_phone'] || row['هاتف ولي الأمر'] || '').trim();
+      const levelName = String(row['level'] || row['Level'] || row['grade'] || row['Grade'] || row['المستوى'] || '').trim();
+      const centerName = String(row['center'] || row['Center'] || row['المركز'] || '').trim();
+      const discountPct = Number(row['discount'] || row['Discount'] || row['الخصم'] || 0);
+      if (!name) { invalid.push({ rowNum, data: row, reason: 'Name is required' }); continue; }
+      if (barcode && existingBarcodes.has(barcode)) { invalid.push({ rowNum, data: row, reason: `Barcode "${barcode}" already exists` }); continue; }
+      const level = levelName ? levels.find(l => l.name.toLowerCase() === levelName.toLowerCase()) : null;
+      const center = centerName ? centers.find(c => c.name.toLowerCase() === centerName.toLowerCase()) : null;
+      valid.push({
+        rowNum, name, barcode: barcode || null, phone, parentPhone,
+        levelId: level?.id || null, levelName: level?.name || levelName || '',
+        centerId: center?.id || null, centerName: center?.name || centerName || '',
+        hasDiscount: discountPct > 0, discountPercent: discountPct > 0 ? Math.min(discountPct, 100) : 0,
+      });
+    }
+    return { success: true, valid, invalid, total: raw.length };
+  } catch (e) { return { success: false, error: e.message }; }
+});
+
+// ── Student Import Commit ──
+ipcMain.handle('import:students-template', async () => {
+  try {
+    if (!XLSX) return { success: false, error: 'xlsx not available - run: npm install xlsx' };
+    const { filePath, canceled } = await dialog.showSaveDialog(mainWindow, {
+      title: 'Save Student Import Template',
+      defaultPath: 'EduTrack_Student_Import_Template.xlsx',
+      filters: [
+        { name: 'Excel Workbook (*.xlsx)', extensions: ['xlsx'] },
+        { name: 'Excel 97-2004 Workbook (*.xls)', extensions: ['xls'] },
+        { name: 'CSV File (*.csv)', extensions: ['csv'] },
+      ],
+    });
+    if (canceled || !filePath) return { success: false, canceled: true };
+
+    const headers = ['name', 'barcode', 'phone', 'parentPhone', 'grade', 'center', 'discount'];
+    const rows = [
+      headers,
+      ['Ahmed Hassan', 'BC1001', '01012345678', '01087654321', 'Grade 10', 'Main Center', 0],
+      ['Mona Ali', 'BC1002', '01112345678', '01187654321', 'Grade 11', 'Main Center', 15],
+      ['Omar Samir', '', '01212345678', '01287654321', 'Grade 12', 'Branch Center', 0],
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [
+      { wch: 24 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 10 },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Students');
+    XLSX.writeFile(wb, filePath);
+    return { success: true };
+  } catch (e) { return { success: false, error: e.message }; }
+});
+
+ipcMain.handle('import:students-commit', (_, { rows }) => {
+  try {
+    const students = readDB('students');
+    let levels = readDB('levels');
+    let centers = readDB('centers');
+    const existingBarcodes = new Set(students.map(s => s.barcode).filter(Boolean));
+    const created = [], skipped = [];
+    const createdLevels = [];
+    const createdCenters = [];
+    const updatedCenters = [];
+    const levelMap = new Map(levels.map(l => [String(l.name || '').trim().toLowerCase(), l]));
+    const centerMap = new Map(centers.map(c => [String(c.name || '').trim().toLowerCase(), c]));
+    const now = new Date().toISOString();
+
+    const ensureLevel = (levelName) => {
+      const name = String(levelName || '').trim();
+      if (!name) return null;
+      const key = name.toLowerCase();
+      const existing = levelMap.get(key);
+      if (existing) return existing;
+      const level = {
+        id: `lv${Date.now()}_${createdLevels.length + 1}`,
+        name,
+        description: '',
+        needsCompletion: true,
+        createdAt: now,
+      };
+      levels.push(level);
+      levelMap.set(key, level);
+      createdLevels.push(level);
+      return level;
+    };
+
+    const ensureCenter = (centerName, gradeName) => {
+      const name = String(centerName || '').trim();
+      if (!name) return null;
+      const key = name.toLowerCase();
+      let center = centerMap.get(key);
+      if (!center) {
+        center = {
+          id: `c${Date.now()}_${createdCenters.length + 1}`,
+          name,
+          location: '',
+          contact: '',
+          grades: gradeName ? [gradeName] : [],
+          needsCompletion: true,
+          createdAt: now,
+        };
+        centers.push(center);
+        centerMap.set(key, center);
+        createdCenters.push(center);
+        return center;
+      }
+
+      if (gradeName && !(center.grades || []).includes(gradeName)) {
+        center = { ...center, grades: [...(center.grades || []), gradeName] };
+        centers = centers.map(c => c.id === center.id ? center : c);
+        centerMap.set(key, center);
+        updatedCenters.push({ id: center.id, name: center.name, grade: gradeName });
+      }
+      return center;
+    };
+
+    for (const row of rows) {
+      if (row.barcode && existingBarcodes.has(row.barcode)) { skipped.push(row); continue; }
+      const level = ensureLevel(row.levelName);
+      const center = ensureCenter(row.centerName, level?.name || row.levelName || '');
+      const student = {
+        id: `s${Date.now()}_${Math.random().toString(36).substr(2,5)}`,
+        name: row.name, barcode: row.barcode || null, phone: row.phone || '',
+        parentPhone: row.parentPhone || '', levelId: level?.id || row.levelId || null,
+        level: level?.name || row.levelName || '', centerId: center?.id || row.centerId || null, center: center?.name || row.centerName || '',
+        hasDiscount: row.hasDiscount || false, discountPercent: row.discountPercent || 0,
+        isBlocked: false, blockReason: '', createdAt: new Date().toISOString(),
+      };
+      if (row.barcode) existingBarcodes.add(row.barcode);
+      created.push(student);
+    }
+    if (createdLevels.length) writeDB('levels', levels);
+    if (createdCenters.length || updatedCenters.length) writeDB('centers', centers);
+    writeDB('students', [...students, ...created]);
+    return {
+      success: true,
+      created: created.length,
+      skipped: skipped.length,
+      createdLevels: createdLevels.map(({ id, name }) => ({ id, name })),
+      createdCenters: createdCenters.map(({ id, name }) => ({ id, name })),
+      updatedCenters,
+      needsCompletion: createdLevels.length > 0 || createdCenters.length > 0 || updatedCenters.length > 0,
+    };
+  } catch (e) { return { success: false, error: e.message }; }
+});
+
+// ── Session Duplication ──
+ipcMain.handle('sessions:duplicate', (_, { sessionId, newDate }) => {
+  const sessions = readDB('sessions');
+  const source = sessions.find(s => s.id === sessionId);
+  if (!source) return { success: false, message: 'Session not found' };
+  if (!newDate) return { success: false, message: 'New date is required' };
+  const { id: _id, createdAt: _c, ...rest } = source;
+  const newSession = { ...rest, id: `ss${Date.now()}`, date: newDate, status: 'scheduled', createdAt: new Date().toISOString(), duplicatedFrom: sessionId };
+  writeDB('sessions', [...sessions, newSession]);
+  return { success: true, session: newSession };
+});
+
+// ── Recurring Sessions ──
+ipcMain.handle('sessions:create-recurring', (_, data) => {
+  const { groupId, titleTemplate, sessionFee, startDate, endDate, daysOfWeek, time, duration, topic, homework, hasQuiz, quizMaxScore } = data;
+  if (!groupId || !titleTemplate || !startDate || !endDate || !daysOfWeek?.length)
+    return { success: false, message: 'Group, title template, date range, and days are required' };
+  const group = readDB('groups').find(g => g.id === groupId);
+  if (!group) return { success: false, message: 'Group not found' };
+  const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dayIndices = daysOfWeek.map(d => typeof d === 'number' ? d : DAY_NAMES.indexOf(d)).filter(d => d >= 0);
+  const start = new Date(startDate + 'T00:00:00');
+  const end = new Date(endDate + 'T00:00:00');
+  if (start > end) return { success: false, message: 'Start date must be before end date' };
+  const daysInRange = Math.floor((end - start) / 86400000) + 1;
+  if (daysInRange > 730) return { success: false, message: 'Recurring sessions are limited to a 2-year date range' };
+  const sessions = readDB('sessions');
+  const created = [];
+  const createdAt = new Date().toISOString();
+  let sessionNum = 1;
+  const cur = new Date(start);
+  while (cur <= end) {
+    if (dayIndices.includes(cur.getDay())) {
+      if (created.length >= 500) return { success: false, message: 'Recurring session generation is limited to 500 sessions at a time' };
+      const dateStr = cur.toISOString().slice(0, 10);
+      const title = titleTemplate.replace('{n}', sessionNum).replace('{date}', dateStr).replace('{group}', group.name);
+      created.push({ id: `ss${Date.now()}_r${sessionNum}`, title, groupId, date: dateStr, time: time || '', duration: duration || '', sessionFee: Number(sessionFee) || 0, topic: topic || '', homework: homework || '', hasQuiz: hasQuiz || false, quizMaxScore: hasQuiz ? (Number(quizMaxScore) || 10) : null, status: 'scheduled', createdAt, isRecurring: true });
+      sessionNum++;
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+  if (!created.length) return { success: false, message: 'No sessions generated — check date range and days' };
+  writeDB('sessions', [...sessions, ...created]);
+  return { success: true, count: created.length, sessions: created };
+});
+
+// ── Bulk Student Operations ──
+ipcMain.handle('students:bulk-assign-group', (_, { studentIds, groupId }) => {
+  try {
+    const selectedIds = Array.isArray(studentIds) ? studentIds : [];
+    const groups = readDB('groups');
+    if (!groups.find(g => g.id === groupId)) return { success: false, message: 'Group not found' };
+    writeDB('groups', groups.map(g => {
+      if (g.id !== groupId) return g;
+      const existing = new Set(g.studentIds || []);
+      selectedIds.forEach(id => existing.add(id));
+      return { ...g, studentIds: [...existing] };
+    }));
+    return { success: true, count: selectedIds.length };
+  } catch (e) { return { success: false, error: e.message }; }
+});
+
+ipcMain.handle('students:bulk-update-level', (_, { studentIds, levelId, levelName }) => {
+  try {
+    const selectedIds = new Set(Array.isArray(studentIds) ? studentIds : []);
+    writeDB('students', readDB('students').map(s => selectedIds.has(s.id) ? { ...s, levelId: levelId || s.levelId, level: levelName || s.level } : s));
+    return { success: true, count: selectedIds.size };
+  } catch (e) { return { success: false, error: e.message }; }
+});
+
+ipcMain.handle('students:bulk-update-center', (_, { studentIds, centerId, centerName }) => {
+  try {
+    const selectedIds = new Set(Array.isArray(studentIds) ? studentIds : []);
+    writeDB('students', readDB('students').map(s => selectedIds.has(s.id) ? { ...s, centerId: centerId || s.centerId, center: centerName || s.center } : s));
+    return { success: true, count: selectedIds.size };
+  } catch (e) { return { success: false, error: e.message }; }
+});
+
+// ── Student Profile Timeline ──
+ipcMain.handle('students:timeline', (_, studentId) => {
+  const student = readDB('students').find(s => s.id === studentId);
+  if (!student) return { success: false, message: 'Student not found' };
+  const sessionMap = Object.fromEntries(readDB('sessions').map(s => [s.id, s]));
+  const events = [];
+  for (const a of readDB('attendance').filter(a => a.studentId === studentId))
+    events.push({ type: 'attendance', date: a.checkInTime, title: `Attended: ${sessionMap[a.sessionId]?.title || 'Unknown session'}`, detail: `Homework: ${a.homeworkStatus || 'pending'}${a.homeworkNote ? ' — ' + a.homeworkNote : ''}`, sessionId: a.sessionId });
+  for (const q of readDB('quiz_scores').filter(q => q.studentId === studentId))
+    events.push({ type: 'quiz', date: q.recordedAt, title: `Quiz: ${sessionMap[q.sessionId]?.title || 'Unknown session'}`, detail: `Score: ${q.score}/${q.maxScore}${q.notes ? ' — ' + q.notes : ''}`, sessionId: q.sessionId });
+  for (const p of readDB('payments').filter(p => p.studentId === studentId))
+    events.push({ type: 'payment', date: p.createdAt, title: 'Payment recorded', detail: `${(p.amount || 0).toLocaleString()} EGP via ${p.method}${p.note ? ' — ' + p.note : ''}` });
+  for (const b of readDB('block_history').filter(b => b.studentId === studentId))
+    events.push({ type: b.action, date: b.timestamp, title: b.action === 'block' ? 'Student blocked' : 'Student unblocked', detail: b.reason ? `Reason: ${b.reason}` : '' });
+  for (const m of readDB('whatsapp_log').filter(m => m.studentId === studentId))
+    events.push({ type: 'whatsapp', date: m.sentAt || m.createdAt, title: `WhatsApp: ${m.type}`, detail: `Status: ${m.status}` });
+  events.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  return { success: true, student, events };
+});
+
+// ── Block History Query ──
+ipcMain.handle('students:block-history', (_, studentId) => {
+  const history = readDB('block_history');
+  const filtered = studentId ? history.filter(b => b.studentId === studentId) : history;
+  return filtered.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+});
+
+// ── Attendance Correction ──
+ipcMain.handle('attendance:transfer', (_, { attendanceId, newSessionId, actorId, actorName }) => {
+  try {
+    const attendance = readDB('attendance');
+    const rec = attendance.find(a => a.id === attendanceId);
+    if (!rec) return { success: false, message: 'Attendance record not found' };
+    const newSession = readDB('sessions').find(s => s.id === newSessionId);
+    if (!newSession) return { success: false, message: 'Target session not found' };
+    if (attendance.find(a => a.sessionId === newSessionId && a.studentId === rec.studentId))
+      return { success: false, message: 'Student already checked in to the target session' };
+    const oldSessionId = rec.sessionId;
+    writeDB('attendance', attendance.map(a => a.id === attendanceId ? { ...a, sessionId: newSessionId } : a));
+    const audit = readDB('audit_log');
+    writeDB('audit_log', [...audit, { id: `al${Date.now()}`, action: 'attendance_transfer', studentId: rec.studentId, studentName: rec.studentName, attendanceId, fromSessionId: oldSessionId, toSessionId: newSessionId, actorId: actorId || '', actorName: actorName || '', timestamp: new Date().toISOString() }]);
+    return { success: true };
+  } catch (e) { return { success: false, error: e.message }; }
+});
+
+ipcMain.handle('attendance:reassign-student', (_, { attendanceId, newStudentId, actorId, actorName }) => {
+  try {
+    const attendance = readDB('attendance');
+    const rec = attendance.find(a => a.id === attendanceId);
+    if (!rec) return { success: false, message: 'Attendance record not found' };
+    const newStudent = readDB('students').find(s => s.id === newStudentId);
+    if (!newStudent) return { success: false, message: 'Student not found' };
+    if (attendance.find(a => a.sessionId === rec.sessionId && a.studentId === newStudentId && a.id !== attendanceId))
+      return { success: false, message: 'Student already checked in to this session' };
+    const oldStudentId = rec.studentId;
+    writeDB('attendance', attendance.map(a => a.id === attendanceId ? { ...a, studentId: newStudentId, studentName: newStudent.name, barcode: newStudent.barcode || '' } : a));
+    const audit = readDB('audit_log');
+    writeDB('audit_log', [...audit, { id: `al${Date.now()}`, action: 'attendance_reassign', fromStudentId: oldStudentId, toStudentId: newStudentId, studentName: newStudent.name, attendanceId, sessionId: rec.sessionId, actorId: actorId || '', actorName: actorName || '', timestamp: new Date().toISOString() }]);
+    return { success: true };
+  } catch (e) { return { success: false, error: e.message }; }
+});
+
+// ── Barcode Generation ──
+ipcMain.handle('students:generate-barcode', (_, studentId) => {
+  const students = readDB('students');
+  const student = students.find(s => s.id === studentId);
+  if (!student) return { success: false, message: 'Student not found' };
+  if (student.barcode) return { success: false, message: 'Student already has a barcode' };
+  const existingBarcodes = new Set(students.map(s => s.barcode).filter(Boolean));
+  let barcode;
+  do { barcode = 'BC' + String(Math.floor(100000 + Math.random() * 900000)); } while (existingBarcodes.has(barcode));
+  writeDB('students', students.map(s => s.id === studentId ? { ...s, barcode } : s));
+  return { success: true, barcode };
+});
+
+ipcMain.handle('students:bulk-generate-barcodes', () => {
+  const students = readDB('students');
+  const existingBarcodes = new Set(students.map(s => s.barcode).filter(Boolean));
+  let count = 0;
+  const updated = students.map(s => {
+    if (s.barcode) return s;
+    let barcode;
+    do { barcode = 'BC' + String(Math.floor(100000 + Math.random() * 900000)); } while (existingBarcodes.has(barcode));
+    existingBarcodes.add(barcode);
+    count++;
+    return { ...s, barcode };
+  });
+  writeDB('students', updated);
+  return { success: true, count };
 });

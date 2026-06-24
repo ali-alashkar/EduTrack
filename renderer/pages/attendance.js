@@ -339,7 +339,10 @@ function renderAttTableFiltered() {
       </td>
       <td><span id="wa-att-status-${r.studentId}" class="wa-msg-indicator wa-msg-queued">⏳</span></td>
       <td>
-        <button class="btn btn-danger btn-sm" onclick="removeAttRecord('${r.id}')">✕</button>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-secondary btn-sm" onclick="correctAttendance('${r.id}')" title="Correct Check-in">Correct</button>
+          <button class="btn btn-danger btn-sm" onclick="removeAttRecord('${r.id}')" title="Remove">✕</button>
+        </div>
       </td>
     </tr>`).join('');
 }
@@ -659,3 +662,81 @@ async function loadWaAttendanceStatus() {
     console.error('Failed to load WA attendance status:', e);
   }
 }
+
+// ── Phase 3: Attendance Correction ──
+window.correctAttendance = async function(attendanceId) {
+  const [sessions, students] = await Promise.all([
+    window.api.sessions.list(),
+    window.api.students.list()
+  ]);
+  const record = attendanceRecords.find(r => r.id === attendanceId);
+  if (!record) return;
+
+  const currentSess = sessions.find(s => s.id === record.sessionId);
+
+  openModal({
+    title: 'Correct Check-in',
+    body: `
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px">Fix a scan mistake by moving this record to another session or assigning it to a different student.</p>
+      
+      <div style="background:var(--bg-hover);padding:12px;border-radius:8px;margin-bottom:20px">
+        <div style="font-size:12px;color:var(--text-muted)">Current Record</div>
+        <div style="font-weight:600">${record.studentName} <span style="font-weight:400;color:var(--text-secondary)">(${record.barcode || 'No Barcode'})</span></div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">Session: ${currentSess?.title || record.sessionId}</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Move to a Different Session</label>
+        <div style="display:flex;gap:8px">
+          <select id="correct-session-select" class="form-select" style="flex:1">
+            <option value="">— Select Target Session —</option>
+            ${sessions.sort((a,b) => b.date.localeCompare(a.date)).slice(0, 30).map(s => `<option value="${s.id}">${s.date} · ${s.title}</option>`).join('')}
+          </select>
+          <button class="btn btn-primary" id="btn-correct-session">Move</button>
+        </div>
+      </div>
+
+      <div style="text-align:center;color:var(--border);margin:16px 0">OR</div>
+
+      <div class="form-group">
+        <label class="form-label">Reassign to a Different Student</label>
+        <div style="display:flex;gap:8px">
+          <select id="correct-student-select" class="form-select" style="flex:1">
+            <option value="">— Select Correct Student —</option>
+            ${students.sort((a,b) => a.name.localeCompare(b.name)).map(s => `<option value="${s.id}">${s.name} (${s.barcode || '—'})</option>`).join('')}
+          </select>
+          <button class="btn btn-primary" id="btn-correct-student">Reassign</button>
+        </div>
+      </div>
+    `,
+    footer: `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>`
+  });
+
+  el('btn-correct-session').addEventListener('click', async () => {
+    const newSessionId = el('correct-session-select').value;
+    if (!newSessionId) return toast('Select a target session', 'error');
+    if (newSessionId === record.sessionId) return toast('Target session is the same', 'error');
+    const res = await window.api.attendance.transfer({ attendanceId, newSessionId, actorName: 'Admin' });
+    if (res.success) {
+      toast('Attendance moved to new session', 'success');
+      closeModal();
+      loadAttTable(); // Reload to reflect it's gone from current view
+    } else {
+      toast(res.message || res.error, 'error');
+    }
+  });
+
+  el('btn-correct-student').addEventListener('click', async () => {
+    const newStudentId = el('correct-student-select').value;
+    if (!newStudentId) return toast('Select the correct student', 'error');
+    if (newStudentId === record.studentId) return toast('Target student is the same', 'error');
+    const res = await window.api.attendance.reassignStudent({ attendanceId, newStudentId, actorName: 'Admin' });
+    if (res.success) {
+      toast('Attendance reassigned successfully', 'success');
+      closeModal();
+      loadAttTable();
+    } else {
+      toast(res.message || res.error, 'error');
+    }
+  });
+};

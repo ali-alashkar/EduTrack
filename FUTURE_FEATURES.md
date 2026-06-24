@@ -18,28 +18,30 @@ The goal is to turn the current working system into a professional product that 
 
 These items should come before selling to real customers because they protect data and reduce support problems.
 
-- **Backup and restore center** - Add one-click backup, restore, and automatic scheduled backup for `edutrack_data`.
-- **Backup reminders** - Warn the owner if no backup has been created recently.
-- **Data integrity checks** - Detect missing, empty, or corrupt JSON files at startup and show clear repair options.
-- **Versioned migrations** - Add a migration system so new releases can update existing customer data safely.
-- **First-run setup wizard** - Replace seeded production accounts with a setup flow for owner name, center name, first admin, country code, and default levels.
-- **Remove default credential risk** - Force changing `admin/admin123` before real use or disable default users in production builds.
-- **Installer branding** - Add real app icon, installer icon, product name, publisher name, version metadata, and support link.
-- **Clean packaged data location** - Decide and document where production data lives, then make backup/restore use that exact location.
-- **Release checklist** - Require tests, clean install test, WhatsApp connection test, barcode print test, and backup/restore test before every release.
+- [COMPLETED] Backup and restore center - Add one-click backup, restore, and automatic scheduled backup for edutrack_data.
+- [COMPLETED] Backup reminders - Warn the owner if no backup has been created recently.
+- [COMPLETED] Data integrity checks - Detect missing, empty, or corrupt JSON files at startup and show clear repair options.
+- [COMPLETED] Versioned migrations - Add a migration system so new releases can update existing customer data safely.
+- [COMPLETED] **First-run setup wizard** - 4-step wizard collects owner name, center name, first admin credentials, country code, and default level. Replaces seeded defaults and marks setup complete in system.json.
+- [COMPLETED] **Remove default credential risk** - Post-login check detects if admin/admin123 is still active and shows a non-dismissable warning banner with a direct link to change the password.
+- [PARTIAL] **Installer branding** - Updated appId (com.edutrack.student-management), productName, copyright, publisherName, requestedExecutionLevel, and NSIS shortcut name. App icon assets still need to be created.
+- [COMPLETED] **Clean packaged data location** - Production data lives next to the exe (path.dirname(process.execPath)); backup/restore use the same location. Documented in RELEASE_CHECKLIST.md.
+- [COMPLETED] **Release checklist** - Documented in RELEASE_CHECKLIST.md with full pre-release steps.
 
 ## Phase 2 - Complete The Money Workflow
 
 The app already stores session fees and student discounts. To sell to tutoring centers, payment tracking should become a first-class module.
+*Note: We have implemented the core financial module visible only to Admin roles.*
 
-- **Student balance page** - Show total due, paid, remaining, discounts, and last payment for each student.
-- **Session payment status** - Mark each attended session as paid, unpaid, partially paid, or waived.
-- **Payment entry modal** - Record payment amount, date, method, note, and linked sessions.
-- **Receipts** - Generate printable/PDF receipts with center name, student name, amount, date, and remaining balance.
-- **Payment reminders** - Queue WhatsApp reminders for unpaid or overdue balances.
-- **Monthly financial report** - Show collected money, unpaid balances, discounts, gross amount, and net expected revenue.
-- **Expense tracking** - Track rent, assistant salaries, printing, materials, and other expenses.
-- **Profit dashboard** - Combine collected revenue and expenses into simple profit reporting.
+- [COMPLETED] **Student balance page** - Show total due, paid, remaining, discounts, and last payment for each student.
+- [PENDING] **Session payment status** - Mark each attended session as paid, unpaid, partially paid, or waived.
+- [COMPLETED] **Payment entry modal** - Record payment amount, date, method, note, and linked sessions.
+- [PENDING] **Receipts** - Generate printable/PDF receipts with center name, student name, amount, date, and remaining balance.
+- [PENDING] **Payment reminders** - Queue WhatsApp reminders for unpaid or overdue balances.
+- [COMPLETED] **Monthly financial report** - Show collected money, unpaid balances, discounts, gross amount, and net expected revenue.
+- [PENDING] **Expense tracking** - Track rent, assistant salaries, printing, materials, and other expenses.
+- [PENDING] **Profit dashboard** - Combine collected revenue and expenses into simple profit reporting.
+
 
 ## Phase 3 - Improve Daily Operations
 

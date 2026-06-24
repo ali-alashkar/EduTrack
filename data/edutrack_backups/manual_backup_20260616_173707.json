@@ -1,0 +1,1577 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2026-06-16T14:37:07.778Z",
+  "dbs": {
+    "attendance": [
+      {
+        "id": "att1780544685795",
+        "sessionId": "ss3",
+        "studentId": "s3",
+        "studentName": "Ahmed Ali",
+        "barcode": "STU-1003",
+        "checkInTime": "2026-06-04T03:44:45.797Z",
+        "homeworkStatus": "missed",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780663117283",
+        "sessionId": "ss1780660015043",
+        "studentId": "s4",
+        "studentName": "Sara Connor",
+        "barcode": "STU-1004",
+        "checkInTime": "2026-06-05T12:38:37.283Z",
+        "homeworkStatus": "done",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780663245341",
+        "sessionId": "ss3",
+        "studentId": "s5",
+        "studentName": "Omar Hassan",
+        "barcode": "STU-1005",
+        "checkInTime": "2026-06-05T12:40:45.341Z",
+        "homeworkStatus": "done",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780663642802",
+        "sessionId": "ss1780660015043",
+        "studentId": "s3",
+        "studentName": "Ahmed Ali",
+        "barcode": "STU-1003",
+        "checkInTime": "2026-06-05T12:47:22.802Z",
+        "homeworkStatus": "partial",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780663777567",
+        "sessionId": "ss2",
+        "studentId": "s4",
+        "studentName": "Sara Connor",
+        "barcode": "STU-1004",
+        "checkInTime": "2026-06-05T12:49:37.567Z",
+        "homeworkStatus": "excused",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780663809870",
+        "sessionId": "ss3",
+        "studentId": "s4",
+        "studentName": "Sara Connor",
+        "barcode": "STU-1004",
+        "checkInTime": "2026-06-05T12:50:09.870Z",
+        "homeworkStatus": "pending",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780664186930",
+        "sessionId": "ss3",
+        "studentId": "s1",
+        "studentName": "John Doe",
+        "barcode": "STU-1001",
+        "checkInTime": "2026-06-05T12:56:26.930Z",
+        "homeworkStatus": "excused",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780664233308",
+        "sessionId": "ss3",
+        "studentId": "s2",
+        "studentName": "Jane Smith",
+        "barcode": "STU-1002",
+        "checkInTime": "2026-06-05T12:57:13.308Z",
+        "homeworkStatus": "pending",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780668205116",
+        "sessionId": "ss1780660015043",
+        "studentId": "s1",
+        "studentName": "John Doe",
+        "barcode": "STU-1001",
+        "checkInTime": "2026-06-05T14:03:25.116Z",
+        "homeworkStatus": "missed",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780668628263",
+        "sessionId": "ss1780660015043",
+        "studentId": "s2",
+        "studentName": "Jane Smith",
+        "barcode": "STU-1002",
+        "checkInTime": "2026-06-05T14:10:28.263Z",
+        "homeworkStatus": "missed",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780671263380",
+        "sessionId": "ss2",
+        "studentId": "s3",
+        "studentName": "Ahmed Ali",
+        "barcode": "STU-1003",
+        "checkInTime": "2026-06-05T14:54:23.380Z",
+        "homeworkStatus": "pending",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780671275169",
+        "sessionId": "ss2",
+        "studentId": "s1",
+        "studentName": "John Doe",
+        "barcode": "STU-1001",
+        "checkInTime": "2026-06-05T14:54:35.169Z",
+        "homeworkStatus": "pending",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780672166925",
+        "sessionId": "ss2",
+        "studentId": "s2",
+        "studentName": "Jane Smith",
+        "barcode": "STU-1002",
+        "checkInTime": "2026-06-05T15:09:26.926Z",
+        "homeworkStatus": "partial",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780672221092",
+        "sessionId": "ss2",
+        "studentId": "s5",
+        "studentName": "Omar Hassan",
+        "barcode": "STU-1005",
+        "checkInTime": "2026-06-05T15:10:21.092Z",
+        "homeworkStatus": "done",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780672650396",
+        "sessionId": "ss1780672624894",
+        "studentId": "s4",
+        "studentName": "Sara Connor",
+        "barcode": "STU-1004",
+        "checkInTime": "2026-06-05T15:17:30.396Z",
+        "homeworkStatus": "partial",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1780998785643",
+        "sessionId": "ss1",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "barcode": "STU-981193",
+        "checkInTime": "2026-06-09T09:53:05.643Z",
+        "homeworkStatus": "missed",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781202311171",
+        "sessionId": "ss1781202305282",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "barcode": "STU-868715",
+        "checkInTime": "2026-06-11T18:25:11.171Z",
+        "homeworkStatus": "excused",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781202506311",
+        "sessionId": "ss1781202305282",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "barcode": "STU-981193",
+        "checkInTime": "2026-06-11T18:28:26.311Z",
+        "homeworkStatus": "missed",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781203073809",
+        "sessionId": "ss1780672624894",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "barcode": "STU-868715",
+        "checkInTime": "2026-06-11T18:37:53.809Z",
+        "homeworkStatus": "missed",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781203116311",
+        "sessionId": "ss1780672624894",
+        "studentId": "s5",
+        "studentName": "Omar Hassan",
+        "barcode": "STU-1005",
+        "checkInTime": "2026-06-11T18:38:36.311Z",
+        "homeworkStatus": "pending",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781203126606",
+        "sessionId": "ss1780672624894",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "barcode": "STU-981193",
+        "checkInTime": "2026-06-11T18:38:46.606Z",
+        "homeworkStatus": "pending",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781204810182",
+        "sessionId": "ss1",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "barcode": "STU-868715",
+        "checkInTime": "2026-06-11T19:06:50.182Z",
+        "homeworkStatus": "excused",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781205268042",
+        "sessionId": "ss3",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "barcode": "STU-868715",
+        "checkInTime": "2026-06-11T19:14:28.042Z",
+        "homeworkStatus": "partial",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781205769972",
+        "sessionId": "ss1",
+        "studentId": "s1781205732540",
+        "studentName": "mohamed haitham",
+        "barcode": "STU-159987",
+        "checkInTime": "2026-06-11T19:22:49.972Z",
+        "homeworkStatus": "partial",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781209600352",
+        "sessionId": "ss1781209479692",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "barcode": "STU-868715",
+        "checkInTime": "2026-06-11T20:26:40.352Z",
+        "homeworkStatus": "partial",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781209706003",
+        "sessionId": "ss1781209479692",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "barcode": "STU-981193",
+        "checkInTime": "2026-06-11T20:28:26.003Z",
+        "homeworkStatus": "done",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781209966505",
+        "sessionId": "ss1781209479692",
+        "studentId": "s1781205732540",
+        "studentName": "mohamed haitham",
+        "barcode": "STU-159987",
+        "checkInTime": "2026-06-11T20:32:46.505Z",
+        "homeworkStatus": "excused",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781366805814",
+        "sessionId": "ss1781366779611",
+        "studentId": "s5",
+        "studentName": "Omar Hassan",
+        "barcode": "STU-1005",
+        "checkInTime": "2026-06-13T16:06:45.814Z",
+        "homeworkStatus": "done",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781366820625",
+        "sessionId": "ss1781366779611",
+        "studentId": "s3",
+        "studentName": "Ahmed Ali",
+        "barcode": "STU-1003",
+        "checkInTime": "2026-06-13T16:07:00.625Z",
+        "homeworkStatus": "pending",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781366836584",
+        "sessionId": "ss1781366779611",
+        "studentId": "s1",
+        "studentName": "John Doe",
+        "barcode": "STU-1001",
+        "checkInTime": "2026-06-13T16:07:16.584Z",
+        "homeworkStatus": "done",
+        "homeworkNote": "",
+        "notes": ""
+      },
+      {
+        "id": "att1781366867214",
+        "sessionId": "ss1781366779611",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "barcode": "STU-868715",
+        "checkInTime": "2026-06-13T16:07:47.214Z",
+        "homeworkStatus": "missed",
+        "homeworkNote": "",
+        "notes": ""
+      }
+    ],
+    "backup_settings": {
+      "enabled": true,
+      "frequency": "weekly",
+      "maxKeep": 10,
+      "lastBackup": "2026-06-16T14:07:52.477Z"
+    },
+    "centers": [
+      {
+        "id": "c1",
+        "name": "Main Center",
+        "location": "Downtown Avenue"
+      },
+      {
+        "id": "c2",
+        "name": "North Branch",
+        "location": "Uptown District",
+        "contact": "",
+        "grades": [
+          "Grade 10",
+          "Grade 11"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "g1",
+        "name": "G10 Math Advanced",
+        "levelId": "l1",
+        "centerId": "c1",
+        "studentIds": [
+          "s1",
+          "s4",
+          "s1781202276397",
+          "s1781205732540",
+          "s1781213026199",
+          "s1781213130466"
+        ],
+        "createdAt": "2026-06-04T00:00:00.000Z",
+        "level": "Grade 10",
+        "center": "Main Center",
+        "dayOfWeek": "Saturday",
+        "time": "",
+        "capacity": "1000",
+        "notes": ""
+      },
+      {
+        "id": "g2",
+        "name": "G11 Physics Basics",
+        "levelId": "l2",
+        "centerId": "c2",
+        "studentIds": [
+          "s2",
+          "s5",
+          "s1",
+          "s3",
+          "s1780998761486"
+        ],
+        "createdAt": "2026-06-04T00:00:00.000Z",
+        "level": "Grade 12",
+        "center": "Main Center",
+        "dayOfWeek": "",
+        "time": "",
+        "capacity": "",
+        "notes": ""
+      },
+      {
+        "id": "g3",
+        "name": "G12 Chemistry Crash",
+        "levelId": "l3",
+        "centerId": "c1",
+        "studentIds": [
+          "s3"
+        ],
+        "createdAt": "2026-06-04T00:00:00.000Z"
+      }
+    ],
+    "levels": [
+      {
+        "id": "l1",
+        "name": "Grade 10",
+        "description": "First Year Secondary"
+      },
+      {
+        "id": "l2",
+        "name": "Grade 11",
+        "description": "Second Year Secondary"
+      },
+      {
+        "id": "l3",
+        "name": "Grade 12",
+        "description": "Third Year Secondary"
+      }
+    ],
+    "quiz_scores": [
+      {
+        "id": "qz1780671088547",
+        "sessionId": "ss1780660015043",
+        "studentId": "s1",
+        "studentName": "John Doe",
+        "score": 19.5,
+        "maxScore": 20,
+        "notes": "",
+        "recordedAt": "2026-06-11T16:35:27.605Z"
+      },
+      {
+        "id": "qz1780671094691",
+        "sessionId": "ss1780660015043",
+        "studentId": "s4",
+        "studentName": "Sara Connor",
+        "score": 15,
+        "maxScore": 20,
+        "notes": "",
+        "recordedAt": "2026-06-11T16:35:27.620Z"
+      },
+      {
+        "id": "qz1780671509655",
+        "sessionId": "ss2",
+        "studentId": "s1",
+        "studentName": "John Doe",
+        "score": 6,
+        "maxScore": 10,
+        "notes": "",
+        "recordedAt": "2026-06-05T15:11:25.950Z"
+      },
+      {
+        "id": "qz1780671509668",
+        "sessionId": "ss2",
+        "studentId": "s4",
+        "studentName": "Sara Connor",
+        "score": 5,
+        "maxScore": 10,
+        "notes": "",
+        "recordedAt": "2026-06-05T15:11:25.965Z"
+      },
+      {
+        "id": "qz1780671517585",
+        "sessionId": "ss2",
+        "studentId": "s3",
+        "studentName": "Ahmed Ali",
+        "score": 6,
+        "maxScore": 10,
+        "notes": "",
+        "recordedAt": "2026-06-05T15:11:25.918Z"
+      },
+      {
+        "id": "qz1780672279499",
+        "sessionId": "ss2",
+        "studentId": "s2",
+        "studentName": "Jane Smith",
+        "score": 1,
+        "maxScore": 10,
+        "notes": "",
+        "recordedAt": "2026-06-05T15:11:25.936Z"
+      },
+      {
+        "id": "qz1780672279521",
+        "sessionId": "ss2",
+        "studentId": "s5",
+        "studentName": "Omar Hassan",
+        "score": 0,
+        "maxScore": 10,
+        "notes": "",
+        "recordedAt": "2026-06-05T15:11:25.958Z"
+      },
+      {
+        "id": "qz1780672718997",
+        "sessionId": "ss1780672624894",
+        "studentId": "s4",
+        "studentName": "Sara Connor",
+        "score": 15,
+        "maxScore": 15,
+        "notes": "",
+        "recordedAt": "2026-06-05T15:18:38.997Z"
+      },
+      {
+        "id": "qz1781202399564",
+        "sessionId": "ss1781202305282",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "score": 3,
+        "maxScore": 10,
+        "notes": "bad",
+        "recordedAt": "2026-06-11T18:30:09.771Z"
+      },
+      {
+        "id": "qz1781202609785",
+        "sessionId": "ss1781202305282",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "score": 5,
+        "maxScore": 10,
+        "notes": "",
+        "recordedAt": "2026-06-11T18:30:09.785Z"
+      },
+      {
+        "id": "qz1781204863892",
+        "sessionId": "ss1",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "score": 5,
+        "maxScore": 10,
+        "notes": "",
+        "recordedAt": "2026-06-11T19:08:36.298Z"
+      },
+      {
+        "id": "qz1781204872667",
+        "sessionId": "ss1",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "score": 7.5,
+        "maxScore": 10,
+        "notes": "",
+        "recordedAt": "2026-06-11T19:08:36.320Z"
+      },
+      {
+        "id": "qz1781204941108",
+        "sessionId": "ss1",
+        "studentId": "s3",
+        "studentName": "Ahmed Ali",
+        "score": 0,
+        "maxScore": 10,
+        "notes": "",
+        "recordedAt": "2026-06-11T19:09:01.108Z"
+      },
+      {
+        "id": "qz1781205335238",
+        "sessionId": "ss3",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "score": 5,
+        "maxScore": 5,
+        "notes": "",
+        "recordedAt": "2026-06-11T19:15:35.238Z"
+      },
+      {
+        "id": "qz1781209741635",
+        "sessionId": "ss1781209479692",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "score": 5,
+        "maxScore": 10,
+        "notes": "",
+        "recordedAt": "2026-06-11T20:33:34.958Z"
+      },
+      {
+        "id": "qz1781209782155",
+        "sessionId": "ss1781209479692",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "score": 10,
+        "maxScore": 10,
+        "notes": "",
+        "recordedAt": "2026-06-11T20:33:34.926Z"
+      },
+      {
+        "id": "qz1781210012054",
+        "sessionId": "ss1781209479692",
+        "studentId": "s1781205732540",
+        "studentName": "mohamed haitham",
+        "score": 0,
+        "maxScore": 10,
+        "notes": "",
+        "recordedAt": "2026-06-11T20:33:34.942Z"
+      }
+    ],
+    "sessions": [
+      {
+        "id": "ss1",
+        "title": "Algebra Introduction",
+        "date": "2026-06-04",
+        "time": "10:00",
+        "groupId": "g1",
+        "status": "scheduled",
+        "createdAt": "2026-06-04T00:00:00.000Z",
+        "duration": "",
+        "sessionFee": 100,
+        "topic": "",
+        "homework": "",
+        "hasQuiz": true,
+        "quizMaxScore": 10
+      },
+      {
+        "id": "ss2",
+        "title": "Newton Laws",
+        "date": "2026-06-04",
+        "time": "12:00",
+        "groupId": "g2",
+        "status": "scheduled",
+        "createdAt": "2026-06-04T00:00:00.000Z",
+        "duration": "",
+        "topic": "",
+        "homework": "",
+        "hasQuiz": true,
+        "quizMaxScore": 10
+      },
+      {
+        "id": "ss3",
+        "title": "Organic Chemistry Prep",
+        "date": "2026-06-04",
+        "time": "14:00",
+        "groupId": "g3",
+        "status": "scheduled",
+        "createdAt": "2026-06-04T00:00:00.000Z",
+        "duration": "",
+        "sessionFee": 0,
+        "topic": "",
+        "homework": "",
+        "hasQuiz": true,
+        "quizMaxScore": 5
+      },
+      {
+        "id": "ss1780660015043",
+        "title": "ch3",
+        "groupId": "g1",
+        "date": "2026-06-05",
+        "time": "",
+        "duration": "",
+        "topic": "",
+        "homework": "",
+        "status": "scheduled",
+        "createdAt": "2026-06-05T11:46:55.043Z",
+        "hasQuiz": true,
+        "quizMaxScore": 20,
+        "sessionFee": 100
+      },
+      {
+        "id": "ss1780672624894",
+        "title": "ch4",
+        "groupId": "g1",
+        "date": "2026-06-05",
+        "time": "",
+        "duration": "",
+        "topic": "",
+        "homework": "",
+        "hasQuiz": true,
+        "quizMaxScore": 15,
+        "status": "scheduled",
+        "createdAt": "2026-06-05T15:17:04.894Z",
+        "sessionFee": 100
+      },
+      {
+        "id": "ss1781202305282",
+        "title": "ch6",
+        "groupId": "g1",
+        "date": "2026-06-11",
+        "time": "",
+        "duration": "",
+        "sessionFee": 50,
+        "topic": "",
+        "homework": "",
+        "hasQuiz": true,
+        "quizMaxScore": 10,
+        "status": "scheduled",
+        "createdAt": "2026-06-11T18:25:05.282Z"
+      },
+      {
+        "id": "ss1781209479692",
+        "title": "now",
+        "groupId": "g1",
+        "date": "2026-06-11",
+        "time": "",
+        "duration": "",
+        "sessionFee": 0,
+        "topic": "",
+        "homework": "",
+        "hasQuiz": true,
+        "quizMaxScore": 10,
+        "status": "scheduled",
+        "createdAt": "2026-06-11T20:24:39.692Z"
+      },
+      {
+        "id": "ss1781366779611",
+        "title": "try",
+        "groupId": "g2",
+        "date": "2026-06-13",
+        "time": "",
+        "duration": "",
+        "sessionFee": 0,
+        "topic": "",
+        "homework": "",
+        "hasQuiz": false,
+        "quizMaxScore": null,
+        "status": "scheduled",
+        "createdAt": "2026-06-13T16:06:19.611Z"
+      }
+    ],
+    "students": [
+      {
+        "id": "s1",
+        "name": "John Doe",
+        "phone": "01011112222",
+        "parentPhone": "01033334444",
+        "levelId": "l1",
+        "barcode": "STU-1001",
+        "createdAt": "2026-06-04T00:00:00.000Z",
+        "level": "Grade 10",
+        "center": "",
+        "dob": "",
+        "email": "",
+        "notes": "",
+        "sessionFee": 100,
+        "hasDiscount": true,
+        "discountPercent": 20,
+        "isBlocked": false,
+        "blockReason": "",
+        "blockedAt": ""
+      },
+      {
+        "id": "s2",
+        "name": "Jane Smith",
+        "phone": "01122223333",
+        "parentPhone": "01144445555",
+        "levelId": "l2",
+        "barcode": "STU-1002",
+        "createdAt": "2026-06-04T00:00:00.000Z"
+      },
+      {
+        "id": "s3",
+        "name": "Ahmed Ali",
+        "phone": "01233334444",
+        "parentPhone": "01255556666",
+        "levelId": "l3",
+        "barcode": "STU-1003",
+        "createdAt": "2026-06-04T00:00:00.000Z",
+        "level": "Grade 12",
+        "center": "Main Center",
+        "dob": "",
+        "email": "",
+        "notes": "",
+        "isBlocked": false,
+        "blockReason": "",
+        "blockedAt": ""
+      },
+      {
+        "id": "s4",
+        "name": "Sara Connor",
+        "phone": "01544445555",
+        "parentPhone": "01566667777",
+        "levelId": "l1",
+        "barcode": "STU-1004",
+        "createdAt": "2026-06-04T00:00:00.000Z",
+        "level": "",
+        "center": "",
+        "dob": "",
+        "email": "",
+        "notes": "",
+        "hasDiscount": true,
+        "discountPercent": 100
+      },
+      {
+        "id": "s5",
+        "name": "Omar Hassan",
+        "phone": "01055556666",
+        "parentPhone": "01077778888",
+        "levelId": "l2",
+        "barcode": "STU-1005",
+        "createdAt": "2026-06-04T00:00:00.000Z",
+        "isBlocked": true,
+        "blockReason": "ضرب صاحبه في الحصه",
+        "blockedAt": "2026-06-13T16:25:17.332Z"
+      },
+      {
+        "id": "s1780998761486",
+        "name": "omar hassan",
+        "barcode": "STU-981193",
+        "phone": "01127718939",
+        "parentPhone": "01556960684",
+        "level": "",
+        "center": "Main Center",
+        "dob": "2026-06-26",
+        "email": "",
+        "notes": "",
+        "hasDiscount": true,
+        "discountPercent": 15,
+        "createdAt": "2026-06-09T09:52:41.486Z",
+        "isBlocked": true,
+        "blockReason": "ضرب صاحبه في الحصه وضحك طول الحصه",
+        "blockedAt": "2026-06-13T16:34:03.601Z"
+      },
+      {
+        "id": "s1781202276397",
+        "name": "ali haitham",
+        "barcode": "STU-868715",
+        "phone": "01556960684",
+        "parentPhone": "01127718939",
+        "level": "Grade 10",
+        "center": "",
+        "dob": "",
+        "email": "",
+        "notes": "",
+        "hasDiscount": false,
+        "discountPercent": 0,
+        "createdAt": "2026-06-11T18:24:36.397Z"
+      },
+      {
+        "id": "s1781205732540",
+        "name": "mohamed haitham",
+        "barcode": "STU-159987",
+        "phone": "01514697836",
+        "parentPhone": "01127718939",
+        "level": "Grade 10",
+        "center": "Main Center",
+        "dob": "",
+        "email": "",
+        "notes": "",
+        "hasDiscount": true,
+        "discountPercent": 100,
+        "createdAt": "2026-06-11T19:22:12.540Z"
+      },
+      {
+        "id": "s1781213026199",
+        "name": "eoiwnion",
+        "barcode": "oinewd",
+        "phone": "01144891955",
+        "parentPhone": "01127718939",
+        "level": "Grade 10",
+        "center": "Main Center",
+        "dob": "",
+        "email": "",
+        "notes": "",
+        "hasDiscount": false,
+        "discountPercent": 0,
+        "createdAt": "2026-06-11T21:23:46.199Z"
+      },
+      {
+        "id": "s1781213130466",
+        "name": "lkmlkm",
+        "barcode": "mkmwqe",
+        "phone": "01556960684",
+        "parentPhone": "01127718939",
+        "level": "Grade 10",
+        "center": "",
+        "dob": "",
+        "email": "",
+        "notes": "",
+        "hasDiscount": false,
+        "discountPercent": 0,
+        "createdAt": "2026-06-11T21:25:30.466Z"
+      }
+    ],
+    "users": [
+      {
+        "id": "u1",
+        "username": "admin",
+        "password": "admin123",
+        "role": "admin",
+        "name": "System Admin",
+        "createdAt": "2026-06-04T02:40:17.126Z"
+      },
+      {
+        "id": "u1780541841546",
+        "name": "ali",
+        "username": "alihaitham",
+        "password": "123456789",
+        "role": "assistant",
+        "createdAt": "2026-06-04T02:57:21.546Z"
+      }
+    ],
+    "whatsapp_log": [
+      {
+        "id": "wm_1781202311207_2i7rb",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1781202305282",
+        "sessionTitle": "ch6",
+        "type": "attendance",
+        "messageText": "تحية طيبة 📚\n*ali haitham* حضر/ت اليوم حصة *ch6*\n📅 2026-06-11  ⏰ \nنشكر تعاونكم",
+        "templateId": "att_4",
+        "templateIndex": 3,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T18:25:11.263Z",
+        "createdAt": "2026-06-11T18:25:11.207Z"
+      },
+      {
+        "id": "wm_1781202337677_db2c7",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1781202305282",
+        "sessionTitle": "ch6",
+        "type": "homework",
+        "messageText": "السلام عليكم ورحمة الله 🌟\nملاحظة بخصوص الواجب:\n*ali haitham* في حصة *ch6*\nحالة الواجب: *✅ تم التسليم*\n\nبارك الله فيكم",
+        "templateId": "hw_5",
+        "templateIndex": 4,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T18:25:37.716Z",
+        "createdAt": "2026-06-11T18:25:37.677Z"
+      },
+      {
+        "id": "wm_1781202347611_bz6rs",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1781202305282",
+        "sessionTitle": "ch6",
+        "type": "homework",
+        "messageText": "أهلاً وسهلاً 📚\nتقرير الواجب المنزلي:\nالطالب/ة: *ali haitham*\n📖 *ch6*\nالحالة: *❌ لم يسلم*\n\nنشكر تعاونكم",
+        "templateId": "hw_4",
+        "templateIndex": 3,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T18:25:47.682Z",
+        "createdAt": "2026-06-11T18:25:47.611Z"
+      },
+      {
+        "id": "wm_1781202353765_27wnr",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1781202305282",
+        "sessionTitle": "ch6",
+        "type": "homework",
+        "messageText": "تحية طيبة ✏️\nنود إبلاغكم عن حالة الواجب:\n*ali haitham* - حصة *ch6*\n📋 الواجب: *🔵 معذور*\n\nمع تحياتنا",
+        "templateId": "hw_3",
+        "templateIndex": 2,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T18:25:53.789Z",
+        "createdAt": "2026-06-11T18:25:53.765Z"
+      },
+      {
+        "id": "wm_1781202399591_x6c3h",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1781202305282",
+        "sessionTitle": "ch6",
+        "type": "quiz",
+        "messageText": "تحية طيبة ✨\nنتائج الاختبار:\n*ali haitham* - *ch6*\n📝 حصل/ت على: *1* من *10*\n📊 النسبة المئوية: *10%*\nمع تحياتنا",
+        "templateId": "qz_3",
+        "templateIndex": 2,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T18:26:39.699Z",
+        "createdAt": "2026-06-11T18:26:39.591Z"
+      },
+      {
+        "id": "wm_1781202457591_fkt2t",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1781202305282",
+        "sessionTitle": "ch6",
+        "type": "homework",
+        "messageText": "السلام عليكم ورحمة الله 🌟\nملاحظة بخصوص الواجب:\n*ali haitham* في حصة *ch6*\nحالة الواجب: *✅ تم التسليم*\n\nبارك الله فيكم",
+        "templateId": "hw_5",
+        "templateIndex": 4,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T18:27:37.615Z",
+        "createdAt": "2026-06-11T18:27:37.591Z"
+      },
+      {
+        "id": "wm_1781202471527_xuv0d",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1781202305282",
+        "sessionTitle": "ch6",
+        "type": "homework",
+        "messageText": "السلام عليكم 📝\nتحديث الواجب المنزلي للطالب/ة *ali haitham*\n📖 الحصة: *ch6*\n📋 حالة الواجب: *⚠️ تسليم جزئي*\n\nجزاكم الله خيراً",
+        "templateId": "hw_1",
+        "templateIndex": 0,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T18:27:51.551Z",
+        "createdAt": "2026-06-11T18:27:51.527Z"
+      },
+      {
+        "id": "wm_1781202517086_b5phq",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "parentPhone": "01556960684",
+        "sessionId": "ss1781202305282",
+        "sessionTitle": "ch6",
+        "type": "homework",
+        "messageText": "السلام عليكم 📝\nتحديث الواجب المنزلي للطالب/ة *omar hassan*\n📖 الحصة: *ch6*\n📋 حالة الواجب: *⚠️ تسليم جزئي*\n\nجزاكم الله خيراً",
+        "templateId": "hw_1",
+        "templateIndex": 0,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T18:28:37.169Z",
+        "createdAt": "2026-06-11T18:28:37.086Z"
+      },
+      {
+        "id": "wm_1781202613708_ib0os",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "parentPhone": "01556960684",
+        "sessionId": "ss1781202305282",
+        "sessionTitle": "ch6",
+        "type": "quiz",
+        "messageText": "أهلاً بكم 📋\nتقرير الاختبار القصير:\nالطالب/ة: *omar hassan*\n📖 *ch6*\nالنتيجة: *5 / 10* = *50%*\nنشكر تعاونكم",
+        "templateId": "qz_4",
+        "templateIndex": 3,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T18:30:13.748Z",
+        "createdAt": "2026-06-11T18:30:13.708Z"
+      },
+      {
+        "id": "wm_1781202654843_ywb99",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "parentPhone": "01556960684",
+        "sessionId": "ss1781202305282",
+        "sessionTitle": "ch6",
+        "type": "attendance",
+        "messageText": "السلام عليكم 🌟\nنفيدكم بحضور الطالب/ة *omar hassan* لحصة *ch6*\n📅 التاريخ: 2026-06-11 | ⏰ الوقت: \n📋 حالة الواجب: *❌ لم يسلم*\n\nجزاكم الله خيراً",
+        "templateId": "atthw_1",
+        "templateIndex": 0,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T18:30:54.875Z",
+        "createdAt": "2026-06-11T18:30:54.843Z"
+      },
+      {
+        "id": "wm_1781203073829_fxx27",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1780672624894",
+        "sessionTitle": "ch4",
+        "type": "attendance",
+        "messageText": "أهلاً وسهلاً ✅\nنود إعلامكم أن *ali haitham* حضر/ت حصة *ch4*\nبتاريخ 2026-06-05 الساعة \nمع تحياتنا",
+        "templateId": "att_3",
+        "templateIndex": 2,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T18:37:54.094Z",
+        "createdAt": "2026-06-11T18:37:53.829Z"
+      },
+      {
+        "id": "wm_1781203086150_8mfde",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1780672624894",
+        "sessionTitle": "ch4",
+        "type": "homework",
+        "messageText": "تحية طيبة ✏️\nنود إبلاغكم عن حالة الواجب:\n*ali haitham* - حصة *ch4*\n📋 الواجب: *❌ لم يسلم*\n\nمع تحياتنا",
+        "templateId": "hw_3",
+        "templateIndex": 2,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T18:38:06.183Z",
+        "createdAt": "2026-06-11T18:38:06.150Z"
+      },
+      {
+        "id": "wm_1781203116332_fidif",
+        "studentId": "s5",
+        "studentName": "Omar Hassan",
+        "parentPhone": "01077778888",
+        "sessionId": "ss1780672624894",
+        "sessionTitle": "ch4",
+        "type": "attendance",
+        "messageText": "تحية طيبة 📚\n*Omar Hassan* حضر/ت اليوم حصة *ch4*\n📅 2026-06-05  ⏰ \nنشكر تعاونكم",
+        "templateId": "att_4",
+        "templateIndex": 3,
+        "status": "failed",
+        "error": "No LID for user\ns (https://static.whatsapp.net/rsrc.php/v4/yO/r/_o1F093C5v0.js:80:180)",
+        "sentAt": "",
+        "createdAt": "2026-06-11T18:38:36.332Z"
+      },
+      {
+        "id": "wm_1781203126640_tnsgq",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "parentPhone": "01556960684",
+        "sessionId": "ss1780672624894",
+        "sessionTitle": "ch4",
+        "type": "attendance",
+        "messageText": "مرحباً 👋\nتم تسجيل حضور *omar hassan* في حصة *ch4*\n📅 2026-06-05 - ⏰ \nشكراً لكم",
+        "templateId": "att_2",
+        "templateIndex": 1,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T18:38:46.667Z",
+        "createdAt": "2026-06-11T18:38:46.640Z"
+      },
+      {
+        "id": "wm_1781205139706_2m37v",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "parentPhone": "01556960684",
+        "sessionId": "ss1",
+        "sessionTitle": "Algebra Introduction",
+        "type": "attendance",
+        "messageText": "أهلاً وسهلاً ✅\nتقرير حصة اليوم للطالب/ة *omar hassan*:\n📖 الحصة: *Algebra Introduction* (2026-06-04)\n✅ الحضور: تم التسجيل\n📋 الواجب: *❌ لم يسلم*\n\nمع تحياتنا",
+        "templateId": "atthw_3",
+        "templateIndex": 2,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T19:12:19.757Z",
+        "createdAt": "2026-06-11T19:12:19.706Z"
+      },
+      {
+        "id": "wm_1781205139710_cyodj",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1",
+        "sessionTitle": "Algebra Introduction",
+        "type": "attendance",
+        "messageText": "تحية طيبة 📚\nملخص حصة اليوم:\nالطالب/ة: *ali haitham*\nالحصة: *Algebra Introduction*\nالتاريخ: 2026-06-04 | الوقت: 10:00\nحالة الواجب: *🔵 معذور*\n\nنشكر تعاونكم",
+        "templateId": "atthw_4",
+        "templateIndex": 3,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T19:12:31.730Z",
+        "createdAt": "2026-06-11T19:12:19.710Z"
+      },
+      {
+        "id": "wm_1781205335266_rmolt",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss3",
+        "sessionTitle": "Organic Chemistry Prep",
+        "type": "quiz",
+        "messageText": "مرحباً 🎓\nنتيجة الكويز:\nالطالب/ة: *ali haitham*\nالحصة: *Organic Chemistry Prep*\nالدرجة: *5/5* (100%)\nشكراً لمتابعتكم",
+        "templateId": "qz_2",
+        "templateIndex": 1,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T19:15:35.299Z",
+        "createdAt": "2026-06-11T19:15:35.266Z"
+      },
+      {
+        "id": "wm_1781205528463_f0ar5",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss3",
+        "sessionTitle": "Organic Chemistry Prep",
+        "type": "quiz",
+        "messageText": "مرحباً 🎓\nنتيجة الكويز:\nالطالب/ة: *ali haitham*\nالحصة: *Organic Chemistry Prep*\nالدرجة: *5/5* (100%)\nشكراً لمتابعتكم",
+        "templateId": "qz_2",
+        "templateIndex": 1,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T19:18:48.493Z",
+        "createdAt": "2026-06-11T19:18:48.463Z"
+      },
+      {
+        "id": "wm_1781209644029_sljgq",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1781209479692",
+        "sessionTitle": "now",
+        "type": "session_summary",
+        "messageText": "السلام عليكم ورحمة الله 🌙\nإليكم تقرير اليوم:\n\n👤 *ali haitham*\n📖 الحصة: *now*\n📅 2026-06-11\n✅ الحضور: حاضر/ة\n📋 الواجب: *⚠️ تسليم جزئي*\n\nبارك الله فيكم",
+        "templateId": "sum_5",
+        "templateIndex": 4,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T20:27:24.081Z",
+        "createdAt": "2026-06-11T20:27:24.029Z"
+      },
+      {
+        "id": "wm_1781209768093_wcieo",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "parentPhone": "01556960684",
+        "sessionId": "ss1781209479692",
+        "sessionTitle": "now",
+        "type": "quiz",
+        "messageText": "مرحباً 🎓\nنتيجة الكويز:\nالطالب/ة: *omar hassan*\nالحصة: *now*\nالدرجة: *5/10* (50%)\nشكراً لمتابعتكم",
+        "templateId": "qz_2",
+        "templateIndex": 1,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T20:29:28.142Z",
+        "createdAt": "2026-06-11T20:29:28.093Z"
+      },
+      {
+        "id": "wm_1781209797243_o5fts",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "parentPhone": "01556960684",
+        "sessionId": "ss1781209479692",
+        "sessionTitle": "now",
+        "type": "session_summary",
+        "messageText": "السلام عليكم ورحمة الله 🌙\nإليكم تقرير اليوم:\n\n👤 *omar hassan*\n📖 الحصة: *now*\n📅 2026-06-11\n✅ الحضور: حاضر/ة\n📋 الواجب: *✅ تم التسليم*\n📊 الكويز: *5/10* (50%)\n\nبارك الله فيكم",
+        "templateId": "sum_5",
+        "templateIndex": 4,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T20:29:57.280Z",
+        "createdAt": "2026-06-11T20:29:57.243Z"
+      },
+      {
+        "id": "wm_1781209866145_o6hgr",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1781209479692",
+        "sessionTitle": "now",
+        "type": "session_summary",
+        "messageText": "تحية طيبة 📚\n*now* | 2026-06-11\n\nالطالب/ة: *ali haitham*\nالحضور: ✅ تم التسجيل\n📋 الواجب: *⚠️ تسليم جزئي*\n📊 الكويز: *10/10* (100%)\n\nنشكر تعاونكم",
+        "templateId": "sum_4",
+        "templateIndex": 3,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T20:31:06.170Z",
+        "createdAt": "2026-06-11T20:31:06.145Z"
+      },
+      {
+        "id": "wm_1781210023724_bobn7",
+        "studentId": "s1781205732540",
+        "studentName": "mohamed haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1781209479692",
+        "sessionTitle": "now",
+        "type": "session_summary",
+        "messageText": "السلام عليكم ورحمة الله 🌙\nإليكم تقرير اليوم:\n\n👤 *mohamed haitham*\n📖 الحصة: *now*\n📅 2026-06-11\n✅ الحضور: حاضر/ة\n📋 الواجب: *🔵 معذور*\n📊 الكويز: *0/10* (0%)\n\nبارك الله فيكم",
+        "templateId": "sum_5",
+        "templateIndex": 4,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-11T20:33:43.778Z",
+        "createdAt": "2026-06-11T20:33:43.724Z"
+      },
+      {
+        "id": "wm_1781366880097_qlzgp",
+        "studentId": "s5",
+        "studentName": "Omar Hassan",
+        "parentPhone": "01077778888",
+        "sessionId": "ss1781366779611",
+        "sessionTitle": "try",
+        "type": "session_summary",
+        "messageText": "السلام عليكم ورحمة الله 🌙\nإليكم تقرير اليوم:\n\n👤 *Omar Hassan*\n📖 الحصة: *try*\n📅 2026-06-13\n✅ الحضور: حاضر/ة\n📋 الواجب: *✅ تم التسليم*\n\nبارك الله فيكم",
+        "templateId": "sum_5",
+        "templateIndex": 4,
+        "status": "failed",
+        "error": "No LID for user\ns (https://static.whatsapp.net/rsrc.php/v4/y6/r/9XjTbjv73Qt.js:80:180)",
+        "sentAt": "",
+        "createdAt": "2026-06-13T16:08:00.097Z"
+      },
+      {
+        "id": "wm_1781366880101_1plcq",
+        "studentId": "s3",
+        "studentName": "Ahmed Ali",
+        "parentPhone": "01255556666",
+        "sessionId": "ss1781366779611",
+        "sessionTitle": "try",
+        "type": "session_summary",
+        "messageText": "مرحباً 👋\nملخص حصة اليوم لـ *Ahmed Ali*\n📖 *try* — 2026-06-13\n─────────────────\n✅ الحضور: مسجّل\n─────────────────\nشكراً لمتابعتكم",
+        "templateId": "sum_2",
+        "templateIndex": 1,
+        "status": "failed",
+        "error": "No LID for user\ns (https://static.whatsapp.net/rsrc.php/v4/y6/r/9XjTbjv73Qt.js:80:180)",
+        "sentAt": "",
+        "createdAt": "2026-06-13T16:08:00.101Z"
+      },
+      {
+        "id": "wm_1781366880120_ydylo",
+        "studentId": "s1",
+        "studentName": "John Doe",
+        "parentPhone": "01033334444",
+        "sessionId": "ss1781366779611",
+        "sessionTitle": "try",
+        "type": "session_summary",
+        "messageText": "أهلاً وسهلاً ✨\nتقرير *John Doe* — *try*\n📅 2026-06-13\n\n- الحضور ✅ حاضر/ة\n📋 الواجب: *✅ تم التسليم*\n\nمع تحياتنا",
+        "templateId": "sum_3",
+        "templateIndex": 2,
+        "status": "failed",
+        "error": "No LID for user\ns (https://static.whatsapp.net/rsrc.php/v4/y6/r/9XjTbjv73Qt.js:80:180)",
+        "sentAt": "",
+        "createdAt": "2026-06-13T16:08:00.120Z"
+      },
+      {
+        "id": "wm_1781366880130_32kna",
+        "studentId": "s1781202276397",
+        "studentName": "ali haitham",
+        "parentPhone": "01127718939",
+        "sessionId": "ss1781366779611",
+        "sessionTitle": "try",
+        "type": "session_summary",
+        "messageText": "تحية طيبة 📚\n*try* | 2026-06-13\n\nالطالب/ة: *ali haitham*\nالحضور: ✅ تم التسجيل\n📋 الواجب: *❌ لم يسلم*\n\nنشكر تعاونكم",
+        "templateId": "sum_4",
+        "templateIndex": 3,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-13T16:08:31.722Z",
+        "createdAt": "2026-06-13T16:08:00.130Z"
+      },
+      {
+        "id": "wm_1781366947845_c3jgx",
+        "studentId": "s2",
+        "studentName": "Jane Smith",
+        "parentPhone": "01144445555",
+        "sessionId": "ss1781366779611",
+        "sessionTitle": "try",
+        "type": "absence",
+        "messageText": "مرحباً 👋\nللعلم، الطالب/ة *Jane Smith* لم يسجل/تسجل حضوراً في حصة *try*\n📅 2026-06-13 - ⏰ \nيرجى إبلاغنا بسبب الغياب\nشكراً لكم",
+        "templateId": "abs_2",
+        "templateIndex": 1,
+        "status": "failed",
+        "error": "No LID for user\ns (https://static.whatsapp.net/rsrc.php/v4/y6/r/9XjTbjv73Qt.js:80:180)",
+        "sentAt": "",
+        "createdAt": "2026-06-13T16:09:07.845Z"
+      },
+      {
+        "id": "wm_1781366947848_3gxto",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "parentPhone": "01556960684",
+        "sessionId": "ss1781366779611",
+        "sessionTitle": "try",
+        "type": "absence",
+        "messageText": "السلام عليكم 🔔\nنود إعلامكم بأن الطالب/ة *omar hassan* لم يحضر/تحضر حصة *try*\n📅 التاريخ: 2026-06-13\n⏰ الوقت: \nنرجو التواصل معنا في حال وجود أي عذر\nجزاكم الله خيراً",
+        "templateId": "abs_1",
+        "templateIndex": 0,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-13T16:09:13.780Z",
+        "createdAt": "2026-06-13T16:09:07.848Z"
+      },
+      {
+        "id": "wm_1781367917336_ae068",
+        "studentId": "s5",
+        "studentName": "Omar Hassan",
+        "parentPhone": "01077778888",
+        "sessionId": "",
+        "sessionTitle": "",
+        "type": "block",
+        "messageText": "Hello,\nWe would like to inform you that Omar Hassan has been blocked.\nReason: ضرب صاحبه في الحصه\nPlease contact the administration for more details.",
+        "templateId": "block_auto",
+        "templateIndex": 0,
+        "status": "failed",
+        "error": "No LID for user\ns (https://static.whatsapp.net/rsrc.php/v4/y6/r/9XjTbjv73Qt.js:80:180)",
+        "sentAt": "",
+        "createdAt": "2026-06-13T16:25:17.336Z"
+      },
+      {
+        "id": "wm_1781367936793_x597f",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "parentPhone": "01556960684",
+        "sessionId": "",
+        "sessionTitle": "",
+        "type": "block",
+        "messageText": "Hello,\nWe would like to inform you that omar hassan has been blocked.\nReason: ضرب صاحبه في الحصه\nPlease contact the administration for more details.",
+        "templateId": "block_auto",
+        "templateIndex": 0,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-13T16:25:36.871Z",
+        "createdAt": "2026-06-13T16:25:36.793Z"
+      },
+      {
+        "id": "wm_1781368443606_2a8go",
+        "studentId": "s1780998761486",
+        "studentName": "omar hassan",
+        "parentPhone": "01556960684",
+        "sessionId": "",
+        "sessionTitle": "",
+        "type": "block",
+        "messageText": "السلام عليكم ولي امر الطالب\\ة: omar hassan\nنحيط علمكم بانه تم طرد الطاالب\\ة وهذا بسبب\n:ضرب صاحبه في الحصه وضحك طول الحصه\nويرجي االتواصل معانا",
+        "templateId": "blk_1",
+        "templateIndex": 0,
+        "status": "sent",
+        "error": "",
+        "sentAt": "2026-06-13T16:34:03.686Z",
+        "createdAt": "2026-06-13T16:34:03.606Z"
+      }
+    ],
+    "whatsapp_settings": {
+      "autoSendAttendance": false,
+      "autoSendHomework": false,
+      "autoSendQuiz": false,
+      "countryCode": "20",
+      "minDelay": 5000,
+      "maxDelay": 15000
+    },
+    "whatsapp_templates": {
+      "attendance": [
+        {
+          "id": "att_1",
+          "text": "السلام عليكم 🌟\nنفيدكم بحضور الطالب/ة *{studentName}* لحصة *{sessionTitle}* اليوم\n📅 التاريخ: {date}\n⏰ الوقت: {time}\nجزاكم الله خيراً"
+        },
+        {
+          "id": "att_2",
+          "text": "مرحباً 👋\nتم تسجيل حضور *{studentName}* في حصة *{sessionTitle}*\n📅 {date} - ⏰ {time}\nشكراً لكم"
+        },
+        {
+          "id": "att_3",
+          "text": "أهلاً وسهلاً ✅\nنود إعلامكم أن *{studentName}* حضر/ت حصة *{sessionTitle}*\nبتاريخ {date} الساعة {time}\nمع تحياتنا"
+        },
+        {
+          "id": "att_4",
+          "text": "تحية طيبة 📚\n*{studentName}* حضر/ت اليوم حصة *{sessionTitle}*\n📅 {date}  ⏰ {time}\nنشكر تعاونكم"
+        },
+        {
+          "id": "att_5",
+          "text": "السلام عليكم ورحمة الله ✨\nيسرنا إبلاغكم بحضور *{studentName}* لحصة *{sessionTitle}* اليوم\nالتاريخ: {date}\nالوقت: {time}\nبارك الله فيكم"
+        },
+        {
+          "id": "att_6",
+          "text": "مساء الخير 🌙\nنعلمكم أن الطالب/ة *{studentName}* قد حضر/ت حصة اليوم\n📖 الحصة: *{sessionTitle}*\n📅 التاريخ: {date}\nمع أطيب التحيات"
+        },
+        {
+          "id": "att_7",
+          "text": "أهلا بكم 📝\nتم تأكيد حضور *{studentName}*\nالحصة: *{sessionTitle}*\nالتاريخ: {date} | الوقت: {time}\nشكراً لمتابعتكم"
+        }
+      ],
+      "homework": [
+        {
+          "id": "hw_1",
+          "text": "السلام عليكم 📝\nتحديث الواجب المنزلي للطالب/ة *{studentName}*\n📖 الحصة: *{sessionTitle}*\n📋 حالة الواجب: *{homeworkStatus}*\n{homeworkNote}\nجزاكم الله خيراً"
+        },
+        {
+          "id": "hw_2",
+          "text": "مرحباً 👋\nبخصوص الواجب المنزلي:\nالطالب/ة: *{studentName}*\nالحصة: *{sessionTitle}*\nالحالة: *{homeworkStatus}*\n{homeworkNote}\nشكراً لمتابعتكم"
+        },
+        {
+          "id": "hw_3",
+          "text": "تحية طيبة ✏️\nنود إبلاغكم عن حالة الواجب:\n*{studentName}* - حصة *{sessionTitle}*\n📋 الواجب: *{homeworkStatus}*\n{homeworkNote}\nمع تحياتنا"
+        },
+        {
+          "id": "hw_4",
+          "text": "أهلاً وسهلاً 📚\nتقرير الواجب المنزلي:\nالطالب/ة: *{studentName}*\n📖 *{sessionTitle}*\nالحالة: *{homeworkStatus}*\n{homeworkNote}\nنشكر تعاونكم"
+        },
+        {
+          "id": "hw_5",
+          "text": "السلام عليكم ورحمة الله 🌟\nملاحظة بخصوص الواجب:\n*{studentName}* في حصة *{sessionTitle}*\nحالة الواجب: *{homeworkStatus}*\n{homeworkNote}\nبارك الله فيكم"
+        }
+      ],
+      "quiz": [
+        {
+          "id": "qz_1",
+          "text": "السلام عليكم 📊\nنتيجة الاختبار القصير للطالب/ة *{studentName}*\n📖 الحصة: *{sessionTitle}*\n📝 الدرجة: *{quizScore} / {quizMax}*\n📈 النسبة: *{quizPercent}%*\nجزاكم الله خيراً"
+        },
+        {
+          "id": "qz_2",
+          "text": "مرحباً 🎓\nنتيجة الكويز:\nالطالب/ة: *{studentName}*\nالحصة: *{sessionTitle}*\nالدرجة: *{quizScore}/{quizMax}* ({quizPercent}%)\nشكراً لمتابعتكم"
+        },
+        {
+          "id": "qz_3",
+          "text": "تحية طيبة ✨\nنتائج الاختبار:\n*{studentName}* - *{sessionTitle}*\n📝 حصل/ت على: *{quizScore}* من *{quizMax}*\n📊 النسبة المئوية: *{quizPercent}%*\nمع تحياتنا"
+        },
+        {
+          "id": "qz_4",
+          "text": "أهلاً بكم 📋\nتقرير الاختبار القصير:\nالطالب/ة: *{studentName}*\n📖 *{sessionTitle}*\nالنتيجة: *{quizScore} / {quizMax}* = *{quizPercent}%*\nنشكر تعاونكم"
+        },
+        {
+          "id": "qz_5",
+          "text": "السلام عليكم ورحمة الله 🌟\nإليكم نتيجة الاختبار:\n*{studentName}*\nالحصة: *{sessionTitle}*\nالدرجة: *{quizScore}* من أصل *{quizMax}*\nالنسبة: *{quizPercent}%*\nبارك الله فيكم"
+        }
+      ],
+      "attendance_homework": [
+        {
+          "id": "atthw_1",
+          "text": "السلام عليكم 🌟\nنفيدكم بحضور الطالب/ة *{studentName}* لحصة *{sessionTitle}*\n📅 التاريخ: {date} | ⏰ الوقت: {time}\n📋 حالة الواجب: *{homeworkStatus}*\n{homeworkNote}\nجزاكم الله خيراً"
+        },
+        {
+          "id": "atthw_2",
+          "text": "مرحباً 👋\n*{studentName}* حضر/ت حصة *{sessionTitle}* اليوم\n📅 {date} - ⏰ {time}\n📝 الواجب: *{homeworkStatus}*\n{homeworkNote}\nشكراً لكم"
+        },
+        {
+          "id": "atthw_3",
+          "text": "أهلاً وسهلاً ✅\nتقرير حصة اليوم للطالب/ة *{studentName}*:\n📖 الحصة: *{sessionTitle}* ({date})\n✅ الحضور: تم التسجيل\n📋 الواجب: *{homeworkStatus}*\n{homeworkNote}\nمع تحياتنا"
+        },
+        {
+          "id": "atthw_4",
+          "text": "تحية طيبة 📚\nملخص حصة اليوم:\nالطالب/ة: *{studentName}*\nالحصة: *{sessionTitle}*\nالتاريخ: {date} | الوقت: {time}\nحالة الواجب: *{homeworkStatus}*\n{homeworkNote}\nنشكر تعاونكم"
+        },
+        {
+          "id": "atthw_5",
+          "text": "السلام عليكم ورحمة الله ✨\nإليكم تقرير حضور اليوم:\n*{studentName}* ✅ حاضر/ة\n📖 *{sessionTitle}* - {date}\n📝 الواجب: *{homeworkStatus}*\n{homeworkNote}\nبارك الله فيكم"
+        }
+      ],
+      "session_summary": [
+        {
+          "id": "sum_1",
+          "text": "السلام عليكم 🌟\nتقرير حصة *{sessionTitle}*\n📅 {date}{time_line}\n\n👤 الطالب/ة: *{studentName}*\n✅ الحضور: حاضر/ة{hw_line}{quiz_line}\n\nجزاكم الله خيراً"
+        },
+        {
+          "id": "sum_2",
+          "text": "مرحباً 👋\nملخص حصة اليوم لـ *{studentName}*\n📖 *{sessionTitle}* — {date}{time_line}\n─────────────────\n✅ الحضور: مسجّل{hw_line}{quiz_line}\n─────────────────\nشكراً لمتابعتكم"
+        },
+        {
+          "id": "sum_3",
+          "text": "أهلاً وسهلاً ✨\nتقرير *{studentName}* — *{sessionTitle}*\n📅 {date}{time_line}\n\n- الحضور ✅ حاضر/ة{hw_line}{quiz_line}\n\nمع تحياتنا"
+        },
+        {
+          "id": "sum_4",
+          "text": "تحية طيبة 📚\n*{sessionTitle}* | {date}{time_line}\n\nالطالب/ة: *{studentName}*\nالحضور: ✅ تم التسجيل{hw_line}{quiz_line}\n\nنشكر تعاونكم"
+        },
+        {
+          "id": "sum_5",
+          "text": "السلام عليكم ورحمة الله 🌙\nإليكم تقرير اليوم:\n\n👤 *{studentName}*\n📖 الحصة: *{sessionTitle}*\n📅 {date}{time_line}\n✅ الحضور: حاضر/ة{hw_line}{quiz_line}\n\nبارك الله فيكم"
+        }
+      ],
+      "block": [
+        {
+          "id": "blk_1",
+          "text": "السلام عليكم ولي امر الطالب\\ة: {studentName}\nنحيط علمكم بانه تم طرد الطاالب\\ة وهذا بسبب\n:{blockReason}\nويرجي االتواصل معانا"
+        }
+      ],
+      "absence": [
+        {
+          "id": "abs_1",
+          "text": "السلام عليكم 🔔\nنود إعلامكم بأن الطالب/ة *{studentName}* لم يحضر/تحضر حصة *{sessionTitle}*\n📅 التاريخ: {date}\n⏰ الوقت: {time}\nنرجو التواصل معنا في حال وجود أي عذر\nجزاكم الله خيراً"
+        },
+        {
+          "id": "abs_2",
+          "text": "مرحباً 👋\nللعلم، الطالب/ة *{studentName}* لم يسجل/تسجل حضوراً في حصة *{sessionTitle}*\n📅 {date} - ⏰ {time}\nيرجى إبلاغنا بسبب الغياب\nشكراً لكم"
+        },
+        {
+          "id": "abs_3",
+          "text": "أهلاً وسهلاً ⚠️\nنفيدكم بتغيب الطالب/ة *{studentName}* عن حصة *{sessionTitle}*\nبتاريخ {date} الساعة {time}\nنأمل إعلامنا بالسبب\nمع تحياتنا"
+        },
+        {
+          "id": "abs_4",
+          "text": "تحية طيبة 📋\n*{studentName}* لم يحضر/تحضر حصة اليوم:\n📖 الحصة: *{sessionTitle}*\n📅 {date} | ⏰ {time}\nنرجو التواصل لمعرفة سبب الغياب\nنشكر تعاونكم"
+        },
+        {
+          "id": "abs_5",
+          "text": "السلام عليكم ورحمة الله 🌟\nنود إبلاغكم بغياب الطالب/ة *{studentName}*\nعن حصة *{sessionTitle}* بتاريخ {date}\n⏰ الوقت: {time}\nيرجى التواصل معنا لتوضيح سبب الغياب\nبارك الله فيكم"
+        }
+      ]
+    }
+  }
+}

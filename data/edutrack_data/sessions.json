@@ -117,5 +117,21 @@
     "quizMaxScore": null,
     "status": "scheduled",
     "createdAt": "2026-06-13T16:06:19.611Z"
+  },
+  {
+    "title": "try G22",
+    "groupId": "g2",
+    "date": "2026-06-24",
+    "time": "",
+    "duration": "",
+    "sessionFee": 0,
+    "topic": "",
+    "homework": "",
+    "hasQuiz": false,
+    "quizMaxScore": null,
+    "status": "scheduled",
+    "id": "ss1782306635953",
+    "createdAt": "2026-06-24T13:10:35.953Z",
+    "duplicatedFrom": "ss1781366779611"
   }
 ]

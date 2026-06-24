@@ -13,5 +13,19 @@
       "Grade 10",
       "Grade 11"
     ]
+  },
+  {
+    "id": "c1782309706666_1",
+    "name": "elnady",
+    "location": "",
+    "contact": "",
+    "grades": [
+      "Grade 10",
+      "Grade 11",
+      "Grade 12",
+      "Grade 12"
+    ],
+    "needsCompletion": true,
+    "createdAt": "2026-06-24T14:01:46.664Z"
   }
 ]
