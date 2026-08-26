@@ -5,6 +5,7 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const path = require('path');
+const fs = require('fs');
 const { getRandomTemplate } = require('./whatsapp-templates');
 
 class WhatsAppService {
@@ -47,10 +48,10 @@ class WhatsAppService {
         dataPath: path.join(this.dataDir, 'whatsapp_auth'),
       }),
       puppeteer: {
-        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', // ← add this
+        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
         headless: true,
-        timeout: 60000,          // ← wait up to 60s to launch
-         protocolTimeout: 60000,  // ← wait up to 60s for CDP commands
+        timeout: 120000,         // 120s to launch Chrome
+        protocolTimeout: 120000, // 120s for CDP commands (was timing out at 60s)
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -59,8 +60,8 @@ class WhatsAppService {
           '--no-first-run',
           '--no-zygote',
           '--disable-gpu',
-          '--disable-extensions',      // ← add this
-          '--disable-default-apps',    // ← add this
+          '--disable-extensions',
+          '--disable-default-apps',
         ],
       },
     });
@@ -94,6 +95,12 @@ class WhatsAppService {
     this.client.on('disconnected', (reason) => {
       console.log('[WhatsApp] Disconnected:', reason);
       this._setStatus('disconnected');
+      // If WhatsApp logged out the session remotely, the saved auth is now
+      // invalid. Clear it so the next init() gets a fresh QR instead of hanging.
+      if (reason === 'LOGOUT') {
+        console.log('[WhatsApp] Session logged out — clearing stale auth data');
+        this.clearAuth();
+      }
       this.onDisconnected();
     });
 
@@ -104,6 +111,19 @@ class WhatsAppService {
       console.error('[WhatsApp] Init error:', err);
       this._setStatus('disconnected');
       return { success: false, error: err.message };
+    }
+  }
+
+  // ── Clear Auth ──
+  clearAuth() {
+    const authDir = path.join(this.dataDir, 'whatsapp_auth');
+    try {
+      if (fs.existsSync(authDir)) {
+        fs.rmSync(authDir, { recursive: true, force: true });
+        console.log('[WhatsApp] Auth data cleared');
+      }
+    } catch (err) {
+      console.error('[WhatsApp] Failed to clear auth data:', err);
     }
   }
 

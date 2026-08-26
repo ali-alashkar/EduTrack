@@ -1,6 +1,7 @@
 // ── WhatsApp Integration Page ─────────────────────────────────────────────────
 let waCurrentTab = 'connection';
 let waStatusInterval = null;
+let _currentWaLogData = [];
 
 async function renderWhatsApp() {
   const status = await window.api.whatsapp.status();
@@ -239,6 +240,22 @@ function renderWaSettings(settings) {
         <button class="btn btn-primary" style="margin-top:20px" onclick="saveWaSettings(); toast('Settings saved', 'success')">Save Settings</button>
       </div>
     </div>
+
+    ${State.isTrial ? `
+      <div class="card" style="max-width:640px; margin-top:24px; border:1px solid var(--red); background:rgba(239,68,68,0.03)">
+        <div class="card-header" style="border-bottom: 1px solid rgba(239, 68, 68, 0.15)">
+          <span class="card-title" style="color:var(--red)">👑 تفعيل النسخة الكاملة</span>
+        </div>
+        <div style="padding:20px">
+          <p style="font-size:13px; color:var(--text-secondary); line-height:1.6; margin-bottom:14px">
+            أنت تستخدم النسخة التجريبية (بحد أقصى ${State.trialLimit} طالب فقط). لشراء النسخة الكاملة وتفعيل جميع الميزات (مثل تصدير الإكسل والنسخ الاحتياطي) بدون أي اشتراك شهري، يرجى التواصل مع المبرمج.
+          </p>
+          <button class="btn btn-sm btn-primary" onclick="window.api.system.openExternal('https://wa.me/201127718933?text=أريد شراء النسخة الكاملة من برنامج EduTrack')" style="background:var(--red); border-color:var(--red)">
+            تواصل للشراء عبر الواتساب
+          </button>
+        </div>
+      </div>
+    ` : ''}
   `;
 }
 
@@ -265,7 +282,7 @@ async function renderWaLog() {
         <option value="queued">⏳ Queued</option>
         <option value="no_phone">⚠️ No Phone</option>
       </select>
-      <select id="wa-log-type-filter" class="form-select" style="width:140px" onchange="filterWaLog()">
+      <select class="form-select" id="wa-log-type-filter" class="form-select" style="width:140px" onchange="filterWaLog()">
         <option value="">All Types</option>
         <option value="session_summary">Session Summary</option>
         <option value="attendance">📋 Attendance</option>
@@ -274,6 +291,7 @@ async function renderWaLog() {
         <option value="block">Block</option>
       </select>
       <button class="btn btn-secondary btn-sm" onclick="renderWaLog()">🔄 Refresh</button>
+      <button class="btn btn-secondary btn-sm" id="btn-export-wa-log">Export CSV/Excel</button>
     </div>
 
     <!-- Stats -->
@@ -302,6 +320,7 @@ async function renderWaLog() {
   `;
 
   await filterWaLog();
+  el('btn-export-wa-log').addEventListener('click', () => exportWaLogExcel());
 }
 
 window.filterWaLog = async function() {
@@ -323,6 +342,7 @@ window.filterWaLog = async function() {
       (m.parentPhone || '').includes(search)
     );
   }
+  _currentWaLogData = log;
 
   // Stats
   const allLog = await window.api.whatsapp.getLog(null);
@@ -530,13 +550,14 @@ async function renderWaTemplates() {
   const templatesObj = await window.api.whatsapp.listTemplates();
   
   const categories = [
-    { id: 'attendance', label: 'Attendance' },
-    { id: 'homework', label: 'Homework' },
-    { id: 'quiz', label: 'Quiz' },
-    { id: 'attendance_homework', label: 'Att. + Homework' },
-    { id: 'session_summary', label: 'Session Summary' },
-    { id: 'block', label: 'Block' },
-    { id: 'absence', label: 'Absence' },
+    { id: 'attendance', label: '✅ Attendance' },
+    { id: 'homework', label: '📝 Homework' },
+    { id: 'quiz', label: '🏆 Quiz' },
+    { id: 'attendance_homework', label: '📋 Att. + Homework' },
+    { id: 'session_summary', label: '📊 Session Summary' },
+    { id: 'block', label: '🚫 Block' },
+    { id: 'absence', label: '🔔 Absence' },
+    { id: 'student_report', label: '📈 Student Report' },
   ];
 
   container.innerHTML = `
@@ -602,6 +623,15 @@ const WA_VARS = [
   { id: 'time_line', label: 'Time Line', cats: ['session_summary'] },
   { id: 'hw_line', label: 'HW Line', cats: ['session_summary'] },
   { id: 'quiz_line', label: 'Quiz Line', cats: ['session_summary'] },
+  // student_report
+  { id: 'level', label: 'Level', cats: ['student_report'] },
+  { id: 'reportPeriod', label: 'Report Period', cats: ['student_report'] },
+  { id: 'totalSessions', label: 'Total Sessions', cats: ['student_report'] },
+  { id: 'attendanceRate', label: 'Attendance Rate', cats: ['student_report'] },
+  { id: 'hwDoneRate', label: 'HW Done Rate', cats: ['student_report'] },
+  { id: 'avgQuizScore', label: 'Avg Quiz Score', cats: ['student_report'] },
+  { id: 'avgQuizPercent', label: 'Avg Quiz %', cats: ['student_report'] },
+  { id: 'performanceSummary', label: 'Performance', cats: ['student_report'] },
 ];
 
 window.openWaTemplateModal = async function(id = null) {
@@ -673,7 +703,16 @@ window.previewWaTemplate = function() {
     quizPercent: '90',
     time_line: ' | 14:00',
     hw_line: '\n📋 الواجب: *✅ تم التسليم*\n📌 ملاحظة: ممتاز جداً',
-    quiz_line: '\n📊 الكويز: *9/10* (90%)'
+    quiz_line: '\n📊 الكويز: *9/10* (90%)',
+    // student_report
+    level: 'الصف الثالث',
+    reportPeriod: 'منذ التسجيل / All Time',
+    totalSessions: '18',
+    attendanceRate: '89%',
+    hwDoneRate: '78%',
+    avgQuizScore: '8.5/10',
+    avgQuizPercent: '85',
+    performanceSummary: '✅ جيد جداً / Very Good',
   };
 
   let text = textarea.value || '';
@@ -728,3 +767,30 @@ window.resetWaTemplates = async function() {
     toast('Failed to reset templates', 'error');
   }
 };
+
+async function exportWaLogExcel() {
+  if (!_currentWaLogData || !_currentWaLogData.length) return toast('No log messages to export', 'error');
+  const rows = _currentWaLogData.map(m => ({
+    studentName: m.studentName,
+    parentPhone: m.parentPhone || '',
+    session: m.sessionTitle || m.sessionId || '',
+    type: m.type || '',
+    status: m.status || '',
+    error: m.error || '',
+    time: m.sentAt ? new Date(m.sentAt).toLocaleString() : m.createdAt ? new Date(m.createdAt).toLocaleString() : ''
+  }));
+
+  const cols = [
+    { key: 'studentName', label: 'Student' },
+    { key: 'parentPhone', label: 'Parent Phone' },
+    { key: 'session', label: 'Session' },
+    { key: 'type', label: 'Type' },
+    { key: 'status', label: 'Status' },
+    { key: 'error', label: 'Error' },
+    { key: 'time', label: 'Time' }
+  ];
+
+  const res = await window.api.export.excel({ sheetName: 'WhatsApp Message Log', columns: cols, rows, filename: `WhatsApp_Log_Export.xlsx` });
+  if (res?.success) toast('WhatsApp message log exported successfully', 'success');
+  else if (res && !res.canceled) toast(res.error || 'Export failed', 'error');
+}

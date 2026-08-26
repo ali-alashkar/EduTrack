@@ -173,26 +173,32 @@ function showImportCompletionNotice(res) {
   const createdCenters = res.createdCenters || [];
   const updatedCenters = res.updatedCenters || [];
 
-  if (!res.needsCompletion) {
-    previewSection.style.display = 'none';
-    return;
-  }
-
   const levelNames = createdLevels.map(l => l.name).join(', ');
   const centerNames = createdCenters.map(c => c.name).join(', ');
   const updatedCenterText = updatedCenters.map(c => `${c.name} (${c.grade})`).join(', ');
 
   previewSection.style.display = 'block';
   previewSection.innerHTML = `
-    <div class="alert alert-warning" style="margin-bottom:16px;">
-      <strong>Imported successfully, but some setup data needs review.</strong>
-      <div style="margin-top:8px;font-size:13px;line-height:1.6;">
-        ${levelNames ? `<div>New grades/levels added: <strong>${levelNames}</strong>.</div>` : ''}
-        ${centerNames ? `<div>New centers added: <strong>${centerNames}</strong>.</div>` : ''}
-        ${updatedCenterText ? `<div>Centers assigned new grades: <strong>${updatedCenterText}</strong>.</div>` : ''}
-        <div>Please open Levels and Centers to complete descriptions, locations, contacts, and grade assignments.</div>
+    <div class="card" style="padding:20px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div>
+          <h3 style="margin:0 0 6px 0;color:var(--text-primary);">🎉 Import Completed Successfully!</h3>
+          <p style="margin:0;color:var(--text-secondary);font-size:13px;">Imported <strong>${res.created || 0}</strong> students.</p>
+        </div>
+        <button class="btn btn-primary" onclick="navigate('students')">
+          Go to Students Page →
+        </button>
       </div>
+      ${res.needsCompletion ? `
+        <div class="alert alert-warning" style="margin-top:16px;margin-bottom:0;">
+          <strong>Setup data needs review:</strong>
+          <div style="margin-top:6px;font-size:13px;line-height:1.6;">
+            ${levelNames ? `<div>New grades/levels added: <strong>${levelNames}</strong>.</div>` : ''}
+            ${centerNames ? `<div>New centers added: <strong>${centerNames}</strong>.</div>` : ''}
+            ${updatedCenterText ? `<div>Centers assigned new grades: <strong>${updatedCenterText}</strong>.</div>` : ''}
+          </div>
+        </div>
+      ` : ''}
     </div>
   `;
-  toast('Some imported grades or centers need completion', 'warning');
 }

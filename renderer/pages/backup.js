@@ -1,13 +1,13 @@
-// ── Backup & Restore Center (Admin Only) ───────────────────────────────────────
+// ── Backup & Restore Center (Admin & Assistant) ─────────────────────────────────
 async function renderBackup() {
-  if (State.user?.role !== 'admin') {
+  if (!State.user || (State.user.role !== 'admin' && State.user.role !== 'assistant')) {
     el('page-backup').innerHTML = `
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/>
           <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
         </svg>
-        <p>Access denied. Admin only.</p>
+        <p>Access denied.</p>
       </div>`;
     return;
   }
@@ -52,8 +52,25 @@ async function renderBackup() {
           </svg>
           <span>Create Instant Backup</span>
         </button>
-      </div>
     </div>
+
+    ${State.isTrial ? `
+      <div class="card" style="border: 1px solid var(--red); background: rgba(239, 68, 68, 0.03); margin-bottom: 24px;">
+        <div class="card-header" style="border-bottom: 1px solid rgba(239, 68, 68, 0.15)">
+          <span class="card-title" style="color:var(--red); display:flex; align-items:center; gap:8px">
+            ⚠️ ميزة مغلقة في النسخة التجريبية
+          </span>
+        </div>
+        <div style="padding:20px">
+          <p style="font-size:13px; color:var(--text-secondary); line-height:1.6; margin-bottom:14px">
+            ميزات النسخ الاحتياطي اليدوي والتلقائي واستيراد وتصدير ملفات قواعد البيانات معطلة في النسخة التجريبية. يرجى شراء النسخة الكاملة لتفعيل الميزة وحماية بيانات طلابك.
+          </p>
+          <button class="btn btn-sm btn-primary" onclick="window.api.system.openExternal('https://wa.me/201127718933?text=أريد شراء النسخة الكاملة من برنامج EduTrack')" style="background:var(--red); border-color:var(--red); color:white;">
+            شراء النسخة الكاملة (تواصل عبر واتساب)
+          </button>
+        </div>
+      </div>
+    ` : ''}
 
     <!-- Stats Grid -->
     <div class="stats-grid">
@@ -131,6 +148,96 @@ async function renderBackup() {
       </div>
     </div>
 
+    <!-- Cloud Sync Card -->
+    <div class="card" style="margin-bottom:28px;background:linear-gradient(135deg,rgba(99,102,241,0.04) 0%,rgba(6,182,212,0.04) 100%);border:1px solid rgba(99,102,241,0.2);" id="cloud-sync-card">
+      <div class="card-header" style="border-bottom:1px solid rgba(99,102,241,0.15)">
+        <span class="card-title" style="color:var(--accent);display:flex;align-items:center;gap:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          ☁️ Google Drive Cloud Sync
+        </span>
+        <span id="sync-status-badge" style="font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;background:rgba(107,114,128,0.15);color:var(--text-secondary)">Loading...</span>
+      </div>
+      <div class="card-body" style="padding:20px">
+        <!-- Connected state -->
+        <div id="sync-connected-panel" style="display:none">
+          <div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:20px">
+            <div style="flex:1;min-width:180px;background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:14px">
+              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Last Upload</div>
+              <div id="sync-last-upload" style="font-weight:600;font-size:13px;color:var(--text-primary)">Never</div>
+            </div>
+            <div style="flex:1;min-width:180px;background:rgba(6,182,212,0.07);border:1px solid rgba(6,182,212,0.2);border-radius:10px;padding:14px">
+              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Last Download</div>
+              <div id="sync-last-download" style="font-weight:600;font-size:13px;color:var(--text-primary)">Never</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.7;background:rgba(99,102,241,0.05);border-radius:8px;padding:10px 14px">
+            🔄 <strong style="color:var(--text-primary)">Auto-sync is active.</strong> The app checks Google Drive for newer data when it starts, and uploads any local changes every <strong style="color:var(--accent)">30 seconds</strong> automatically.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" id="btn-sync-upload">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload Now
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-sync-download">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download Now
+            </button>
+            <button class="btn btn-danger btn-sm" id="btn-sync-disconnect" style="margin-left:auto">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Disconnect
+            </button>
+          </div>
+        </div>
+
+        <!-- Setup state (not connected) -->
+        <div id="sync-setup-panel">
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:18px;line-height:1.7">
+            Connect to <strong style="color:var(--text-primary)">Google Drive</strong> to keep your data automatically synced across devices.
+            You'll need a free <strong>Google Cloud OAuth 2.0</strong> client ID &amp; secret.
+            <a href="#" id="sync-help-link" style="color:var(--accent);text-decoration:underline;font-weight:600">How to get credentials ↗</a>
+          </p>
+
+          <!-- Step 1: Enter credentials -->
+          <div style="background:rgba(15,17,23,0.6);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:6px">
+              <span style="background:var(--accent);color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px">1</span>
+              Enter Google OAuth Credentials
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Client ID</label>
+                <input type="text" id="sync-client-id" class="form-input" placeholder="xxxxxx.apps.googleusercontent.com" autocomplete="off" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Client Secret</label>
+                <input type="password" id="sync-client-secret" class="form-input" placeholder="GOCSPX-..." autocomplete="off" />
+              </div>
+            </div>
+            <button class="btn btn-primary btn-sm" id="btn-sync-get-url">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Open Google Authorization Page
+            </button>
+          </div>
+
+          <!-- Step 2: Paste authorization code -->
+          <div id="sync-step2" style="background:rgba(15,17,23,0.6);border:1px solid var(--border);border-radius:10px;padding:16px;display:none">
+            <div style="font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:12px;display:flex;align-items:center;gap:6px">
+              <span style="background:var(--cyan);color:#000;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px">2</span>
+              Paste the Authorization Code from Google
+            </div>
+            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">After approving access in your browser, Google will show you a code. Copy it and paste it here.</p>
+            <div style="display:flex;gap:10px">
+              <input type="text" id="sync-auth-code" class="form-input" placeholder="Paste authorization code here..." style="flex:1" />
+              <button class="btn btn-success" id="btn-sync-connect">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg>
+                Connect
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Backup History List -->
     <div class="card">
       <div class="card-header">
@@ -179,6 +286,9 @@ async function renderBackup() {
   el('btn-save-settings').addEventListener('click', handleSaveSettings);
   el('btn-export-backup').addEventListener('click', handleExportBackup);
   el('btn-import-backup').addEventListener('click', handleImportBackup);
+
+  // ── Cloud Sync: init UI and bind events ─────────────────────────────────────
+  await initCloudSyncUI();
 }
 
 // ── Event Handlers ──────────────────────────────────────────────────────────
@@ -314,4 +424,195 @@ function formatBytes(bytes) {
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cloud Sync UI
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderSyncStatusBadge(status, connected) {
+  if (!connected) {
+    return { text: '🔴 Not Connected', bg: 'rgba(239,68,68,0.12)', color: '#ef4444' };
+  }
+  switch (status) {
+    case 'uploading':   return { text: '⬆️ Uploading...', bg: 'rgba(99,102,241,0.15)', color: 'var(--accent)' };
+    case 'downloading': return { text: '⬇️ Downloading...', bg: 'rgba(6,182,212,0.15)', color: 'var(--cyan)' };
+    case 'syncing':     return { text: '🔄 Syncing...', bg: 'rgba(99,102,241,0.15)', color: 'var(--accent)' };
+    case 'error':       return { text: '⚠️ Sync Error', bg: 'rgba(239,68,68,0.12)', color: '#ef4444' };
+    case 'offline':     return { text: '📶 Offline — Will sync when connected', bg: 'rgba(234,179,8,0.12)', color: '#eab308' };
+    case 'pending':     return { text: '⏳ Pending Upload — Waiting for internet', bg: 'rgba(234,179,8,0.12)', color: '#eab308' };
+    default:            return { text: '🟢 Connected', bg: 'rgba(34,197,94,0.12)', color: 'var(--green)' };
+  }
+}
+
+function updateSyncStatusBadge(syncStatus) {
+  const badge = el('sync-status-badge');
+  if (!badge) return;
+  const { text, bg, color } = renderSyncStatusBadge(syncStatus.status, syncStatus.connected);
+  badge.textContent = text;
+  badge.style.background = bg;
+  badge.style.color = color;
+
+  const connectedPanel = el('sync-connected-panel');
+  const setupPanel     = el('sync-setup-panel');
+  if (!connectedPanel || !setupPanel) return;
+
+  if (syncStatus.connected) {
+    connectedPanel.style.display = 'block';
+    setupPanel.style.display     = 'none';
+    const lastUpload   = el('sync-last-upload');
+    const lastDownload = el('sync-last-download');
+    if (lastUpload)   lastUpload.textContent   = syncStatus.lastUpload   ? (formatDate(syncStatus.lastUpload)   + ' · ' + formatTime(syncStatus.lastUpload))   : 'Never';
+    if (lastDownload) lastDownload.textContent = syncStatus.lastDownload ? (formatDate(syncStatus.lastDownload) + ' · ' + formatTime(syncStatus.lastDownload)) : 'Never';
+  } else {
+    connectedPanel.style.display = 'none';
+    setupPanel.style.display     = 'block';
+  }
+}
+
+async function initCloudSyncUI() {
+  try {
+    const status = await window.api.sync.getStatus();
+    updateSyncStatusBadge(status);
+  } catch (e) {
+    console.error('[SyncUI] Failed to get sync status:', e);
+    const badge = el('sync-status-badge');
+    if (badge) { badge.textContent = '⚠️ Unavailable'; badge.style.color = '#ef4444'; }
+    return;
+  }
+
+  // Listen for live status updates from main process
+  window.api.sync.onStatusChange((s) => updateSyncStatusBadge(s));
+
+  // Help link
+  const helpLink = el('sync-help-link');
+  if (helpLink) {
+    helpLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.api.system.openExternal('https://console.cloud.google.com/apis/credentials');
+    });
+  }
+
+  // Step 1 – Open authorization URL
+  const btnGetUrl = el('btn-sync-get-url');
+  if (btnGetUrl) {
+    btnGetUrl.addEventListener('click', async () => {
+      const clientId     = el('sync-client-id')?.value?.trim();
+      const clientSecret = el('sync-client-secret')?.value?.trim();
+      if (!clientId || !clientSecret) {
+        toast('Please enter both Client ID and Client Secret.', 'error');
+        return;
+      }
+      btnGetUrl.disabled = true;
+      btnGetUrl.textContent = 'Opening browser...';
+      try {
+        const res = await window.api.sync.getAuthUrl({ clientId, clientSecret });
+        if (res.success) {
+          toast('Google authorization page opened in your browser. Approve access and paste the code below.', 'success');
+          el('sync-step2').style.display = 'block';
+        } else {
+          toast(`Error: ${res.error}`, 'error');
+        }
+      } catch (e) {
+        toast(`Error: ${e.message}`, 'error');
+      } finally {
+        btnGetUrl.disabled = false;
+        btnGetUrl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Open Google Authorization Page';
+      }
+    });
+  }
+
+  // Step 2 – Exchange code for tokens
+  const btnConnect = el('btn-sync-connect');
+  if (btnConnect) {
+    btnConnect.addEventListener('click', async () => {
+      const clientId     = el('sync-client-id')?.value?.trim();
+      const clientSecret = el('sync-client-secret')?.value?.trim();
+      const code         = el('sync-auth-code')?.value?.trim();
+      if (!clientId || !clientSecret || !code) {
+        toast('Please enter Client ID, Client Secret, and the authorization code.', 'error');
+        return;
+      }
+      btnConnect.disabled = true;
+      btnConnect.textContent = 'Connecting...';
+      try {
+        const res = await window.api.sync.exchangeCode({ clientId, clientSecret, code });
+        if (res.success) {
+          toast('✅ Successfully connected to Google Drive! Auto-sync is now active.', 'success');
+          const status = await window.api.sync.getStatus();
+          updateSyncStatusBadge(status);
+        } else {
+          toast(`Connection failed: ${res.error}`, 'error');
+        }
+      } catch (e) {
+        toast(`Error: ${e.message}`, 'error');
+      } finally {
+        btnConnect.disabled = false;
+        btnConnect.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg> Connect';
+      }
+    });
+  }
+
+  // Upload Now
+  const btnUpload = el('btn-sync-upload');
+  if (btnUpload) {
+    btnUpload.addEventListener('click', async () => {
+      btnUpload.disabled = true;
+      btnUpload.textContent = 'Uploading...';
+      try {
+        const res = await window.api.sync.forceUpload();
+        if (res.success) {
+          toast('✅ Data uploaded to Google Drive successfully!', 'success');
+          updateSyncStatusBadge(res.status);
+        } else {
+          toast(`Upload failed: ${res.error}`, 'error');
+        }
+      } catch (e) {
+        toast(`Error: ${e.message}`, 'error');
+      } finally {
+        btnUpload.disabled = false;
+        btnUpload.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload Now';
+      }
+    });
+  }
+
+  // Download Now
+  const btnDownload = el('btn-sync-download');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', async () => {
+      if (!confirmAction('Merge latest data from Google Drive with your local data? Records from both sides will be kept, with the most recently updated version winning on conflicts. A pre-sync backup will be created first.')) return;
+      btnDownload.disabled = true;
+      btnDownload.textContent = 'Downloading...';
+      try {
+        const res = await window.api.sync.forceDownload();
+        if (res.success) {
+          toast('✅ Drive data merged with local data successfully!', 'success');
+          updateSyncStatusBadge(res.status);
+        } else {
+          toast(`Download failed: ${res.error}`, 'error');
+        }
+      } catch (e) {
+        toast(`Error: ${e.message}`, 'error');
+      } finally {
+        btnDownload.disabled = false;
+        btnDownload.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download Now';
+      }
+    });
+  }
+
+  // Disconnect
+  const btnDisconnect = el('btn-sync-disconnect');
+  if (btnDisconnect) {
+    btnDisconnect.addEventListener('click', async () => {
+      if (!confirmAction('Disconnect Google Drive sync? The app will stop auto-syncing data. Your existing data will not be deleted.')) return;
+      try {
+        await window.api.sync.disconnect();
+        toast('Disconnected from Google Drive.', 'success');
+        const status = await window.api.sync.getStatus();
+        updateSyncStatusBadge(status);
+      } catch (e) {
+        toast(`Error: ${e.message}`, 'error');
+      }
+    });
+  }
 }

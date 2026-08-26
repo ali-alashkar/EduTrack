@@ -1,6 +1,7 @@
 // ── Students ─────────────────────────────────────────────────────────────────
 let studentsData = [];
 let studentsLookup = null;
+let _studentsCheckboxDelegationHandler = null;
 
 async function renderStudents() {
   const [students, levels, centers, groups] = await Promise.all([
@@ -28,11 +29,18 @@ async function renderStudents() {
       <button class="btn btn-secondary" onclick="generateMissingBarcodes()" title="Generate Missing Barcodes">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M3 5v14M21 5v14M8 5v14M12 5v14M16 5v14"/></svg>
       </button>
-      <select class="form-select" id="bulk-action-select" style="width:140px; display:none;">
+      <select class="form-select" id="bulk-action-select" style="width:170px;" disabled>
         <option value="">Bulk Actions</option>
         <option value="group">Assign Group</option>
+        <option value="move-group">Move to Group</option>
         <option value="level">Update Level</option>
         <option value="center">Update Center</option>
+        <option value="note">Add Note</option>
+        <option value="whatsapp">WhatsApp Announcement</option>
+        <option value="whatsapp-report">WhatsApp Performance Report</option>
+        <option value="block">Block Students</option>
+        <option value="unblock">Remove Block</option>
+        <option value="delete">Delete Students</option>
       </select>
       <select class="form-select" id="student-level-filter" style="width:160px">
         <option value="">All Levels</option>
@@ -60,6 +68,13 @@ async function renderStudents() {
         <option value="has-notes">Has Notes</option>
       </select>
     </div>
+    <div class="bulk-selection-bar hidden" id="student-selection-bar">
+      <div>
+        <strong id="student-selection-count">0 selected</strong>
+        <span>Use Shift + click to select a range.</span>
+      </div>
+      <button class="btn btn-secondary btn-sm" type="button" onclick="clearStudentSelection()">Clear</button>
+    </div>
     <div class="card">
       <div class="table-wrap">
         <table>
@@ -76,40 +91,135 @@ async function renderStudents() {
 
   renderStudentsTable(students, groups, studentsLookup);
   el('btn-add-student').addEventListener('click', () => openStudentModal(null, levels, centers, groups));
-  el('student-search').addEventListener('input', () => filterStudents(groups));
+  el('student-search').addEventListener('input', debounce(() => filterStudents(groups), 150));
   el('student-level-filter').addEventListener('change', () => filterStudents(groups));
   el('student-center-filter').addEventListener('change', () => filterStudents(groups));
   el('student-property-filter').addEventListener('change', () => filterStudents(groups));
   el('bulk-action-select')?.addEventListener('change', (e) => handleBulkAction(e.target.value, levels, centers, groups));
+
+  // Event delegation for ALL student checkboxes — attached once, removed first to avoid duplicates
+  // Uses 'click' (not 'change') because Electron fires 'change' on checkbox only after blur
+  const pageEl = el('page-students');
+  if (_studentsCheckboxDelegationHandler) {
+    pageEl.removeEventListener('click', _studentsCheckboxDelegationHandler);
+  }
+  _studentsCheckboxDelegationHandler = function(e) {
+    const cb = e.target && e.target.closest('input.student-checkbox');
+    if (cb) {
+      toggleStudent(cb, e);
+    }
+  };
+  pageEl.addEventListener('click', _studentsCheckboxDelegationHandler);
+
+  // Ensure bulk action dropdown reflects current selection after full page re-render
+  updateBulkActionsVisibility();
 }
 
 let selectedStudentIds = new Set();
 
+function setStudentCheckboxSelected(checkbox, checked) {
+  if (!checkbox) return;
+  checkbox.checked = checked;
+  checkbox.closest?.('tr')?.classList.toggle('row-selected', checked);
+  const val = String(checkbox.value || '');
+  if (!val) return;
+  if (checked) {
+    selectedStudentIds.add(val);
+  } else {
+    selectedStudentIds.delete(val);
+  }
+}
+
 window.toggleAllStudents = function(checkbox) {
+  const isChecked = checkbox ? checkbox.checked : false;
   const checkboxes = document.querySelectorAll('.student-checkbox');
   checkboxes.forEach(cb => {
-    cb.checked = checkbox.checked;
-    if (checkbox.checked) selectedStudentIds.add(cb.value);
-    else selectedStudentIds.delete(cb.value);
+    setStudentCheckboxSelected(cb, isChecked);
   });
   updateBulkActionsVisibility();
 };
 
-window.toggleStudent = function(checkbox) {
-  if (checkbox.checked) selectedStudentIds.add(checkbox.value);
-  else selectedStudentIds.delete(checkbox.value);
-  const allChecked = document.querySelectorAll('.student-checkbox:not(:checked)').length === 0;
-  el('selectAllStudents').checked = allChecked;
+let lastCheckedStudentCheckbox = null;
+
+function syncStudentSelectionControls() {
+  const checkboxes = Array.from(document.querySelectorAll('.student-checkbox'));
+  
+  // Keep each visible checkbox in sync with selectedStudentIds
+  checkboxes.forEach(cb => {
+    const val = String(cb.value || '');
+    const isSel = !!val && selectedStudentIds.has(val);
+    cb.checked = isSel;
+    cb.closest?.('tr')?.classList.toggle('row-selected', isSel);
+  });
+
+  const selectAllEl = el('selectAllStudents');
+  if (selectAllEl) {
+    const checkedCount = checkboxes.filter(cb => cb.checked).length;
+    selectAllEl.checked = checkboxes.length > 0 && checkedCount === checkboxes.length;
+    selectAllEl.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+  }
+
+  const bar = el('student-selection-bar');
+  const count = el('student-selection-count');
+  if (bar && count) {
+    const total = selectedStudentIds.size;
+    count.textContent = `${total} selected`;
+    bar.classList.toggle('hidden', total === 0);
+  }
+}
+
+window.toggleStudent = function(checkbox, event) {
+  if (!checkbox) return;
+  
+  if (event && event.shiftKey && lastCheckedStudentCheckbox && document.body.contains(lastCheckedStudentCheckbox)) {
+    const checkboxes = Array.from(document.querySelectorAll('.student-checkbox'));
+    const start = checkboxes.indexOf(checkbox);
+    const end = checkboxes.indexOf(lastCheckedStudentCheckbox);
+    
+    if (start !== -1 && end !== -1) {
+      const slice = checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1);
+      slice.forEach(cb => {
+        setStudentCheckboxSelected(cb, checkbox.checked);
+      });
+    } else {
+      setStudentCheckboxSelected(checkbox, checkbox.checked);
+    }
+  } else {
+    setStudentCheckboxSelected(checkbox, checkbox.checked);
+  }
+  
+  lastCheckedStudentCheckbox = checkbox;
+
   updateBulkActionsVisibility();
 };
 
 function updateBulkActionsVisibility() {
   const select = el('bulk-action-select');
   if (select) {
-    select.style.display = selectedStudentIds.size > 0 ? '' : 'none';
-    select.value = ''; // Reset
+    const hasSelection = selectedStudentIds.size > 0;
+    select.disabled = !hasSelection;
+    if (select.removeAttribute && select.setAttribute) {
+      if (hasSelection) {
+        select.removeAttribute('disabled');
+      } else {
+        select.setAttribute('disabled', '');
+      }
+    }
+    if (!hasSelection) select.value = '';
+    select._syncSearchableSelect?.();
   }
+  syncStudentSelectionControls();
 }
+
+window.clearStudentSelection = function() {
+  selectedStudentIds.clear();
+  lastCheckedStudentCheckbox = null;
+  document.querySelectorAll('.student-checkbox').forEach(cb => {
+    cb.checked = false;
+    cb.closest?.('tr')?.classList.remove('row-selected');
+  });
+  updateBulkActionsVisibility();
+};
 
 function normalizeStudentPhone(phone) {
   return String(phone || '').replace(/\D/g, '');
@@ -189,6 +299,7 @@ function renderStudentsTable(students, groups, lookup = null) {
   const tbody = el('students-tbody');
   if (!students.length) {
     tbody.innerHTML = `<tr><td colspan="11" class="table-empty">No students found.</td></tr>`;
+    updateBulkActionsVisibility();
     return;
   }
   tbody.innerHTML = students.map((s, i) => {
@@ -200,9 +311,11 @@ function renderStudentsTable(students, groups, lookup = null) {
       ? studentGroups.map(g => `<span class="badge badge-purple" style="margin:1px 2px;font-size:10px">${g.name}</span>`).join('')
       : '<span style="color:var(--text-muted)">—</span>';
 
+    const studentIdStr = String(s?.id || '');
+    const isSelected = !!studentIdStr && selectedStudentIds.has(studentIdStr);
     return `
-    <tr>
-      <td><input type="checkbox" class="student-checkbox" value="${s.id}" ${selectedStudentIds.has(s.id) ? 'checked' : ''} onchange="toggleStudent(this)" /></td>
+    <tr class="${isSelected ? 'row-selected' : ''}">
+      <td><input type="checkbox" class="student-checkbox" value="${studentIdStr}" ${isSelected ? 'checked' : ''} /></td>
       <td style="color:var(--text-muted)">${i+1}</td>
       <td>
         <div style="display:flex;align-items:center;gap:8px;">
@@ -233,6 +346,7 @@ function renderStudentsTable(students, groups, lookup = null) {
       </td>
     </tr>`;
   }).join('');
+  updateBulkActionsVisibility();
 }
 
 async function filterStudents(groups) {
@@ -708,6 +822,23 @@ async function generateMissingBarcodes() {
 }
 
 // ── Phase 3: Bulk Actions ──
+async function completeBulkStudentAction(res, successMessage) {
+  if (!res?.success) {
+    toast(res?.message || res?.error || 'Bulk action failed', 'error');
+    return;
+  }
+  toast(successMessage(res), 'success');
+  selectedStudentIds.clear();
+  lastCheckedStudentCheckbox = null;
+  const selectAll = el('selectAllStudents');
+  if (selectAll) {
+    selectAll.checked = false;
+    selectAll.indeterminate = false;
+  }
+  closeModal();
+  await renderStudents();
+}
+
 async function handleBulkAction(action, levels, centers, groups) {
   const select = el('bulk-action-select');
   if (!action || selectedStudentIds.size === 0) { select.value = ''; return; }
@@ -723,7 +854,7 @@ async function handleBulkAction(action, levels, centers, groups) {
       const groupId = el('bulk-group-id').value;
       if (!groupId) return;
       const res = await window.api.students.bulkAssignGroup({ studentIds, groupId });
-      if (res.success) { toast(`Assigned ${res.count} students`, 'success'); selectedStudentIds.clear(); el('selectAllStudents').checked = false; closeModal(); renderStudents(); }
+      await completeBulkStudentAction(res, r => `Assigned ${r.count} students`);
     });
   } else if (action === 'level') {
     openModal({
@@ -736,7 +867,7 @@ async function handleBulkAction(action, levels, centers, groups) {
       if (!levelId) return;
       const levelName = levels.find(l => l.id === levelId)?.name || '';
       const res = await window.api.students.bulkUpdateLevel({ studentIds, levelId, levelName });
-      if (res.success) { toast(`Updated ${res.count} students`, 'success'); selectedStudentIds.clear(); el('selectAllStudents').checked = false; closeModal(); renderStudents(); }
+      await completeBulkStudentAction(res, r => `Updated ${r.count} students`);
     });
   } else if (action === 'center') {
     openModal({
@@ -749,7 +880,144 @@ async function handleBulkAction(action, levels, centers, groups) {
       if (!centerId) return;
       const centerName = centers.find(c => c.id === centerId)?.name || '';
       const res = await window.api.students.bulkUpdateCenter({ studentIds, centerId, centerName });
-      if (res.success) { toast(`Updated ${res.count} students`, 'success'); selectedStudentIds.clear(); el('selectAllStudents').checked = false; closeModal(); renderStudents(); }
+      await completeBulkStudentAction(res, r => `Updated ${r.count} students`);
+    });
+  } else if (action === 'block') {
+    openModal({
+      title: `Block ${studentIds.length} Students`,
+      body: `
+        <div class="form-group">
+          <label class="form-label">Reason *</label>
+          <textarea id="bulk-block-reason" class="form-textarea" placeholder="Write why these students are blocked..."></textarea>
+        </div>`,
+      footer: `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" id="btn-bulk-block">Block</button>`
+    });
+    el('btn-bulk-block').addEventListener('click', async () => {
+      const reason = el('bulk-block-reason').value.trim();
+      if (!reason) { toast('Block reason is required', 'error'); return; }
+      const res = await window.api.students.bulkBlock({ studentIds, reason });
+      await completeBulkStudentAction(res, r => `Blocked ${r.count} students`);
+    });
+  } else if (action === 'unblock') {
+    if (!confirmAction(`Remove block from ${studentIds.length} selected students?`)) { select.value = ''; return; }
+    const res = await window.api.students.bulkUnblock({ studentIds });
+    await completeBulkStudentAction(res, r => `Removed block from ${r.count} students`);
+  } else if (action === 'delete') {
+    if (!confirmAction(`Delete ${studentIds.length} selected students? This also removes their attendance, quizzes, payments, block history, and messages.`)) { select.value = ''; return; }
+    const res = await window.api.students.bulkDelete({ studentIds });
+    await completeBulkStudentAction(res, r => `Deleted ${r.count} students`);
+  } else if (action === 'move-group') {
+    openModal({
+      title: `Move ${studentIds.length} Students to Group`,
+      body: `
+        <div class="form-group">
+          <label class="form-label">From Group (optional — leave blank to just add)</label>
+          <select id="bulk-from-group-id" class="form-select"><option value="">— Any / None —</option>${groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}</select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">To Group *</label>
+          <select id="bulk-to-group-id" class="form-select"><option value="">— Select Target Group —</option>${groups.map(g => `<option value="${g.id}">${g.name} (${g.level || 'Any'} / ${g.center || 'Any'})</option>`).join('')}</select>
+        </div>`,
+      footer: `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="btn-bulk-move-group">Move</button>`
+    });
+    el('btn-bulk-move-group').addEventListener('click', async () => {
+      const fromGroupId = el('bulk-from-group-id').value || null;
+      const toGroupId = el('bulk-to-group-id').value;
+      if (!toGroupId) { toast('Please select a target group', 'error'); return; }
+      const res = await window.api.students.bulkMoveGroup({ studentIds, fromGroupId, toGroupId });
+      await completeBulkStudentAction(res, r => `Moved ${r.count} students`);
+    });
+  } else if (action === 'note') {
+    openModal({
+      title: `Add Note to ${studentIds.length} Students`,
+      body: `
+        <div class="form-group">
+          <label class="form-label">Note *</label>
+          <textarea id="bulk-note-text" class="form-textarea" placeholder="Write note to append to selected students…" rows="4"></textarea>
+        </div>
+        <p style="color:var(--text-muted);font-size:12px;margin-top:4px">Note will be appended to each student's existing notes with today's date.</p>`,
+      footer: `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="btn-bulk-note">Add Note</button>`
+    });
+    el('btn-bulk-note').addEventListener('click', async () => {
+      const note = el('bulk-note-text').value.trim();
+      if (!note) { toast('Note text is required', 'error'); return; }
+      const res = await window.api.students.bulkNote({ studentIds, note });
+      await completeBulkStudentAction(res, r => `Added note to ${r.count} students`);
+    });
+  } else if (action === 'whatsapp') {
+    openModal({
+      title: `Send WhatsApp Announcement to ${studentIds.length} Students' Parents`,
+      body: `
+        <div class="form-group">
+          <label class="form-label">Message *</label>
+          <textarea id="bulk-wa-message" class="form-textarea" placeholder="Write the announcement message…" rows="5"></textarea>
+        </div>
+        <p style="color:var(--text-muted);font-size:12px;margin-top:4px">Will be sent to each selected student's parent phone (students without a parent phone will be skipped).</p>
+        <div id="bulk-wa-error" class="alert alert-error hidden"></div>`,
+      footer: `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="btn-bulk-wa" style="background:#25D366;border-color:#25D366">📱 Queue Messages</button>`
+    });
+    el('btn-bulk-wa').addEventListener('click', async () => {
+      const errEl = el('bulk-wa-error');
+      errEl.classList.add('hidden');
+      const message = el('bulk-wa-message').value.trim();
+      if (!message) { errEl.textContent = 'Message is required.'; errEl.classList.remove('hidden'); return; }
+      const allStudents = studentsData.filter(s => studentIds.includes(s.id));
+      const eligible = allStudents.filter(s => s.parentPhone);
+      const skipped = allStudents.length - eligible.length;
+      if (!eligible.length) { errEl.textContent = 'None of the selected students have a parent phone.'; errEl.classList.remove('hidden'); return; }
+
+      let queued = 0;
+      for (const s of eligible) {
+        try {
+          await window.api.payments.queueReminder({ studentId: s.id, customMessage: message });
+          queued++;
+        } catch (_) {}
+      }
+      closeModal();
+      selectedStudentIds.clear();
+      lastCheckedStudentCheckbox = null;
+      toast(`Queued ${queued} messages${skipped > 0 ? ` (${skipped} skipped — no parent phone)` : ''}`, 'success');
+      await renderStudents();
+    });
+  } else if (action === 'whatsapp-report') {
+    const allStudents = studentsData.filter(s => studentIds.includes(s.id));
+    const eligible = allStudents.filter(s => s.parentPhone || s.phone);
+    const skipped = allStudents.length - eligible.length;
+
+    if (!eligible.length) {
+      alert('None of the selected students have a phone or parent phone saved.');
+      select.value = '';
+      return;
+    }
+
+    openModal({
+      title: `Send Performance Reports via WhatsApp`,
+      body: `
+        <p>You are about to queue performance report messages for <strong>${eligible.length} student(s)</strong>.</p>
+        ${skipped > 0 ? `<p style="color:var(--yellow)">⚠️ ${skipped} student(s) will be skipped because they have no phone number saved.</p>` : ''}
+        <p style="color:var(--text-muted);font-size:12px;margin-top:12px">Note: Messages will be added to the WhatsApp queue and sent with standard anti-ban delays in the background.</p>
+      `,
+      footer: `
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="btn-bulk-wa-report" style="background:#25D366;border-color:#25D366">📱 Queue Reports</button>
+      `
+    });
+
+    el('btn-bulk-wa-report').addEventListener('click', async () => {
+      let queued = 0;
+      for (const s of eligible) {
+        try {
+          const res = await window.api.whatsapp.queueReport({ studentId: s.id });
+          if (res.success) queued++;
+        } catch (e) {
+          console.error(`Failed to queue report for ${s.name}:`, e);
+        }
+      }
+      closeModal();
+      selectedStudentIds.clear();
+      lastCheckedStudentCheckbox = null;
+      toast(`Queued ${queued} performance report(s)${skipped > 0 ? ` (${skipped} skipped — no phone)` : ''}`, 'success');
+      await renderStudents();
     });
   }
 
@@ -792,7 +1060,7 @@ window.viewStudentProfile = async function(id) {
     title: `Student Profile`,
     wide: true,
     body: `
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;background:var(--bg-card-alt);padding:16px;border-radius:12px;border:1px solid var(--border)">
+      <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;background:var(--bg-card-alt);padding:16px;border-radius:12px;border:1px solid var(--border)">
         <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;flex-shrink:0;color:white;box-shadow:0 4px 12px rgba(139,92,246,0.25)">${s.name[0].toUpperCase()}</div>
         <div style="flex:1">
           <div style="font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px">${s.name} ${s.isBlocked ? '<span class="badge badge-red">Blocked</span>' : ''}</div>
@@ -806,6 +1074,56 @@ window.viewStudentProfile = async function(id) {
           </div>
           <div style="margin-top:8px"><code style="color:var(--accent);font-size:12px;background:var(--bg-hover);padding:3px 8px;border-radius:6px;border:1px solid rgba(99,102,241,0.2)">${s.barcode || 'NO BARCODE'}</code></div>
         </div>
+      </div>
+
+      <!-- Barcode Visual + WhatsApp Send -->
+      <div style="margin-bottom:24px;padding:20px;background:var(--bg-card-alt);border-radius:12px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:14px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);align-self:flex-start">Student Barcode</div>
+        ${s.barcode
+          ? `<div style="background:#fff;padding:16px 24px;border-radius:10px;border:1px solid #e5e7eb;display:inline-block">
+               <svg id="profile-barcode-svg"></svg>
+             </div>
+             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center">
+               <code style="color:var(--text-secondary);font-size:13px;letter-spacing:1px">${s.barcode}</code>
+               ${(s.phone || s.parentPhone)
+                 ? `<button id="btn-send-barcode-wa" class="btn" style="background:#25D366;border-color:#25D366;color:#fff;display:flex;align-items:center;gap:7px;font-size:13px;padding:7px 16px;border-radius:8px;font-weight:600;transition:opacity .15s">
+                      <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+                      Send on WhatsApp
+                    </button>`
+                 : `<span style="font-size:12px;color:var(--red);background:rgba(239,68,68,0.08);padding:4px 10px;border-radius:6px">No phone — cannot send</span>`}
+             </div>`
+          : `<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:36px;height:36px;margin:0 auto 8px;display:block;opacity:0.35"><path d="M3 5v14M21 5v14M8 5v14M12 5v14M16 5v14"/></svg>
+               No barcode assigned yet
+             </div>`}
+      </div>
+
+      <!-- History Analysis + Send Report -->
+      <div id="profile-report-section" style="margin-bottom:24px;padding:20px;background:var(--bg-card-alt);border-radius:12px;border:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary)">Performance Report</div>
+          ${(s.phone || s.parentPhone)
+            ? `<button id="btn-send-report-wa" class="btn" style="background:#128C7E;border-color:#128C7E;color:#fff;display:flex;align-items:center;gap:7px;font-size:12px;padding:6px 14px;border-radius:8px;font-weight:600">
+                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                 📊 Send Report on WhatsApp
+               </button>`
+            : `<span style="font-size:12px;color:var(--red)">No phone — cannot send</span>`}
+        </div>
+        <div id="profile-report-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div style="background:var(--bg-hover);border-radius:10px;padding:14px;text-align:center">
+            <div style="font-size:22px;font-weight:800;color:var(--accent)" id="rstat-sessions">—</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Sessions Attended</div>
+          </div>
+          <div style="background:var(--bg-hover);border-radius:10px;padding:14px;text-align:center">
+            <div style="font-size:22px;font-weight:800;color:var(--green)" id="rstat-hw">—</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">HW Completion</div>
+          </div>
+          <div style="background:var(--bg-hover);border-radius:10px;padding:14px;text-align:center">
+            <div style="font-size:22px;font-weight:800;color:var(--purple)" id="rstat-quiz">—</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Avg Quiz Score</div>
+          </div>
+        </div>
+        <div id="rstat-performance" style="margin-top:12px;text-align:center;font-size:13px;font-weight:600;color:var(--text-secondary)"></div>
       </div>
 
       ${s.isBlocked ? `
@@ -826,7 +1144,131 @@ window.viewStudentProfile = async function(id) {
     footer: `
       ${s.isBlocked
         ? `<button class="btn btn-secondary" onclick="unblockStudent('${s.id}')">Remove Block</button>`
-        : `<button class="btn btn-danger" onclick="openBlockStudentModal('${s.id}', '${s.name.replace(/'/g, "\\'")}')">Block Student</button>`}
+        : `<button class="btn btn-danger" onclick="openBlockStudentModal('${s.id}', '${s.name.replace(/'/g, "\\''")}')">Block Student</button>`}
       <button class="btn btn-secondary" onclick="closeModal()">Close</button>`,
   });
+
+  // Render the barcode SVG + report stats after the modal DOM exists
+  setTimeout(() => {
+    // ── Barcode SVG ──
+    if (s.barcode) {
+      const svgEl = document.getElementById('profile-barcode-svg');
+      if (svgEl && typeof JsBarcode !== 'undefined') {
+        try {
+          JsBarcode(svgEl, s.barcode, {
+            format: 'CODE128',
+            width: 2,
+            height: 70,
+            displayValue: true,
+            fontSize: 14,
+            margin: 4,
+            background: '#ffffff',
+            lineColor: '#111827',
+          });
+        } catch (e) {
+          console.error('Profile barcode render error:', e);
+        }
+      }
+
+      // Wire up the barcode WhatsApp send button
+      const waBtnEl = document.getElementById('btn-send-barcode-wa');
+      if (waBtnEl) {
+        waBtnEl.addEventListener('click', async () => {
+          waBtnEl.disabled = true;
+          waBtnEl.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            Sending…`;
+          const res = await window.api.whatsapp.sendBarcode({ studentId: s.id });
+          if (res.success) {
+            toast('Barcode sent on WhatsApp ✓', 'success');
+            waBtnEl.innerHTML = `
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><polyline points="20 6 9 17 4 12"/></svg>
+              Sent!`;
+          } else {
+            toast(res.error || 'Failed to send barcode', 'error');
+            waBtnEl.disabled = false;
+            waBtnEl.innerHTML = `
+              <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+              Send on WhatsApp`;
+          }
+        });
+      }
+    }
+
+    // ── Report Stats (computed from already-loaded events) ──
+    const attendanceEvents = events.filter(e => e.type === 'attendance');
+    const quizEvents       = events.filter(e => e.type === 'quiz');
+
+    // Sessions attended
+    const totalSessions = attendanceEvents.length;
+    const rstatSessions = document.getElementById('rstat-sessions');
+    if (rstatSessions) rstatSessions.textContent = totalSessions;
+
+    // HW completion
+    const hwEvents  = attendanceEvents.filter(e => e.detail && !e.detail.includes('pending'));
+    const hwDone    = hwEvents.filter(e => e.detail && e.detail.includes('done')).length;
+    const hwPct     = hwEvents.length > 0 ? Math.round((hwDone / hwEvents.length) * 100) : null;
+    const rstatHw   = document.getElementById('rstat-hw');
+    if (rstatHw) rstatHw.textContent = hwPct !== null ? `${hwPct}%` : 'N/A';
+
+    // Avg quiz score (parse "Score: X/Y" from detail)
+    let quizAvgText = 'N/A';
+    if (quizEvents.length > 0) {
+      const scores = quizEvents.map(e => {
+        const m = (e.detail || '').match(/Score:\s*([\d.]+)\/([\d.]+)/);
+        return m ? { s: parseFloat(m[1]), max: parseFloat(m[2]) } : null;
+      }).filter(Boolean);
+      if (scores.length > 0) {
+        const avgPct = Math.round(scores.reduce((sum, q) => sum + (q.s / q.max) * 100, 0) / scores.length);
+        const lastMax = scores[scores.length - 1].max;
+        quizAvgText = `${((avgPct / 100) * lastMax).toFixed(1)}/${lastMax}`;
+      }
+    }
+    const rstatQuiz = document.getElementById('rstat-quiz');
+    if (rstatQuiz) rstatQuiz.textContent = quizAvgText;
+
+    // Performance summary label
+    let perfPct = 0; let perfFactors = 0;
+    if (hwPct !== null) { perfPct += hwPct; perfFactors++; }
+    if (quizEvents.length > 0) {
+      const scores = quizEvents.map(e => {
+        const m = (e.detail || '').match(/Score:\s*([\d.]+)\/([\d.]+)/);
+        return m ? (parseFloat(m[1]) / parseFloat(m[2])) * 100 : null;
+      }).filter(n => n !== null);
+      if (scores.length) { perfPct += scores.reduce((a, b) => a + b, 0) / scores.length; perfFactors++; }
+    }
+    const overallPct = perfFactors > 0 ? perfPct / perfFactors : 0;
+    const perfLabel =
+      overallPct >= 90 ? '🌟 ممتاز / Excellent' :
+      overallPct >= 75 ? '✅ جيد جداً / Very Good' :
+      overallPct >= 60 ? '📈 جيد / Good' :
+      overallPct >= 40 ? '⚠️ مقبول / Acceptable' :
+      perfFactors > 0  ? '❗ يحتاج متابعة / Needs Attention' : '—';
+    const rstatPerf = document.getElementById('rstat-performance');
+    if (rstatPerf) rstatPerf.textContent = perfLabel;
+
+    // ── Wire up Send Report button ──
+    const reportBtnEl = document.getElementById('btn-send-report-wa');
+    if (reportBtnEl) {
+      reportBtnEl.addEventListener('click', async () => {
+        reportBtnEl.disabled = true;
+        reportBtnEl.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          Sending…`;
+        const res = await window.api.whatsapp.sendReport({ studentId: s.id });
+        if (res.success) {
+          toast('Performance report sent on WhatsApp ✓', 'success');
+          reportBtnEl.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg>
+            Report Sent!`;
+        } else {
+          toast(res.error || 'Failed to send report', 'error');
+          reportBtnEl.disabled = false;
+          reportBtnEl.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            📊 Send Report on WhatsApp`;
+        }
+      });
+    }
+  }, 80);
 };

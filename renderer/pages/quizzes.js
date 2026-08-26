@@ -123,6 +123,7 @@ async function selectSessionForQuizzes(sessionId) {
           </div>
           <button class="btn btn-primary btn-sm" id="btn-save-all-quiz">Save All</button>
           <button class="btn btn-secondary btn-sm" id="btn-wa-send-quiz" style="background:rgba(37,211,102,0.1);color:#25D366;border-color:rgba(37,211,102,0.25)">📱 Send Quiz Results</button>
+          <button class="btn btn-secondary btn-sm" id="btn-export-quiz">Export CSV/Excel</button>
         </div>
       </div>
       <div class="table-wrap">
@@ -138,7 +139,7 @@ async function selectSessionForQuizzes(sessionId) {
   el('quiz-main').classList.remove('hidden');
   renderQuizTable(attendedStudents, scoreMap, maxScore);
 
-  el('quiz-search').addEventListener('input', () => {
+  el('quiz-search').addEventListener('input', debounce(() => {
     const q = el('quiz-search').value.toLowerCase();
     const filtered = attendedStudents.filter(s =>
       s.name.toLowerCase().includes(q) ||
@@ -146,10 +147,11 @@ async function selectSessionForQuizzes(sessionId) {
       (s.barcode || '').toLowerCase().includes(q)
     );
     renderQuizTable(filtered, scoreMap, maxScore);
-  });
+  }));
 
   el('btn-save-all-quiz').addEventListener('click', () => saveAllQuizScores(attendedStudents, maxScore));
   el('btn-wa-send-quiz').addEventListener('click', () => batchSendWhatsAppQuiz());
+  el('btn-export-quiz').addEventListener('click', () => exportQuizzesExcel(attendedStudents, scoreMap, maxScore));
 
   window.saveQuizScore = async (studentId, maxScore) => {
     const input = el(`quiz-score-${studentId}`);
@@ -287,4 +289,37 @@ async function batchSendWhatsAppQuiz() {
   } else {
     toast(res.error || 'Failed to queue quiz messages', 'error');
   }
+}
+
+async function exportQuizzesExcel(students, scoreMap, maxScore) {
+  if (!students.length) return toast('No students to export', 'error');
+  const rows = students.map(s => {
+    const record = scoreMap[s.id];
+    const scoreVal = record ? record.score : '';
+    const pct = record ? Math.round((record.score / record.maxScore) * 100) + '%' : '—';
+    const note = record ? record.notes || '' : '';
+    return {
+      name: s.name,
+      barcode: s.barcode || '',
+      level: s.level || '',
+      score: scoreVal,
+      maxScore: record ? record.maxScore : maxScore,
+      percentage: pct,
+      note: note
+    };
+  });
+
+  const cols = [
+    { key: 'name', label: 'Student Name' },
+    { key: 'barcode', label: 'Barcode' },
+    { key: 'level', label: 'Level' },
+    { key: 'score', label: 'Score' },
+    { key: 'maxScore', label: 'Max Score' },
+    { key: 'percentage', label: 'Percentage' },
+    { key: 'note', label: 'Note' }
+  ];
+
+  const res = await window.api.export.excel({ sheetName: 'Quiz Scores', columns: cols, rows, filename: `Quiz_Scores_Export.xlsx` });
+  if (res?.success) toast('Quiz scores exported successfully', 'success');
+  else if (res && !res.canceled) toast(res.error || 'Export failed', 'error');
 }

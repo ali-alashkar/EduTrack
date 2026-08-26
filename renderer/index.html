@@ -5,9 +5,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EduTrack — Student Registration System</title>
+  <!-- Anti-flash: apply saved theme before first paint -->
+  <script>(function(){var t=localStorage.getItem('edutrack-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');})();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -26,6 +28,29 @@
       <span class="app-title">EduTrack</span>
     </div>
     <div id="title-bar-drag"></div>
+    <div id="title-bar-center">
+      <span class="app-title-center">EduTrack</span>
+    </div>
+    <div id="title-bar-right">
+      <button id="btn-theme-toggle" title="Toggle Theme" class="titlebar-icon-btn">
+        <!-- Sun icon (shown in dark mode) -->
+        <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <!-- Moon icon (shown in light mode) -->
+        <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
     <div id="title-bar-controls">
       <button id="btn-minimize" title="Minimize">&#8722;</button>
       <button id="btn-maximize" title="Maximize">&#9633;</button>
@@ -84,6 +109,9 @@
         </button>
       </form>
       <p class="login-hint">Default: admin / admin123</p>
+      <p class="login-contact">
+        Need help? <button type="button" class="login-contact-link" id="login-contact-btn" onclick="showContactModal()">Contact Developer</button>
+      </p>
     </div>
   </div>
 
@@ -109,6 +137,7 @@
         <div class="user-info">
           <span class="user-name" id="sidebar-user-name">Admin</span>
           <span class="user-role badge" id="sidebar-user-role">admin</span>
+          <span id="trial-badge" class="badge hidden" style="background:var(--red); color:white; font-size:10px; margin-top:4px; display:none; padding:2px 6px; border-radius:4px; font-weight:bold; width:fit-content; text-transform:uppercase;">Trial Version</span>
         </div>
       </div>
       <nav id="sidebar-nav">
@@ -212,7 +241,7 @@
           </svg>
           Payments
         </a>
-        <a class="nav-item admin-only" data-page="import" style="display:none">
+        <a class="nav-item staff-visible" data-page="import" style="display:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="7 10 12 15 17 10" />
@@ -220,13 +249,13 @@
           </svg>
           Import Data
         </a>
-        <a class="nav-item admin-only" data-page="backup" style="display:none">
+        <a class="nav-item staff-visible" data-page="backup" style="display:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="17 8 12 3 7 8" />
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
-          Backup & Restore
+          Backup &amp; Restore
         </a>
         <div class="nav-section-label">Reports</div>
         <a class="nav-item" data-page="reports">
@@ -238,6 +267,12 @@
           Reports
         </a>
         <div class="sidebar-bottom">
+          <a class="nav-item" data-page="contact">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            Contact Us
+          </a>
           <a class="nav-item nav-logout" id="logout-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -268,6 +303,7 @@
       <div id="page-barcodes" class="page"></div>
       <div id="page-payments" class="page"></div>
       <div id="page-import" class="page"></div>
+      <div id="page-contact" class="page"></div>
     </main>
     </div><!-- /#app-content-row -->
   </div>
@@ -325,6 +361,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="app.js"></script>
   <script src="pages/setup-wizard.js"></script>
   <script src="pages/dashboard.js"></script>
   <script src="pages/levels-centers.js"></script>
@@ -338,7 +375,43 @@
   <script src="pages/backup.js"></script>
   <script src="pages/payments.js"></script>
   <script src="pages/import.js"></script>
-  <script src="app.js"></script>
+  <script src="developer-info.js"></script>
+  <script src="pages/about.js"></script>
+  <script src="searchable-select.js"></script>
+  <script src="table-sort.js"></script>
+  <script>
+    // Theme toggle logic
+    (function() {
+      function applyTheme(dark) {
+        if (dark) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('edutrack-theme', 'dark');
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+          localStorage.setItem('edutrack-theme', 'light');
+        }
+        updateThemeIcon();
+      }
+      function updateThemeIcon() {
+        var isDark = document.documentElement.hasAttribute('data-theme');
+        var sun = document.getElementById('theme-icon-sun');
+        var moon = document.getElementById('theme-icon-moon');
+        if (sun && moon) {
+          sun.style.display = isDark ? 'block' : 'none';
+          moon.style.display = isDark ? 'none' : 'block';
+        }
+      }
+      var btn = document.getElementById('btn-theme-toggle');
+      if (btn) {
+        btn.addEventListener('click', function() {
+          var isDark = document.documentElement.hasAttribute('data-theme');
+          applyTheme(!isDark);
+        });
+      }
+      // Set initial icon state
+      updateThemeIcon();
+    })();
+  </script>
 </body>
 
 </html>

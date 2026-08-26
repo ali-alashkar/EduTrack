@@ -1,7 +1,55 @@
+# Dependencies
 node_modules/
-dist/
-.wwebjs_cache/
+package-lock.json.bak
 
-data/edutrack_data/whatsapp_auth/
-data/edutrack_data/whatsapp_log.json
-data/edutrack_data/whatsapp_settings.json
+# Production Builds & Release Artifacts
+dist/
+releases/
+.build-tmp/
+build/
+out/
+*.exe
+*.zip
+*.tar.gz
+*.dmg
+*.AppImage
+
+# WhatsApp Web & Puppeteer Cache/Auth
+.wwebjs_cache/
+.wwebjs_auth/
+.puppeteer/
+
+# Application Runtime Data & Backups (Prevent leaking personal/student records)
+data/edutrack_data/
+data/edutrack_backups/
+data/*.json
+data/**/*.json
+
+# Secrets, Environment & API Credentials
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+client_secret*.json
+oauth_credentials.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE, Editor & OS Files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Agent / AI Tooling Artifacts
+.agents/
+.gemini/

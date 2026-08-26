@@ -1,172 +1,112 @@
 [
   {
-    "id": "qz1780671088547",
-    "sessionId": "ss1780660015043",
-    "studentId": "s1",
-    "studentName": "John Doe",
-    "score": 19.5,
-    "maxScore": 20,
-    "notes": "",
-    "recordedAt": "2026-06-11T16:35:27.605Z"
-  },
-  {
-    "id": "qz1780671094691",
-    "sessionId": "ss1780660015043",
-    "studentId": "s4",
-    "studentName": "Sara Connor",
-    "score": 15,
-    "maxScore": 20,
-    "notes": "",
-    "recordedAt": "2026-06-11T16:35:27.620Z"
-  },
-  {
-    "id": "qz1780671509655",
-    "sessionId": "ss2",
-    "studentId": "s1",
-    "studentName": "John Doe",
-    "score": 6,
-    "maxScore": 10,
-    "notes": "",
-    "recordedAt": "2026-06-05T15:11:25.950Z"
-  },
-  {
-    "id": "qz1780671509668",
-    "sessionId": "ss2",
-    "studentId": "s4",
-    "studentName": "Sara Connor",
+    "id": "qz1784302632386",
+    "sessionId": "ss1784239936945",
+    "studentId": "s1781202276397",
+    "studentName": "ali haitham",
     "score": 5,
     "maxScore": 10,
     "notes": "",
-    "recordedAt": "2026-06-05T15:11:25.965Z"
+    "recordedAt": "2026-07-17T16:04:46.052Z"
   },
   {
-    "id": "qz1780671517585",
-    "sessionId": "ss2",
-    "studentId": "s3",
-    "studentName": "Ahmed Ali",
-    "score": 6,
+    "id": "qz1784302645202",
+    "sessionId": "ss1784239936945",
+    "studentId": "s1780998761486",
+    "studentName": "omar hassan",
+    "score": 4,
     "maxScore": 10,
     "notes": "",
-    "recordedAt": "2026-06-05T15:11:25.918Z"
+    "recordedAt": "2026-07-17T16:04:46.076Z"
   },
   {
-    "id": "qz1780672279499",
-    "sessionId": "ss2",
-    "studentId": "s2",
-    "studentName": "Jane Smith",
-    "score": 1,
-    "maxScore": 10,
-    "notes": "",
-    "recordedAt": "2026-06-05T15:11:25.936Z"
-  },
-  {
-    "id": "qz1780672279521",
-    "sessionId": "ss2",
-    "studentId": "s5",
-    "studentName": "Omar Hassan",
+    "id": "qz1784303953301_kinby",
+    "sessionId": "ss1784241348879",
+    "studentId": "s1781202276397",
+    "studentName": "ali haitham",
     "score": 0,
     "maxScore": 10,
     "notes": "",
-    "recordedAt": "2026-06-05T15:11:25.958Z"
+    "recordedAt": "2026-07-19T17:11:15.254Z"
   },
   {
-    "id": "qz1780672718997",
-    "sessionId": "ss1780672624894",
-    "studentId": "s4",
-    "studentName": "Sara Connor",
-    "score": 15,
-    "maxScore": 15,
+    "id": "qz_c75f74b1a9fc_1786837040403",
+    "sessionId": "ss_c75f74b1a9fc_1785943597790",
+    "studentId": "s3",
+    "studentName": "Ahmed Ali",
+    "score": 10,
+    "maxScore": 10,
     "notes": "",
-    "recordedAt": "2026-06-05T15:18:38.997Z"
+    "recordedAt": "2026-08-15T23:37:20.403Z"
   },
   {
-    "id": "qz1781202399564",
-    "sessionId": "ss1781202305282",
+    "id": "qz_34a28a29a811_1786837051898",
+    "sessionId": "ss_c75f74b1a9fc_1785943597790",
     "studentId": "s1781202276397",
     "studentName": "ali haitham",
+    "score": 2,
+    "maxScore": 10,
+    "notes": "",
+    "recordedAt": "2026-08-15T23:37:31.899Z"
+  },
+  {
+    "id": "qz_79b8a2ea3e99_1787324403275",
+    "sessionId": "ss_34a28a29a811_1786837142796",
+    "studentId": "s_c75f74b1a9fc_1785225437822",
+    "studentName": "ali alashkar",
+    "score": 3.5,
+    "maxScore": 5,
+    "notes": "",
+    "recordedAt": "2026-08-21T15:00:03.276Z"
+  },
+  {
+    "id": "qz_a184e7a4bfad_1787324824040",
+    "sessionId": "ss_a184e7a4bfad_1787324798287",
+    "studentId": "s1781202276397",
+    "studentName": "ali haitham",
+    "score": 2,
+    "maxScore": 7,
+    "notes": "Auto-set to zero when sending parent summary",
+    "recordedAt": "2026-08-21T21:23:06.941Z"
+  },
+  {
+    "id": "qz_79b8a2ea3e99_1787324949458",
+    "sessionId": "ss_a184e7a4bfad_1787324798287",
+    "studentId": "s_c75f74b1a9fc_1785225437822",
+    "studentName": "ali alashkar",
     "score": 3,
-    "maxScore": 10,
-    "notes": "bad",
-    "recordedAt": "2026-06-11T18:30:09.771Z"
+    "maxScore": 7,
+    "notes": "Auto-set to zero when sending parent summary",
+    "recordedAt": "2026-08-21T21:23:06.921Z"
   },
   {
-    "id": "qz1781202609785",
-    "sessionId": "ss1781202305282",
-    "studentId": "s1780998761486",
-    "studentName": "omar hassan",
-    "score": 5,
-    "maxScore": 10,
-    "notes": "",
-    "recordedAt": "2026-06-11T18:30:09.785Z"
-  },
-  {
-    "id": "qz1781204863892",
-    "sessionId": "ss1",
-    "studentId": "s1781202276397",
-    "studentName": "ali haitham",
-    "score": 5,
-    "maxScore": 10,
-    "notes": "",
-    "recordedAt": "2026-06-11T19:08:36.298Z"
-  },
-  {
-    "id": "qz1781204872667",
-    "sessionId": "ss1",
-    "studentId": "s1780998761486",
-    "studentName": "omar hassan",
-    "score": 7.5,
-    "maxScore": 10,
-    "notes": "",
-    "recordedAt": "2026-06-11T19:08:36.320Z"
-  },
-  {
-    "id": "qz1781204941108",
-    "sessionId": "ss1",
-    "studentId": "s3",
-    "studentName": "Ahmed Ali",
-    "score": 0,
-    "maxScore": 10,
-    "notes": "",
-    "recordedAt": "2026-06-11T19:09:01.108Z"
-  },
-  {
-    "id": "qz1781205335238",
-    "sessionId": "ss3",
+    "id": "qz_c75f74b1a9fc_1787345466526",
+    "sessionId": "ss_c75f74b1a9fc_1787344920766",
     "studentId": "s1781202276397",
     "studentName": "ali haitham",
     "score": 5,
     "maxScore": 5,
     "notes": "",
-    "recordedAt": "2026-06-11T19:15:35.238Z"
+    "recordedAt": "2026-08-21T20:51:06.526Z"
   },
   {
-    "id": "qz1781209741635",
-    "sessionId": "ss1781209479692",
-    "studentId": "s1780998761486",
-    "studentName": "omar hassan",
-    "score": 5,
-    "maxScore": 10,
-    "notes": "",
-    "recordedAt": "2026-06-11T20:33:34.958Z"
-  },
-  {
-    "id": "qz1781209782155",
-    "sessionId": "ss1781209479692",
+    "id": "qz_c75f74b1a9fc_1787405540187",
+    "sessionId": "ss_c75f74b1a9fc_1787405402234",
     "studentId": "s1781202276397",
     "studentName": "ali haitham",
-    "score": 10,
-    "maxScore": 10,
+    "score": 4,
+    "maxScore": 5,
     "notes": "",
-    "recordedAt": "2026-06-11T20:33:34.926Z"
+    "recordedAt": "2026-08-22T13:32:20.187Z"
   },
   {
-    "id": "qz1781210012054",
-    "sessionId": "ss1781209479692",
-    "studentId": "s1781205732540",
-    "studentName": "mohamed haitham",
-    "score": 0,
+    "id": "qz_c75f74b1a9fc_1787660047199_3",
+    "sessionId": "ss_c75f74b1a9fc_1787659827830_1",
+    "studentId": "s1781202276397",
+    "studentName": "ali haitham",
+    "score": 3,
     "maxScore": 10,
     "notes": "",
-    "recordedAt": "2026-06-11T20:33:34.942Z"
+    "recordedAt": "2026-08-25T12:14:17.499Z"
   }
 ]

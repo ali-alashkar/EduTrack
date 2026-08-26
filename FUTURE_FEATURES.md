@@ -25,7 +25,7 @@ These items should come before selling to real customers because they protect da
 - [COMPLETED] Versioned migrations - Add a migration system so new releases can update existing customer data safely.
 - [COMPLETED] **First-run setup wizard** - 4-step wizard collects owner name, center name, first admin credentials, country code, and default level. Replaces seeded defaults and marks setup complete in system.json.
 - [COMPLETED] **Remove default credential risk** - Post-login check detects if admin/admin123 is still active and shows a non-dismissable warning banner with a direct link to change the password.
-- [PARTIAL] **Installer branding** - Updated appId (com.edutrack.student-management), productName, copyright, publisherName, requestedExecutionLevel, and NSIS shortcut name. App icon assets still need to be created.
+- [COMPLETED] **Installer branding** - Updated appId (com.edutrack.student-management), productName, copyright, publisherName, requestedExecutionLevel, and NSIS shortcut name. App icon assets still need to be created.
 - [COMPLETED] **Clean packaged data location** - Production data lives next to the exe (path.dirname(process.execPath)); backup/restore use the same location. Documented in RELEASE_CHECKLIST.md.
 - [COMPLETED] **Release checklist** - Documented in RELEASE_CHECKLIST.md with full pre-release steps.
 
@@ -35,13 +35,13 @@ The app already stores session fees and student discounts. To sell to tutoring c
 *Note: We have implemented the core financial module visible only to Admin roles.*
 
 - [COMPLETED] **Student balance page** - Show total due, paid, remaining, discounts, and last payment for each student.
-- [PENDING] **Session payment status** - Mark each attended session as paid, unpaid, partially paid, or waived.
+- [COMPLETED] **Session payment status** - Mark each attended session as paid, unpaid, partially paid, or waived.
 - [COMPLETED] **Payment entry modal** - Record payment amount, date, method, note, and linked sessions.
-- [PENDING] **Receipts** - Generate printable/PDF receipts with center name, student name, amount, date, and remaining balance.
-- [PENDING] **Payment reminders** - Queue WhatsApp reminders for unpaid or overdue balances.
+- [COMPLETED] **Receipts** - Generate printable receipts from payment records with center name, student name, amount, date, method, note, and remaining balance.
+- [COMPLETED] **Payment reminders** - Queue WhatsApp reminders for unpaid or overdue balances.
 - [COMPLETED] **Monthly financial report** - Show collected money, unpaid balances, discounts, gross amount, and net expected revenue.
-- [PENDING] **Expense tracking** - Track rent, assistant salaries, printing, materials, and other expenses.
-- [PENDING] **Profit dashboard** - Combine collected revenue and expenses into simple profit reporting.
+- [COMPLETED] **Expense tracking** - Track rent, assistant salaries, printing, materials, and other expenses.
+- [COMPLETED] **Profit dashboard** - Combine collected revenue and expenses into simple profit reporting.
 
 
 ## Phase 3 - Improve Daily Operations
@@ -49,11 +49,11 @@ The app already stores session fees and student discounts. To sell to tutoring c
 These features make the app feel faster and more professional for front-desk use.
 
 - [COMPLETED] **Bulk student import** - Import students from Excel/CSV with validation, preview, template download, and automatic creation of missing levels/centers.
-- [PARTIAL] **Excel/CSV export** - Export students and payments to Excel, and attendance to CSV. Still pending: quiz scores, reports, and WhatsApp logs.
+- [COMPLETED] **Excel/CSV export** - Export students and payments to Excel, and attendance to CSV. Still pending: quiz scores, reports, and WhatsApp logs.
 - [COMPLETED] **Advanced barcode assignment** - Generate barcodes for individual students or all students missing barcodes.
 - [COMPLETED] **Student profile timeline** - Combine attendance, homework, quizzes, payments, WhatsApp messages, blocks, and notes in one history view.
 - [COMPLETED] **Block history** - Store block/unblock events with reason, date, and user-aware fields.
-- [PARTIAL] **Bulk group actions** - Assign selected students to a group and bulk update level/center. Still pending: bulk notes and move-between-groups helper.
+- [COMPLETED] **Bulk student actions** - Select visible students individually, with select-all, clear selection, and Shift+click range selection. Actions now include assign group, update level/center, block, unblock, and confirmed delete with related-record cleanup. Still pending: bulk notes, bulk WhatsApp announcements, and move-between-groups helper.
 - [COMPLETED] **Session duplication** - Duplicate previous sessions to create weekly schedules faster.
 - [COMPLETED] **Recurring sessions** - Generate repeated sessions for a group across a date range.
 - [COMPLETED] **Student delete action reliability** - Delete button now confirms, removes the student through the existing IPC API, refreshes the table, and has renderer regression coverage.

@@ -1,7 +1,7 @@
 // ── First-Run Setup Wizard ─────────────────────────────────────────────────
 // This module is loaded by index.html and called from app.js on DOMContentLoaded
 // when system:get-setup-state returns { needsSetup: true }.
-// It injects content into #setup-screen and manages a 4-step wizard UI.
+// It injects content into #setup-screen and manages both fresh setup and Google Drive API setup.
 
 (function () {
   'use strict';
@@ -122,7 +122,52 @@
   ];
 
   // ── Wizard state ──────────────────────────────────────────────────────────
+  let setupMode = 'fresh'; // 'fresh' or 'drive'
   let currentStep = 0;
+  const wizardData = {
+    ownerName: '',
+    centerName: '',
+    adminUsername: '',
+    adminPassword: '',
+    adminConfirm: '',
+    countryCode: '20',
+    defaultLevel: '',
+    driveClientId: '',
+    driveClientSecret: '',
+    driveAuthCode: '',
+  };
+
+  function populateInputs() {
+    if (setupMode === 'fresh') {
+      const fields = [
+        { id: 'wiz-owner-name', key: 'ownerName' },
+        { id: 'wiz-center-name', key: 'centerName' },
+        { id: 'wiz-admin-user', key: 'adminUsername' },
+        { id: 'wiz-admin-pass', key: 'adminPassword' },
+        { id: 'wiz-admin-confirm', key: 'adminConfirm' },
+        { id: 'wiz-country-code', key: 'countryCode' },
+        { id: 'wiz-default-level', key: 'defaultLevel' }
+      ];
+      fields.forEach(f => {
+        const el = document.getElementById(f.id);
+        if (el) {
+          el.value = wizardData[f.key];
+        }
+      });
+    } else {
+      const driveFields = [
+        { id: 'wiz-drive-client-id', key: 'driveClientId' },
+        { id: 'wiz-drive-client-secret', key: 'driveClientSecret' },
+        { id: 'wiz-drive-auth-code', key: 'driveAuthCode' }
+      ];
+      driveFields.forEach(f => {
+        const el = document.getElementById(f.id);
+        if (el) {
+          el.value = wizardData[f.key];
+        }
+      });
+    }
+  }
 
   // ── Password strength calculator ──────────────────────────────────────────
   function getPasswordStrength(password) {
@@ -154,8 +199,18 @@
       </div>
       <div class="wiz-container">
         <div class="wiz-card" id="wiz-card">
-          <!-- Step indicators -->
-          <div class="wiz-steps" id="wiz-steps">
+          <!-- Setup Mode Tabs -->
+          <div class="wiz-mode-tabs" id="wiz-mode-tabs">
+            <button type="button" class="wiz-mode-tab ${setupMode === 'fresh' ? 'active' : ''}" id="wiz-tab-fresh">
+              ✨ New Center Setup
+            </button>
+            <button type="button" class="wiz-mode-tab ${setupMode === 'drive' ? 'active' : ''}" id="wiz-tab-drive">
+              ☁️ Restore from Google Drive
+            </button>
+          </div>
+
+          <!-- Step indicators (Fresh mode only) -->
+          <div class="wiz-steps ${setupMode === 'drive' ? 'hidden' : ''}" id="wiz-steps">
             ${STEPS.map((s, i) => `
               <div class="wiz-step-dot ${i === 0 ? 'active' : ''}" data-step="${i}">
                 <div class="wiz-step-dot-inner"></div>
@@ -164,11 +219,11 @@
 
           <!-- Step content (animated by JS) -->
           <div class="wiz-step-body" id="wiz-step-body">
-            ${renderStep(0)}
+            ${setupMode === 'fresh' ? renderStep(currentStep) : renderDriveStep()}
           </div>
 
-          <!-- Navigation -->
-          <div class="wiz-nav" id="wiz-nav">
+          <!-- Navigation (Fresh mode only) -->
+          <div class="wiz-nav ${setupMode === 'drive' ? 'hidden' : ''}" id="wiz-nav">
             <button class="wiz-btn wiz-btn-ghost hidden" id="wiz-back-btn">← Back</button>
             <div class="wiz-step-counter" id="wiz-step-counter">Step 1 of ${STEPS.length}</div>
             <button class="wiz-btn wiz-btn-primary" id="wiz-next-btn">Continue →</button>
@@ -179,6 +234,7 @@
       </div>`;
 
     bindEvents();
+    populateInputs();
   }
 
   function renderStep(index) {
@@ -192,13 +248,204 @@
       </div>`;
   }
 
+  function renderDriveStep() {
+    return `
+      <div class="wiz-step-inner" id="step-drive-restore">
+        <div class="wiz-hero">
+          <svg viewBox="0 0 48 48" fill="none" class="wizard-hero-icon">
+            <defs>
+              <linearGradient id="wiz-drive-grad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#06b6d4"/>
+                <stop offset="100%" stop-color="#3b82f6"/>
+              </linearGradient>
+            </defs>
+            <rect width="48" height="48" rx="14" fill="url(#wiz-drive-grad)"/>
+            <path d="M14 28h20a6 6 0 0 0 0-12 8 8 0 0 0-15-2.8A6 6 0 0 0 14 28z" stroke="white" stroke-width="2" fill="none"/>
+            <path d="M24 20v10M19 25l5 5 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="wiz-title">Restore from Google Drive</h2>
+        <p class="wiz-subtitle">Connect your Google Cloud OAuth credentials to pull your database backup and skip manual data entry.</p>
+
+        <div class="wiz-fields">
+          <div class="wiz-form-group">
+            <label class="wiz-label">Client ID *</label>
+            <input id="wiz-drive-client-id" class="wiz-input" type="text" placeholder="xxxxxx.apps.googleusercontent.com" autocomplete="off" />
+          </div>
+          <div class="wiz-form-group">
+            <label class="wiz-label">Client Secret *</label>
+            <input id="wiz-drive-client-secret" class="wiz-input" type="password" placeholder="GOCSPX-..." autocomplete="off" />
+          </div>
+          <button type="button" class="wiz-btn wiz-btn-ghost" id="wiz-btn-get-auth" style="width:100%;margin-top:6px;justify-content:center">
+            🌐 1. Open Google Authorization Link
+          </button>
+
+          <div id="wiz-drive-step2" class="wiz-drive-step2 hidden" style="margin-top:18px;padding-top:18px;border-top:1px dashed var(--border)">
+            <div class="wiz-form-group">
+              <label class="wiz-label">Authorization Code *</label>
+              <input id="wiz-drive-auth-code" class="wiz-input" type="text" placeholder="Paste authorization code from Google..." autocomplete="off" />
+              <span class="wiz-hint">Copy the authorization code given by Google in your browser after signing in.</span>
+            </div>
+            <button type="button" class="wiz-btn wiz-btn-primary wiz-btn-launch" id="wiz-btn-connect-drive" style="width:100%;margin-top:14px;justify-content:center">
+              🚀 2. Connect &amp; Download Data from Google Drive
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }
+
   // ── Event binding ─────────────────────────────────────────────────────────
   function bindEvents() {
-    document.getElementById('wiz-next-btn').addEventListener('click', handleNext);
-    document.getElementById('wiz-back-btn').addEventListener('click', handleBack);
+    // Setup mode tabs
+    const tabFresh = document.getElementById('wiz-tab-fresh');
+    const tabDrive = document.getElementById('wiz-tab-drive');
+    if (tabFresh) tabFresh.addEventListener('click', () => switchSetupMode('fresh'));
+    if (tabDrive) tabDrive.addEventListener('click', () => switchSetupMode('drive'));
 
-    // Password strength (re-bind after step 2 render)
-    bindPasswordStrength();
+    if (setupMode === 'fresh') {
+      const nextBtn = document.getElementById('wiz-next-btn');
+      const backBtn = document.getElementById('wiz-back-btn');
+      if (nextBtn) nextBtn.addEventListener('click', handleNext);
+      if (backBtn) backBtn.addEventListener('click', handleBack);
+      bindPasswordStrength();
+    } else {
+      bindDriveEvents();
+    }
+  }
+
+  function switchSetupMode(mode) {
+    if (setupMode === mode) return;
+    collectValues();
+    setupMode = mode;
+    clearError();
+    renderWizard();
+  }
+
+  function bindDriveEvents() {
+    const btnGetAuth = document.getElementById('wiz-btn-get-auth');
+    const btnConnect = document.getElementById('wiz-btn-connect-drive');
+
+    if (btnGetAuth) {
+      btnGetAuth.addEventListener('click', handleGetAuthUrl);
+    }
+    if (btnConnect) {
+      btnConnect.addEventListener('click', handleConnectDrive);
+    }
+  }
+
+  // ── Google Drive Setup Handlers ──────────────────────────────────────────
+  async function handleGetAuthUrl() {
+    clearError();
+    const clientId = document.getElementById('wiz-drive-client-id')?.value?.trim();
+    const clientSecret = document.getElementById('wiz-drive-client-secret')?.value?.trim();
+
+    if (!clientId || !clientSecret) {
+      showError('Please enter both Client ID and Client Secret.');
+      return;
+    }
+
+    wizardData.driveClientId = clientId;
+    wizardData.driveClientSecret = clientSecret;
+
+    const btn = document.getElementById('wiz-btn-get-auth');
+    btn.disabled = true;
+    btn.textContent = 'Opening browser...';
+
+    try {
+      const res = await window.api.sync.getAuthUrl({ clientId, clientSecret });
+      if (res.success) {
+        const step2 = document.getElementById('wiz-drive-step2');
+        if (step2) step2.classList.remove('hidden');
+        const codeInput = document.getElementById('wiz-drive-auth-code');
+        if (codeInput) codeInput.focus();
+      } else {
+        showError(res.error || 'Could not generate Google authorization link.');
+      }
+    } catch (err) {
+      showError(err.message || 'Failed to open authorization URL.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🌐 1. Open Google Authorization Link';
+    }
+  }
+
+  async function handleConnectDrive() {
+    clearError();
+    const clientId = document.getElementById('wiz-drive-client-id')?.value?.trim();
+    const clientSecret = document.getElementById('wiz-drive-client-secret')?.value?.trim();
+    const code = document.getElementById('wiz-drive-auth-code')?.value?.trim();
+
+    if (!clientId || !clientSecret || !code) {
+      showError('Please enter Client ID, Client Secret, and the Authorization Code.');
+      return;
+    }
+
+    wizardData.driveClientId = clientId;
+    wizardData.driveClientSecret = clientSecret;
+    wizardData.driveAuthCode = code;
+
+    const btnConnect = document.getElementById('wiz-btn-connect-drive');
+    btnConnect.disabled = true;
+    btnConnect.textContent = '⏳ 1/3 Authenticating with Google Drive…';
+
+    try {
+      // Step 1: Exchange code for refresh token
+      const authRes = await window.api.sync.exchangeCode({ clientId, clientSecret, code });
+      if (!authRes.success) {
+        showError(authRes.error || 'Authentication failed. Check your authorization code.');
+        btnConnect.disabled = false;
+        btnConnect.textContent = '🚀 2. Connect & Download Data from Google Drive';
+        return;
+      }
+
+      // Step 2: Download data from Google Drive
+      btnConnect.textContent = '⬇️ 2/3 Downloading database backup from Google Drive…';
+      const downloadRes = await window.api.sync.forceDownload();
+      if (!downloadRes || !downloadRes.success) {
+        showError(downloadRes?.error || 'Failed to download snapshot from Google Drive.');
+        btnConnect.disabled = false;
+        btnConnect.textContent = '🚀 2. Connect & Download Data from Google Drive';
+        return;
+      }
+
+      // Step 3: Complete setup state
+      btnConnect.textContent = '⚙️ 3/3 Finalizing setup…';
+      const completeRes = await window.api.system.completeSetup({ isDriveRestore: true });
+      if (!completeRes.success) {
+        showError(completeRes.message || 'Setup completion failed.');
+        btnConnect.disabled = false;
+        btnConnect.textContent = '🚀 2. Connect & Download Data from Google Drive';
+        return;
+      }
+
+      // Success — show overlay and relaunch app to apply restored files
+      showDriveSuccessOverlay(() => {
+        window.api.system.relaunch();
+      });
+    } catch (err) {
+      showError(err.message || 'An unexpected error occurred during Google Drive setup.');
+      btnConnect.disabled = false;
+      btnConnect.textContent = '🚀 2. Connect & Download Data from Google Drive';
+    }
+  }
+
+  function showDriveSuccessOverlay(callback) {
+    const overlay = document.createElement('div');
+    overlay.className = 'wiz-success-overlay';
+    overlay.innerHTML = `
+      <div class="wiz-success-card">
+        <div class="wiz-success-icon">
+          <svg viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="30" stroke="#06b6d4" stroke-width="3" fill="none" opacity="0.3"/>
+            <circle cx="32" cy="32" r="30" stroke="#06b6d4" stroke-width="3" fill="none" class="wiz-success-ring"/>
+            <polyline points="18,34 27,44 46,22" stroke="#06b6d4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="wiz-success-check"/>
+          </svg>
+        </div>
+        <h2 style="color:var(--cyan);font-size:20px;font-weight:800;margin:16px 0 8px">Database Restored from Drive!</h2>
+        <p style="color:var(--text-secondary);font-size:13px">Restarting EduTrack to load all your restored data…</p>
+      </div>`;
+    document.body.appendChild(overlay);
+    setTimeout(() => { overlay.remove(); callback(); }, 1800);
   }
 
   function bindPasswordStrength() {
@@ -206,7 +453,7 @@
     const toggleBtn = document.getElementById('wiz-toggle-pass');
     if (!passInput) return;
 
-    passInput.addEventListener('input', () => {
+    const updateStrength = () => {
       const { score, label, color } = getPasswordStrength(passInput.value);
       const fill = document.getElementById('wiz-strength-fill');
       const labelEl = document.getElementById('wiz-strength-label');
@@ -218,7 +465,10 @@
         labelEl.textContent = label;
         labelEl.style.color = color;
       }
-    });
+    };
+
+    passInput.addEventListener('input', updateStrength);
+    updateStrength();
 
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => {
@@ -230,6 +480,7 @@
   // ── Navigation helpers ────────────────────────────────────────────────────
   function showError(msg) {
     const errEl = document.getElementById('wiz-error');
+    if (!errEl) return;
     errEl.textContent = msg;
     errEl.classList.remove('hidden');
     errEl.style.animation = 'none';
@@ -242,15 +493,36 @@
   }
 
   function collectValues() {
-    return {
-      ownerName: (document.getElementById('wiz-owner-name') || {}).value || '',
-      centerName: (document.getElementById('wiz-center-name') || {}).value || '',
-      adminUsername: (document.getElementById('wiz-admin-user') || {}).value || '',
-      adminPassword: (document.getElementById('wiz-admin-pass') || {}).value || '',
-      adminConfirm: (document.getElementById('wiz-admin-confirm') || {}).value || '',
-      countryCode: (document.getElementById('wiz-country-code') || {}).value || '20',
-      defaultLevel: (document.getElementById('wiz-default-level') || {}).value || '',
-    };
+    if (setupMode === 'fresh') {
+      const fields = [
+        { id: 'wiz-owner-name', key: 'ownerName' },
+        { id: 'wiz-center-name', key: 'centerName' },
+        { id: 'wiz-admin-user', key: 'adminUsername' },
+        { id: 'wiz-admin-pass', key: 'adminPassword' },
+        { id: 'wiz-admin-confirm', key: 'adminConfirm' },
+        { id: 'wiz-country-code', key: 'countryCode' },
+        { id: 'wiz-default-level', key: 'defaultLevel' }
+      ];
+      fields.forEach(f => {
+        const el = document.getElementById(f.id);
+        if (el) {
+          wizardData[f.key] = el.value;
+        }
+      });
+    } else {
+      const driveFields = [
+        { id: 'wiz-drive-client-id', key: 'driveClientId' },
+        { id: 'wiz-drive-client-secret', key: 'driveClientSecret' },
+        { id: 'wiz-drive-auth-code', key: 'driveAuthCode' }
+      ];
+      driveFields.forEach(f => {
+        const el = document.getElementById(f.id);
+        if (el) {
+          wizardData[f.key] = el.value;
+        }
+      });
+    }
+    return wizardData;
   }
 
   function validateStep(index) {
@@ -282,10 +554,17 @@
     const outClass = direction > 0 ? 'wiz-slide-out-left' : 'wiz-slide-out-right';
     const inClass  = direction > 0 ? 'wiz-slide-in-right' : 'wiz-slide-in-left';
 
+    // Save current fields before moving
+    collectValues();
+
     body.classList.add(outClass);
     setTimeout(() => {
       currentStep = newIndex;
       body.innerHTML = renderStep(newIndex);
+
+      // Populate inputs with stored values
+      populateInputs();
+
       body.classList.remove(outClass);
       body.classList.add(inClass);
       bindPasswordStrength();

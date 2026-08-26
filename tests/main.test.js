@@ -54,8 +54,13 @@ jest.mock('electron', () => ({
     handle: jest.fn((channel, handler) => { ipcHandlers[channel] = handler; }),
     on: jest.fn((channel, handler) => { ipcHandlers[channel] = handler; }),
   },
+  Menu: {
+    setApplicationMenu: jest.fn(),
+    buildFromTemplate: jest.fn(() => ({})),
+  },
   dialog: { showOpenDialog: jest.fn() },
 }));
+
 
 // ── Mock `fs` with in-memory key-value store ─────────────────
 jest.mock('fs', () => {
@@ -129,6 +134,26 @@ describe('IMPORT - student commit creates missing setup data', () => {
       centerId: centers[0].id,
       center: 'New Center',
     });
+  });
+
+  test('import:students-commit generates unique IDs for all imported students in tight loop', () => {
+    const rows = Array.from({ length: 10 }, (_, i) => ({
+      name: `Student ${i + 1}`,
+      barcode: `IMP_UNIQUE_${i + 1}`,
+      phone: `010000000${i}`,
+      parentPhone: `011000000${i}`,
+      levelName: 'Grade 10',
+      centerName: 'Center A',
+    }));
+
+    const res = call('import:students-commit', { rows });
+    expect(res.success).toBe(true);
+    expect(res.created).toBe(10);
+
+    const students = read('students');
+    const ids = students.map(s => s.id);
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(10);
   });
 
   test('import:students-commit assigns a new grade to an existing center', () => {
@@ -540,6 +565,61 @@ describe('STUDENTS – CRUD + barcode lookup', () => {
   test('students:delete – removes student', () => {
     call('students:delete', 's2');
     expect(read('students')).toHaveLength(1);
+  });
+
+  test('students:bulk-delete removes students and related records', () => {
+    seed('groups', [
+      { id: 'g1', name: 'Group 1', studentIds: ['s1', 's2', 's3'] },
+    ]);
+    seed('attendance', [
+      { id: 'att1', studentId: 's1' },
+      { id: 'att2', studentId: 's3' },
+    ]);
+    seed('quiz_scores', [
+      { id: 'q1', studentId: 's2' },
+      { id: 'q2', studentId: 's3' },
+    ]);
+    seed('payments', [
+      { id: 'p1', studentId: 's1' },
+      { id: 'p2', studentId: 's3' },
+    ]);
+    seed('block_history', [
+      { id: 'bh1', studentId: 's2' },
+      { id: 'bh2', studentId: 's3' },
+    ]);
+    seed('whatsapp_log', [
+      { id: 'wm1', studentId: 's1' },
+      { id: 'wm2', studentId: 's3' },
+    ]);
+
+    const res = call('students:bulk-delete', { studentIds: ['s1', 's2'] });
+
+    expect(res).toMatchObject({ success: true, count: 2 });
+    expect(read('students').map(s => s.id)).toEqual([]);
+    expect(read('groups')[0].studentIds).toEqual(['s3']);
+    expect(read('attendance').map(r => r.studentId)).toEqual(['s3']);
+    expect(read('quiz_scores').map(r => r.studentId)).toEqual(['s3']);
+    expect(read('payments').map(r => r.studentId)).toEqual(['s3']);
+    expect(read('block_history').map(r => r.studentId)).toEqual(['s3']);
+    expect(read('whatsapp_log').map(r => r.studentId)).toEqual(['s3']);
+  });
+
+  test('students:bulk-block and students:bulk-unblock update selected students', () => {
+    seed('block_history', []);
+    seed('whatsapp_log', []);
+
+    const blockRes = call('students:bulk-block', { studentIds: ['s1', 's2'], reason: 'Batch review' });
+    expect(blockRes.success).toBe(true);
+    expect(blockRes.count).toBe(2);
+    expect(read('students').every(s => s.isBlocked)).toBe(true);
+    expect(read('block_history').filter(h => h.action === 'block')).toHaveLength(2);
+
+    const unblockRes = call('students:bulk-unblock', { studentIds: ['s1'] });
+    expect(unblockRes.success).toBe(true);
+    expect(unblockRes.count).toBe(1);
+    expect(read('students').find(s => s.id === 's1').isBlocked).toBe(false);
+    expect(read('students').find(s => s.id === 's2').isBlocked).toBe(true);
+    expect(read('block_history').filter(h => h.action === 'unblock')).toHaveLength(1);
   });
 
   test('students:by-barcode – returns matching student', () => {
@@ -1382,6 +1462,7 @@ describe('PAYMENTS – create, list, by-student, balance, delete, financial summ
     seed('payments', [
       { id: 'pay1', studentId: 's1', studentName: 'Alice', amount: 150, method: 'cash', note: 'Partial', date: '2024-03-05', createdAt: '2024-03-05T10:00:00Z' },
     ]);
+    seed('system', { centerName: 'Bright Center', schemaVersion: 1 });
   });
 
   test('payments:list – returns all payments sorted by date', () => {
@@ -1422,7 +1503,33 @@ describe('PAYMENTS – create, list, by-student, balance, delete, financial summ
     expect(list).toHaveLength(0);
   });
 
-  test('payments:delete – removes the payment record', () => {
+  test('payments:receipt - returns printable receipt data with balance totals', () => {
+    const res = call('payments:receipt', 'pay1');
+    expect(res.success).toBe(true);
+    expect(res.receipt).toMatchObject({
+      id: 'pay1',
+      receiptNo: 'PAY1',
+      centerName: 'Bright Center',
+      studentName: 'Alice',
+      studentId: 's1',
+      amount: 150,
+      method: 'cash',
+      date: '2024-03-05',
+      note: 'Partial',
+      totalDue: 400,
+      totalPaid: 150,
+      remaining: 250,
+    });
+    expect(res.receipt.generatedAt).toBeTruthy();
+  });
+
+  test('payments:receipt - rejects unknown payment', () => {
+    const res = call('payments:receipt', 'pay999');
+    expect(res.success).toBe(false);
+    expect(res.message).toMatch(/payment not found/i);
+  });
+
+  test('payments:delete - removes the payment record', () => {
     const res = call('payments:delete', 'pay1');
     expect(res.success).toBe(true);
     expect(read('payments')).toHaveLength(0);

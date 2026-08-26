@@ -60,6 +60,7 @@ async function renderAttendance() {
               <input id="att-search" type="text" placeholder="Search present list…" style="font-size:12px;padding:4px 0" />
             </div>
             <button class="btn btn-secondary btn-sm" id="btn-manual-add">+ Manual Add</button>
+            <button class="btn btn-secondary btn-sm" id="btn-assign-att-group" style="background:rgba(99,102,241,0.1);color:var(--accent);border-color:rgba(99,102,241,0.25)">👥 Assign to Group</button>
             <button class="btn btn-secondary btn-sm" id="btn-wa-send-all" style="background:rgba(37,211,102,0.1);color:#25D366;border-color:rgba(37,211,102,0.25)">📱 Send All WhatsApp</button>
             <button class="btn btn-secondary btn-sm" id="btn-wa-send-absence" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">📵 Send Absence</button>
             <button class="btn btn-secondary btn-sm" id="btn-export-att">Export CSV</button>
@@ -200,7 +201,7 @@ async function selectSessionForAttendance(sessionId) {
     suggestionsBox.innerHTML = '';
     suggestionsBox.classList.add('hidden');
 
-    studentSearch.oninput = () => {
+    studentSearch.oninput = debounce(() => {
       const q = studentSearch.value.trim().toLowerCase();
       if (!q) {
         suggestionsBox.innerHTML = '';
@@ -229,15 +230,20 @@ async function selectSessionForAttendance(sessionId) {
           <button class="btn btn-primary btn-sm" style="padding: 2px 8px; font-size:11px">Check In</button>
         </div>`).join('');
       suggestionsBox.classList.remove('hidden');
-    };
+    });
   }
 
   // Handle clicking outside suggestions
-  document.addEventListener('click', (e) => {
-    if (studentSearch && suggestionsBox && e.target !== studentSearch && !suggestionsBox.contains(e.target)) {
-      suggestionsBox.classList.add('hidden');
-    }
-  });
+  if (!window._attClickAttached) {
+    window._attClickAttached = true;
+    document.addEventListener('click', (e) => {
+      const studentSearch = el('attendance-student-search');
+      const suggestionsBox = el('attendance-student-suggestions');
+      if (studentSearch && suggestionsBox && e.target !== studentSearch && !suggestionsBox.contains(e.target)) {
+        suggestionsBox.classList.add('hidden');
+      }
+    });
+  }
 
   window.checkInBySearch = async (studentId, studentName, barcode) => {
     if (studentSearch) studentSearch.value = '';
@@ -277,6 +283,7 @@ async function selectSessionForAttendance(sessionId) {
   };
 
   el('btn-manual-add').onclick = () => manualAttAdd();
+  el('btn-assign-att-group').onclick = () => assignAttendedToGroup();
   el('btn-wa-send-all').onclick = () => batchSendWhatsAppAttendance();
   el('btn-wa-send-absence').onclick = () => batchSendAbsenceNotifications();
   el('btn-export-att').onclick = () => exportAttCSV();
@@ -284,7 +291,7 @@ async function selectSessionForAttendance(sessionId) {
   if (!window._waAttMsgListener) {
     window._waAttMsgListener = true;
     window.api.whatsapp.onMessageSent((record) => {
-      if (record.type === 'attendance' && record.sessionId === currentSessionId) {
+      if ((record.type === 'attendance' || record.type === 'session_summary') && record.sessionId === currentSessionId) {
         updateWaAttIndicator(record.studentId, record.status);
       }
     });
@@ -445,19 +452,6 @@ async function manualAttAdd() {
   renderList();
 }
 
-async function exportAttCSV() {
-  if (!currentSessionId) return;
-  if (!attendanceRecords.length) { toast('No records to export', 'error'); return; }
-  const headers = ['#','Student Name','Barcode','Check-in Time','Homework Status','Note'];
-  const rows = attendanceRecords.map((r, i) => [i+1, r.studentName, r.barcode||'', new Date(r.checkInTime).toLocaleString(), r.homeworkStatus, r.homeworkNote||'']);
-  const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `attendance_${currentSessionId}.csv`; a.click();
-  URL.revokeObjectURL(url);
-  toast('CSV exported', 'success');
-}
 
 async function getStudentHistoryHtml(studentId, groupId, currentSessionId) {
   const [allSessions, allAttendance] = await Promise.all([
@@ -511,37 +505,38 @@ async function getStudentHistoryHtml(studentId, groupId, currentSessionId) {
 
 // ── WhatsApp Attendance Helpers ───────────────────────────────────────────────
 
-async function autoSendWhatsAppAttendance(studentId, sessionId) {
+async function autoSendWhatsApp(type, studentId, sessionId) {
   try {
     const settings = await window.api.whatsapp.getSettings();
-    if (!settings.autoSendAttendance) return;
+    const settingKey = type === 'homework' ? 'autoSendHomework' : 'autoSendAttendance';
+    if (!settings[settingKey]) return;
+
     const status = await window.api.whatsapp.status();
     if (status.status !== 'connected') return;
 
-    const res = await window.api.whatsapp.sendAttendance({ studentId, sessionId });
-    if (res.success) {
-      updateWaAttIndicator(studentId, 'queued');
-    } else if (res.duplicate) {
-      updateWaAttIndicator(studentId, 'sent');
-    } else if (res.record?.status === 'no_phone') {
-      updateWaAttIndicator(studentId, 'no_phone');
+    if (type === 'homework') {
+      await window.api.whatsapp.sendHomework({ studentId, sessionId });
+    } else {
+      const res = await window.api.whatsapp.sendAttendance({ studentId, sessionId });
+      if (res.success) {
+        updateWaAttIndicator(studentId, 'queued');
+      } else if (res.duplicate) {
+        updateWaAttIndicator(studentId, 'sent');
+      } else if (res.record?.status === 'no_phone') {
+        updateWaAttIndicator(studentId, 'no_phone');
+      }
     }
   } catch (e) {
-    console.error('WhatsApp auto-send error:', e);
+    console.error(`WhatsApp ${type} auto-send error:`, e);
   }
 }
 
-async function autoSendWhatsAppHomework(studentId, sessionId) {
-  try {
-    const settings = await window.api.whatsapp.getSettings();
-    if (!settings.autoSendHomework) return;
-    const status = await window.api.whatsapp.status();
-    if (status.status !== 'connected') return;
+function autoSendWhatsAppAttendance(studentId, sessionId) {
+  return autoSendWhatsApp('attendance', studentId, sessionId);
+}
 
-    await window.api.whatsapp.sendHomework({ studentId, sessionId });
-  } catch (e) {
-    console.error('WhatsApp homework auto-send error:', e);
-  }
+function autoSendWhatsAppHomework(studentId, sessionId) {
+  return autoSendWhatsApp('homework', studentId, sessionId);
 }
 
 async function batchSendWhatsAppAttendance() {
@@ -653,8 +648,8 @@ async function loadWaAttendanceStatus() {
     const waStatus = await window.api.whatsapp.getSessionStatus(currentSessionId);
     if (!waStatus || !waStatus.statusMap) return;
     for (const [key, msg] of Object.entries(waStatus.statusMap)) {
-      if (key.endsWith('_attendance')) {
-        const studentId = key.replace('_attendance', '');
+      if (key.endsWith('_attendance') || key.endsWith('_session_summary')) {
+        const studentId = key.replace('_attendance', '').replace('_session_summary', '');
         updateWaAttIndicator(studentId, msg.status);
       }
     }
@@ -740,3 +735,100 @@ window.correctAttendance = async function(attendanceId) {
     }
   });
 };
+
+// ── Phase 3 Completion: Export Attendance CSV ────────────────────────────────
+async function exportAttCSV() {
+  if (!currentSessionId) return toast('Please select a session first', 'error');
+  if (!attendanceRecords.length) return toast('No attendance records to export', 'error');
+
+  const rows = attendanceRecords.map(r => ({
+    studentName: r.studentName,
+    barcode: r.barcode || '',
+    checkInTime: r.checkInTime ? new Date(r.checkInTime).toLocaleString() : '',
+    homeworkStatus: r.homeworkStatus || 'pending',
+    homeworkNote: r.homeworkNote || '',
+    notes: r.notes || '',
+  }));
+  const cols = [
+    { key: 'studentName', label: 'Student Name' },
+    { key: 'barcode', label: 'Barcode' },
+    { key: 'checkInTime', label: 'Check-in Time' },
+    { key: 'homeworkStatus', label: 'Homework Status' },
+    { key: 'homeworkNote', label: 'Homework Note' },
+    { key: 'notes', label: 'Notes' },
+  ];
+  const res = await window.api.export.excel({ sheetName: 'Attendance', columns: cols, rows, filename: `Attendance_Export.xlsx` });
+  if (res?.success) toast('Attendance exported successfully', 'success');
+  else if (res && !res.canceled) toast(res.error || 'Export failed', 'error');
+}
+
+async function assignAttendedToGroup() {
+  if (!currentSessionId) {
+    toast('Please select a session first', 'error');
+    return;
+  }
+
+  if (!attendanceRecords || !attendanceRecords.length) {
+    toast('No present students in this session to assign', 'error');
+    return;
+  }
+
+  const [sessions, groups] = await Promise.all([
+    window.api.sessions.list(),
+    window.api.groups.list()
+  ]);
+
+  const session = sessions.find(s => s.id === currentSessionId);
+  const studentIds = attendanceRecords.map(r => r.studentId).filter(Boolean);
+
+  if (!studentIds.length) {
+    toast('No present students found to assign', 'error');
+    return;
+  }
+
+  const sessionGroup = groups.find(g => g.id === session?.groupId);
+
+  if (sessionGroup) {
+    if (!confirmAction(`Assign all ${studentIds.length} attended students to group "${sessionGroup.name}"?`)) {
+      return;
+    }
+    const res = await window.api.students.bulkAssignGroup({ studentIds, groupId: sessionGroup.id });
+    if (res.success) {
+      toast(`Successfully assigned ${res.count} attended students to "${sessionGroup.name}"`, 'success');
+    } else {
+      toast(res.message || res.error || 'Failed to assign students to group', 'error');
+    }
+  } else {
+    openModal({
+      title: `Assign ${studentIds.length} Attended Students to Group`,
+      body: `
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">
+          This session does not have a linked group. Select the target group to add the ${studentIds.length} attended students:
+        </p>
+        <div class="form-group">
+          <label class="form-label">Target Group *</label>
+          <select id="att-target-group-id" class="form-select">
+            <option value="">— Select Group —</option>
+            ${groups.map(g => `<option value="${g.id}">${g.name} (${g.level || 'Any'} / ${g.center || 'Any'})</option>`).join('')}
+          </select>
+        </div>`,
+      footer: `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="btn-confirm-att-group">Assign</button>`
+    });
+
+    el('btn-confirm-att-group').onclick = async () => {
+      const groupId = el('att-target-group-id').value;
+      if (!groupId) {
+        toast('Please select a group', 'error');
+        return;
+      }
+      const targetGroup = groups.find(g => g.id === groupId);
+      const res = await window.api.students.bulkAssignGroup({ studentIds, groupId });
+      closeModal();
+      if (res.success) {
+        toast(`Successfully assigned ${res.count} attended students to "${targetGroup?.name || 'group'}"`, 'success');
+      } else {
+        toast(res.message || res.error || 'Failed to assign students to group', 'error');
+      }
+    };
+  }
+}

@@ -1,13 +1,35 @@
 // ── Groups ────────────────────────────────────────────────────────────────────
 let groupsData = [];
+let sessionsDataGlobal = [];
+let attendanceDataGlobal = [];
 
 async function renderGroups() {
-  const [groups, students, levels, centers] = await Promise.all([
-    window.api.groups.list(), window.api.students.list(), window.api.levels.list(), window.api.centers.list()
+  const [groups, students, levels, centers, sessions, attendance] = await Promise.all([
+    window.api.groups.list(),
+    window.api.students.list(),
+    window.api.levels.list(),
+    window.api.centers.list(),
+    window.api.sessions.list(),
+    window.api.attendance.list()
   ]);
   groupsData = groups;
+  sessionsDataGlobal = sessions;
+  attendanceDataGlobal = attendance;
 
   el('page-groups').innerHTML = `
+    <style>
+      .groups-sparkline-dot {
+        opacity: 0;
+        transition: opacity 0.2s, r 0.2s, fill 0.2s;
+      }
+      .groups-sparkline:hover .groups-sparkline-dot {
+        opacity: 1;
+      }
+      .groups-sparkline-dot:hover {
+        r: 4 !important;
+        fill: var(--purple) !important;
+      }
+    </style>
     <div class="page-header">
       <div><h2>Groups</h2><p class="page-header-sub">Organize students into teaching groups</p></div>
       <button class="btn btn-primary" id="btn-add-group">
@@ -32,7 +54,7 @@ async function renderGroups() {
     <div class="card">
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Group Name</th><th>Level</th><th>Center</th><th>Day/Time</th><th>Students</th><th>Actions</th></tr></thead>
+          <thead><tr><th>#</th><th>Group Name</th><th>Level</th><th>Center</th><th>Day/Time</th><th>Students</th><th>Attendance Trend</th><th>Actions</th></tr></thead>
           <tbody id="groups-tbody"></tbody>
         </table>
       </div>
@@ -40,7 +62,7 @@ async function renderGroups() {
 
   renderGroupsTable(groups);
   el('btn-add-group').addEventListener('click', () => openGroupModal(null, levels, centers));
-  el('group-search').addEventListener('input', filterGroups);
+  el('group-search').addEventListener('input', debounce(filterGroups, 150));
   el('group-level-filter').addEventListener('change', filterGroups);
   el('group-center-filter').addEventListener('change', filterGroups);
 }
@@ -55,6 +77,7 @@ function renderGroupsTable(groups) {
       <td style="color:var(--text-secondary)">${g.center||'—'}</td>
       <td style="color:var(--text-secondary)">${g.dayOfWeek||'—'} ${g.time||''}</td>
       <td><span class="badge badge-accent">${(g.studentIds||[]).length} students</span></td>
+      <td>${generateGroupTrendSparkline(g.id)}</td>
       <td>
         <div style="display:flex;gap:5px;">
           <button class="btn btn-secondary btn-sm" onclick="manageGroupStudents('${g.id}')">Members</button>
@@ -62,7 +85,66 @@ function renderGroupsTable(groups) {
           <button class="btn btn-danger btn-sm" onclick="deleteGroup('${g.id}')">✕</button>
         </div>
       </td>
-    </tr>`).join('') : `<tr><td colspan="7" class="table-empty">No groups yet.</td></tr>`;
+    </tr>`).join('') : `<tr><td colspan="8" class="table-empty">No groups yet.</td></tr>`;
+}
+
+function generateGroupTrendSparkline(groupId) {
+  const groupSessions = (sessionsDataGlobal || [])
+    .filter(s => s.groupId === groupId)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (!groupSessions.length) {
+    return `<span style="color:var(--text-muted);font-size:11px;">No sessions</span>`;
+  }
+
+  const recentSessions = groupSessions.slice(-8); // Show last 8 sessions
+  const data = recentSessions.map(s => {
+    const presentCount = (attendanceDataGlobal || []).filter(a => a.sessionId === s.id).length;
+    return {
+      title: s.title,
+      date: s.date,
+      val: presentCount
+    };
+  });
+
+  const width = 110;
+  const height = 30;
+  const padding = 4;
+
+  const maxVal = Math.max(...data.map(d => d.val), 5);
+  const minVal = 0;
+
+  const points = data.map((d, i) => {
+    const x = data.length === 1 
+      ? padding + (width - 2 * padding) / 2
+      : padding + (i / (data.length - 1)) * (width - 2 * padding);
+    const y = height - padding - (d.val / maxVal) * (height - 2 * padding);
+    const tooltip = `${d.title} (${d.date}): ${d.val} present`;
+    return { x, y, val: d.val, tooltip };
+  });
+
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  const areaPath = points.length > 0 
+    ? `${linePath} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`
+    : '';
+
+  return `
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" class="groups-sparkline" style="overflow:visible;display:block;">
+      <defs>
+        <linearGradient id="sparkGrad_${groupId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.00"/>
+        </linearGradient>
+      </defs>
+      ${areaPath ? `<path d="${areaPath}" fill="url(#sparkGrad_${groupId})" />` : ''}
+      ${linePath ? `<path d="${linePath}" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />` : ''}
+      ${points.map(p => `
+        <circle cx="${p.x}" cy="${p.y}" r="2" fill="var(--accent)" stroke="var(--bg-card)" stroke-width="1" class="groups-sparkline-dot">
+          <title>${p.tooltip}</title>
+        </circle>
+      `).join('')}
+    </svg>
+  `;
 }
 
 function filterGroups() {
@@ -120,7 +202,15 @@ function openGroupModal(group = null, levels = [], centers = []) {
           <label class="form-label">Max Capacity</label>
           <input id="g-cap" type="number" class="form-input" placeholder="e.g. 30" value="${group?.capacity||''}" />
         </div>
-        <div class="form-group"></div>
+        <div class="form-group">
+          <label class="form-label" style="display:flex;align-items:center;gap:6px">
+            Center Fee per Student (EGP)
+            <span style="font-size:11px;color:var(--text-muted);font-weight:400">(خصم السنتر لكل طالب)</span>
+          </label>
+          <input id="g-center-fee" type="number" class="form-input" placeholder="e.g. 25" min="0"
+            value="${group?.centerFeePerStudent ?? ''}"
+            style="border-color:rgba(99,102,241,0.4)" />
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Notes</label>
@@ -133,9 +223,12 @@ function openGroupModal(group = null, levels = [], centers = []) {
   el('save-group-btn').addEventListener('click', async () => {
     const name = el('g-name').value.trim();
     if (!name) { toast('Group name is required', 'error'); return; }
+    const centerFeeRaw = el('g-center-fee').value;
+    const centerFeePerStudent = centerFeeRaw !== '' ? Math.max(0, Number(centerFeeRaw) || 0) : 0;
     const data = {
       name, level: el('g-level').value, center: el('g-center').value, dayOfWeek: el('g-day').value,
-      time: el('g-time').value, capacity: el('g-cap').value, notes: el('g-notes').value.trim()
+      time: el('g-time').value, capacity: el('g-cap').value, notes: el('g-notes').value.trim(),
+      centerFeePerStudent,
     };
     const res = group ? await window.api.groups.update({ id: group.id, ...data }) : await window.api.groups.create(data);
     if (!res.success) { toast(res.message, 'error'); return; }
@@ -143,6 +236,7 @@ function openGroupModal(group = null, levels = [], centers = []) {
     closeModal(); renderGroups();
   });
 }
+
 
 async function editGroup(id) {
   const [groups, levels, centers] = await Promise.all([window.api.groups.list(), window.api.levels.list(), window.api.centers.list()]);
@@ -262,7 +356,7 @@ async function renderSessions() {
   renderSessionsTable(sessions, groups);
   el('btn-add-session').addEventListener('click', () => openSessionModal(null, groups));
   el('btn-recurring-sessions').addEventListener('click', () => openRecurringSessionsModal(groups));
-  el('session-search').addEventListener('input', () => filterSessions(groups));
+  el('session-search').addEventListener('input', debounce(() => filterSessions(groups), 150));
   el('session-group-filter').addEventListener('change', () => filterSessions(groups));
   el('session-date-filter').addEventListener('change', () => filterSessions(groups));
 }
@@ -421,6 +515,8 @@ async function deleteSession(id) {
   await window.api.sessions.delete(id);
   toast('Session deleted', 'success');
   renderSessions();
+  // Keep dashboard in sync — re-render it if currently visible
+  if (State.currentPage === 'dashboard') renderDashboard();
 }
 
 // ── Phase 3: Duplicate & Recurring Sessions ──

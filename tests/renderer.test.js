@@ -67,6 +67,12 @@ global.window = {
       block: jest.fn(),
       unblock: jest.fn(),
       delete: jest.fn(),
+      bulkAssignGroup: jest.fn(),
+      bulkUpdateLevel: jest.fn(),
+      bulkUpdateCenter: jest.fn(),
+      bulkBlock: jest.fn(),
+      bulkUnblock: jest.fn(),
+      bulkDelete: jest.fn(),
     },
     groups: {
       list: jest.fn(),
@@ -122,6 +128,7 @@ global.confirmAction = jest.fn((msg) => window.confirm(msg));
 global.formatDate = jest.fn((d) => d);
 global.formatTime = jest.fn((t) => t);
 global.hwBadge = jest.fn((s) => s);
+global.debounce = (fn) => fn;
 global.State = { user: { role: 'admin' } };
 
 const vm = require('vm');
@@ -154,6 +161,8 @@ describe('EduTrack Renderer – Search & Filtration Scenarios', () => {
     window.api.sessions.list.mockResolvedValue([]);
     window.api.attendance.list.mockResolvedValue([]);
     window.api.attendance.bySession.mockResolvedValue([]);
+    document.querySelectorAll.mockReturnValue([]);
+    document.querySelector.mockReturnValue(null);
     
     // Clear the documentMocks values
     for (const key in documentMocks) {
@@ -276,6 +285,98 @@ describe('EduTrack Renderer – Search & Filtration Scenarios', () => {
       expect(window.api.students.delete).toHaveBeenCalledWith('s1');
       expect(toast).toHaveBeenCalledWith('Student deleted', 'success');
       expect(el('students-tbody').innerHTML).toContain('No students found.');
+    });
+
+    test('shift-click selects a visible range and updates the bulk selection count', () => {
+      const rowClassList = () => ({ toggle: jest.fn() });
+      const makeCheckbox = (id) => ({
+        value: id,
+        checked: false,
+        closest: jest.fn(() => ({ classList: rowClassList() })),
+      });
+      const cb1 = makeCheckbox('s1');
+      const cb2 = makeCheckbox('s2');
+      const cb3 = makeCheckbox('s3');
+      document.querySelectorAll.mockReturnValue([cb1, cb2, cb3]);
+      document.body.contains = jest.fn(() => true);
+      selectedStudentIds.clear();
+      lastCheckedStudentCheckbox = null;
+
+      cb1.checked = true;
+      window.toggleStudent(cb1, { shiftKey: false });
+      cb3.checked = true;
+      window.toggleStudent(cb3, { shiftKey: true });
+
+      expect([...selectedStudentIds]).toEqual(['s1', 's2', 's3']);
+      expect(cb2.checked).toBe(true);
+      expect(el('student-selection-count').textContent).toBe('3 selected');
+      expect(el('student-selection-bar').classList.containsMock.has('hidden')).toBe(false);
+    });
+
+    test('selecting multiple individual students updates the selected count correctly', () => {
+      const rowClassList = () => ({ toggle: jest.fn() });
+      const makeCheckbox = (id) => ({
+        value: id,
+        checked: false,
+        closest: jest.fn(() => ({ classList: rowClassList() })),
+      });
+      const cb1 = makeCheckbox('s1');
+      const cb2 = makeCheckbox('s2');
+      const cb3 = makeCheckbox('s3');
+      document.querySelectorAll.mockReturnValue([cb1, cb2, cb3]);
+      document.body.contains = jest.fn(() => true);
+      selectedStudentIds.clear();
+      lastCheckedStudentCheckbox = null;
+
+      cb1.checked = true;
+      window.toggleStudent(cb1);
+      expect(el('student-selection-count').textContent).toBe('1 selected');
+
+      cb2.checked = true;
+      window.toggleStudent(cb2);
+      expect(el('student-selection-count').textContent).toBe('2 selected');
+
+      cb3.checked = true;
+      window.toggleStudent(cb3);
+      expect(el('student-selection-count').textContent).toBe('3 selected');
+      expect([...selectedStudentIds]).toEqual(['s1', 's2', 's3']);
+    });
+
+    test('toggleAllStudents selects all visible students and updates count', () => {
+      const rowClassList = () => ({ toggle: jest.fn() });
+      const makeCheckbox = (id) => ({
+        value: id,
+        checked: false,
+        closest: jest.fn(() => ({ classList: rowClassList() })),
+      });
+      const cb1 = makeCheckbox('s1');
+      const cb2 = makeCheckbox('s2');
+      const cb3 = makeCheckbox('s3');
+      document.querySelectorAll.mockReturnValue([cb1, cb2, cb3]);
+      selectedStudentIds.clear();
+
+      const headerCheckbox = { checked: true };
+      window.toggleAllStudents(headerCheckbox);
+
+      expect([...selectedStudentIds]).toEqual(['s1', 's2', 's3']);
+      expect(cb1.checked).toBe(true);
+      expect(cb2.checked).toBe(true);
+      expect(cb3.checked).toBe(true);
+      expect(el('student-selection-count').textContent).toBe('3 selected');
+    });
+
+    test('bulk-action-select remains visible and toggles disabled status based on selection', () => {
+      const selectEl = { disabled: true, value: 'group', style: {} };
+      el.mockImplementation(id => id === 'bulk-action-select' ? selectEl : null);
+
+      selectedStudentIds.clear();
+      updateBulkActionsVisibility();
+      expect(selectEl.disabled).toBe(true);
+      expect(selectEl.value).toBe('');
+
+      selectedStudentIds.add('s1');
+      updateBulkActionsVisibility();
+      expect(selectEl.disabled).toBe(false);
     });
   });
 
@@ -535,7 +636,7 @@ describe('EduTrack Renderer – Search & Filtration Scenarios', () => {
       expect(html).toContain('Students');
       expect(html).toContain('Attendance Records');
       expect(html).toContain('Upcoming Sessions');
-      expect(html).toContain('Homework Rate');
+      expect(html).toContain('Homework Completion Rate');
       expect(html).toContain('Session Attendance Insights');
       expect(html).toContain('Same-Level Siblings');
       expect(html).toContain('Discounted');

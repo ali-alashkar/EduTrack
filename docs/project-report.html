@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>EduTrack Project Report</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: #172033;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11.5pt;
+      line-height: 1.52;
+      background: #ffffff;
+    }
+
+    .cover {
+      min-height: 255mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-left: 9px solid #2457a6;
+      padding-left: 28px;
+    }
+
+    .eyebrow {
+      margin: 0 0 18px;
+      color: #52627a;
+      font-size: 11pt;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: #10264a;
+      font-size: 34pt;
+      line-height: 1.08;
+    }
+
+    .subtitle {
+      max-width: 560px;
+      margin: 18px 0 0;
+      color: #3d4c63;
+      font-size: 15pt;
+    }
+
+    .meta {
+      margin-top: 54px;
+      padding: 16px 18px;
+      border: 1px solid #d6dfeb;
+      border-radius: 6px;
+      background: #f6f9fd;
+      color: #2e3b4f;
+      width: 420px;
+    }
+
+    .meta p {
+      margin: 4px 0;
+    }
+
+    section {
+      break-inside: avoid;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      padding-bottom: 5px;
+      border-bottom: 2px solid #d9e4f2;
+      color: #10264a;
+      font-size: 17pt;
+    }
+
+    h3 {
+      margin: 14px 0 5px;
+      color: #1d3f75;
+      font-size: 12.8pt;
+    }
+
+    p {
+      margin: 0 0 8px;
+    }
+
+    ul,
+    ol {
+      margin: 6px 0 0 19px;
+      padding: 0;
+    }
+
+    li {
+      margin: 3px 0;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 8px;
+      border-collapse: collapse;
+      font-size: 10.5pt;
+    }
+
+    th,
+    td {
+      padding: 7px 8px;
+      border: 1px solid #d9e1ec;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: #10264a;
+      background: #eef4fb;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .box {
+      padding: 12px;
+      border: 1px solid #d9e1ec;
+      border-radius: 6px;
+      background: #fbfcfe;
+    }
+
+    .page-break {
+      break-before: page;
+    }
+  </style>
+</head>
+<body>
+  <div class="cover">
+    <p class="eyebrow">Project Documentation</p>
+    <h1>EduTrack</h1>
+    <p class="subtitle">Student Registration and Academic Management System for Tutoring Centers</p>
+    <div class="meta">
+      <p><strong>Role:</strong> Project Developer / System Designer</p>
+      <p><strong>Project Type:</strong> Desktop application</p>
+      <p><strong>Prepared:</strong> July 2026</p>
+    </div>
+  </div>
+
+  <section class="page-break">
+    <h2>Project Description</h2>
+    <p>
+      EduTrack is a desktop-based student registration and academic management system designed for tutoring centers,
+      private educational offices, and small academic organizations. The system helps administrators manage students,
+      academic levels, centers, groups, sessions, attendance, homework, quiz scores, reports, barcode IDs, payments,
+      user accounts, and parent communication through WhatsApp.
+    </p>
+    <p>
+      The project focuses on making daily front-desk operations faster and more reliable. Instead of tracking student
+      records manually, the system provides a structured workflow for registering students, assigning them to groups,
+      scheduling sessions, scanning attendance, following homework and quiz performance, and keeping parents informed.
+    </p>
+  </section>
+
+  <section>
+    <h2>Project Objectives</h2>
+    <ul>
+      <li>Provide a simple and organized way to register and manage student information.</li>
+      <li>Support academic levels, centers, groups, sessions, attendance, homework, and quizzes.</li>
+      <li>Generate barcode IDs for faster attendance check-in.</li>
+      <li>Improve parent communication through WhatsApp notifications.</li>
+      <li>Give administrators reports and dashboard insights for better decision-making.</li>
+      <li>Store data locally so the system can operate as a practical desktop application.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Key Features</h2>
+    <div class="grid">
+      <div class="box">
+        <h3>Student Management</h3>
+        <p>Register, edit, filter, view, block, and organize students with contact details, barcodes, levels, centers, notes, and discount settings.</p>
+      </div>
+      <div class="box">
+        <h3>Academic Setup</h3>
+        <p>Create academic levels and teaching centers, then use them across students, groups, sessions, and reports.</p>
+      </div>
+      <div class="box">
+        <h3>Groups and Sessions</h3>
+        <p>Create groups with capacity, day, time, level, and center, then schedule sessions with fees, topics, homework, and quiz settings.</p>
+      </div>
+      <div class="box">
+        <h3>Attendance and Homework</h3>
+        <p>Check students in by barcode or search, prevent duplicate attendance, track homework status, and export attendance records.</p>
+      </div>
+      <div class="box">
+        <h3>Quiz Scores</h3>
+        <p>Record quiz scores for attended students, calculate percentages, add notes, and send quiz updates to parents.</p>
+      </div>
+      <div class="box">
+        <h3>Reports and Dashboard</h3>
+        <p>View student, session, group, attendance, homework, quiz, discount, and revenue insights.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-break">
+    <h2>Technology Stack</h2>
+    <table>
+      <tr>
+        <th>Area</th>
+        <th>Technology</th>
+      </tr>
+      <tr>
+        <td>Application Platform</td>
+        <td>Electron</td>
+      </tr>
+      <tr>
+        <td>Programming Language</td>
+        <td>JavaScript</td>
+      </tr>
+      <tr>
+        <td>User Interface</td>
+        <td>HTML, CSS, Vanilla JavaScript</td>
+      </tr>
+      <tr>
+        <td>Local Data Storage</td>
+        <td>JSON files handled through Node.js file system APIs</td>
+      </tr>
+      <tr>
+        <td>Communication</td>
+        <td>whatsapp-web.js and QR-code based WhatsApp Web login</td>
+      </tr>
+      <tr>
+        <td>Barcode Generation</td>
+        <td>JsBarcode and QR code utilities</td>
+      </tr>
+      <tr>
+        <td>Testing</td>
+        <td>Jest</td>
+      </tr>
+      <tr>
+        <td>Packaging</td>
+        <td>electron-builder for Windows installer and portable build</td>
+      </tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Core Workflow</h2>
+    <ol>
+      <li>Create academic levels and teaching centers.</li>
+      <li>Register students with contact details, parent phone numbers, and barcode IDs.</li>
+      <li>Create groups and assign students to the correct group.</li>
+      <li>Schedule sessions with date, time, topic, fee, homework, and quiz settings.</li>
+      <li>Print barcode cards or stickers for students.</li>
+      <li>Scan attendance during each session and update homework status.</li>
+      <li>Enter quiz scores for attended students when a session includes a quiz.</li>
+      <li>Review dashboard statistics and reports.</li>
+      <li>Send attendance, homework, quiz, absence, and block notifications to parents through WhatsApp.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>User Roles</h2>
+    <table>
+      <tr>
+        <th>Role</th>
+        <th>Access</th>
+      </tr>
+      <tr>
+        <td>Admin</td>
+        <td>Full access, including user management and system-level features.</td>
+      </tr>
+      <tr>
+        <td>Assistant</td>
+        <td>Operational access for registration, attendance, sessions, and reports, without user management access.</td>
+      </tr>
+    </table>
+  </section>
+
+  <section class="page-break">
+    <h2>Skills Used</h2>
+    <ul>
+      <li>JavaScript application development</li>
+      <li>Electron desktop application development</li>
+      <li>HTML and CSS interface design</li>
+      <li>Local data storage and file-based database design</li>
+      <li>CRUD operations for students, levels, centers, groups, sessions, users, and reports</li>
+      <li>Barcode generation and attendance workflow design</li>
+      <li>WhatsApp integration and message template handling</li>
+      <li>Testing with Jest</li>
+      <li>Windows application packaging</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Deliverables</h2>
+    <ul>
+      <li>Complete EduTrack desktop application source code.</li>
+      <li>Student registration and management module.</li>
+      <li>Academic levels, centers, groups, and sessions modules.</li>
+      <li>Attendance, homework, and quiz tracking features.</li>
+      <li>Barcode generation and printing support.</li>
+      <li>WhatsApp parent communication feature.</li>
+      <li>Reports and dashboard analytics.</li>
+      <li>User login system with admin and assistant roles.</li>
+      <li>Local data storage files and project documentation.</li>
+      <li>Windows build configuration for installer and portable versions.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Recommended Submission Content</h2>
+    <table>
+      <tr>
+        <th>Content</th>
+        <th>Best Use</th>
+      </tr>
+      <tr>
+        <td>PDF report</td>
+        <td>Formal project explanation, objectives, features, technology stack, workflow, skills, and deliverables.</td>
+      </tr>
+      <tr>
+        <td>Screenshots</td>
+        <td>Show real proof of the system, including login page, dashboard, student form, attendance screen, reports, and WhatsApp page.</td>
+      </tr>
+      <tr>
+        <td>Short demo video</td>
+        <td>Optional but strong. A 1-3 minute screen recording can show registration, barcode attendance, reporting, and WhatsApp notifications.</td>
+      </tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Conclusion</h2>
+    <p>
+      EduTrack provides a practical solution for tutoring centers that need to manage student registration, daily
+      attendance, academic progress, and parent communication in one place. The system reduces manual record keeping,
+      improves accuracy, and gives staff a faster workflow for common academic administration tasks.
+    </p>
+  </section>
+</body>
+</html>

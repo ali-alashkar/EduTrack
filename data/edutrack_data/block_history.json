@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "id": "bh_79b8a2ea3e99_1787324015268",
+    "studentId": "s1",
+    "studentName": "John Doe",
+    "action": "block",
+    "reason": "testblock",
+    "actorId": "",
+    "actorName": "",
+    "timestamp": "2026-08-21T14:53:35.262Z"
+  },
+  {
+    "id": "bh_c75f74b1a9fc_1787404903145",
+    "studentId": "s1",
+    "studentName": "John Doe",
+    "action": "unblock",
+    "reason": "",
+    "actorId": "",
+    "actorName": "",
+    "timestamp": "2026-08-22T13:21:43.145Z"
+  },
+  {
+    "id": "bh_c75f74b1a9fc_1787404913881",
+    "studentId": "s2",
+    "studentName": "Jane Smith",
+    "action": "block",
+    "reason": "kishdgv",
+    "actorId": "",
+    "actorName": "",
+    "timestamp": "2026-08-22T13:21:53.876Z"
+  }
+]

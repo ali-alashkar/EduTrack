@@ -45,10 +45,16 @@ contextBridge.exposeInMainWorld('api', {
     bulkAssignGroup: (data) => ipcRenderer.invoke('students:bulk-assign-group', data),
     bulkUpdateLevel: (data) => ipcRenderer.invoke('students:bulk-update-level', data),
     bulkUpdateCenter: (data) => ipcRenderer.invoke('students:bulk-update-center', data),
+    bulkBlock: (data) => ipcRenderer.invoke('students:bulk-block', data),
+    bulkUnblock: (data) => ipcRenderer.invoke('students:bulk-unblock', data),
+    bulkDelete: (data) => ipcRenderer.invoke('students:bulk-delete', data),
+    bulkNote: (data) => ipcRenderer.invoke('students:bulk-note', data),
+    bulkMoveGroup: (data) => ipcRenderer.invoke('students:bulk-move-group', data),
     timeline: (studentId) => ipcRenderer.invoke('students:timeline', studentId),
     blockHistory: (studentId) => ipcRenderer.invoke('students:block-history', studentId),
     generateBarcode: (studentId) => ipcRenderer.invoke('students:generate-barcode', studentId),
     bulkGenerateBarcodes: () => ipcRenderer.invoke('students:bulk-generate-barcodes'),
+    exportBarcodesZip: (data) => ipcRenderer.invoke('barcodes:export-zip', data),
   },
   // Groups
   groups: {
@@ -98,6 +104,7 @@ contextBridge.exposeInMainWorld('api', {
     init: () => ipcRenderer.invoke('whatsapp:init'),
     status: () => ipcRenderer.invoke('whatsapp:status'),
     disconnect: () => ipcRenderer.invoke('whatsapp:disconnect'),
+    clearAuth: () => ipcRenderer.invoke('whatsapp:clear-auth'),
     updateSettings: (data) => ipcRenderer.invoke('whatsapp:update-settings', data),
     getSettings: () => ipcRenderer.invoke('whatsapp:get-settings'),
     sendAttendance: (data) => ipcRenderer.invoke('whatsapp:send-attendance', data),
@@ -106,6 +113,9 @@ contextBridge.exposeInMainWorld('api', {
     sendSessionSummary: (data) => ipcRenderer.invoke('whatsapp:send-session-summary', data),
     sendSessionBatch: (data) => ipcRenderer.invoke('whatsapp:send-session-batch', data),
     sendAbsenceBatch: (data) => ipcRenderer.invoke('whatsapp:send-absence-batch', data),
+    sendBarcode: (data) => ipcRenderer.invoke('whatsapp:send-barcode', data),
+    sendReport: (data) => ipcRenderer.invoke('whatsapp:send-report', data),
+    queueReport: (data) => ipcRenderer.invoke('whatsapp:queue-report', data),
     getLog: (filters) => ipcRenderer.invoke('whatsapp:get-log', filters),
     retry: (messageId) => ipcRenderer.invoke('whatsapp:retry', messageId),
     resend: (messageId) => ipcRenderer.invoke('whatsapp:resend', messageId),
@@ -145,14 +155,38 @@ contextBridge.exposeInMainWorld('api', {
     completeSetup: (data) => ipcRenderer.invoke('system:complete-setup', data),
     // Security (Phase 1)
     hasDefaultCredentials: () => ipcRenderer.invoke('system:has-default-credentials'),
+    openExternal: (url) => ipcRenderer.invoke('system:open-external', url),
+    getAppInfo: () => ipcRenderer.invoke('system:get-app-info'),
   },
   // Payments (Admin-Only – Phase 2)
   payments: {
-    list:           ()         => ipcRenderer.invoke('payments:list'),
-    byStudent:      (id)       => ipcRenderer.invoke('payments:by-student', id),
-    create:         (data)     => ipcRenderer.invoke('payments:create', data),
-    delete:         (id)       => ipcRenderer.invoke('payments:delete', id),
-    studentBalance: (id)       => ipcRenderer.invoke('payments:student-balance', id),
+    list:               ()         => ipcRenderer.invoke('payments:list'),
+    byStudent:          (id)       => ipcRenderer.invoke('payments:by-student', id),
+    create:             (data)     => ipcRenderer.invoke('payments:create', data),
+    delete:             (id)       => ipcRenderer.invoke('payments:delete', id),
+    studentBalance:     (id)       => ipcRenderer.invoke('payments:student-balance', id),
+    receipt:            (id)       => ipcRenderer.invoke('payments:receipt', id),
+    setSessionStatus:   (data)     => ipcRenderer.invoke('payments:set-session-status', data),
+    getSessionStatuses: (id)       => ipcRenderer.invoke('payments:get-session-statuses', id),
+    queueReminder:      (data)     => ipcRenderer.invoke('payments:queue-reminder', data),
+  },
+  // Expenses (Admin-Only – Phase 2)
+  expenses: {
+    categories:    ()       => ipcRenderer.invoke('expenses:categories'),
+    list:          ()       => ipcRenderer.invoke('expenses:list'),
+    create:        (data)   => ipcRenderer.invoke('expenses:create', data),
+    update:        (data)   => ipcRenderer.invoke('expenses:update', data),
+    delete:        (id)     => ipcRenderer.invoke('expenses:delete', id),
+    profitSummary: (data)   => ipcRenderer.invoke('expenses:profit-summary', data),
+  },
+  // Books (Book Sales)
+  books: {
+    list:          ()       => ipcRenderer.invoke('books:list'),
+    create:        (data)   => ipcRenderer.invoke('books:create', data),
+    markPaid:      (data)   => ipcRenderer.invoke('books:mark-paid', data),
+    delete:        (id)     => ipcRenderer.invoke('books:delete', id),
+    summary:       ()       => ipcRenderer.invoke('books:summary'),
+    queueReminder: (data)   => ipcRenderer.invoke('books:queue-reminder', data),
   },
   // Phase 3 – Excel Export
   export: {
@@ -163,5 +197,16 @@ contextBridge.exposeInMainWorld('api', {
     studentsPreview: ()       => ipcRenderer.invoke('import:students-preview'),
     studentsCommit:  (data)   => ipcRenderer.invoke('import:students-commit', data),
     studentsTemplate: ()      => ipcRenderer.invoke('import:students-template'),
+  },
+  // Cloud Sync (Google Drive)
+  sync: {
+    getStatus:      ()                           => ipcRenderer.invoke('sync:get-status'),
+    getAuthUrl:     (data)                       => ipcRenderer.invoke('sync:get-auth-url', data),
+    exchangeCode:   (data)                       => ipcRenderer.invoke('sync:exchange-code', data),
+    disconnect:     ()                           => ipcRenderer.invoke('sync:disconnect'),
+    forceUpload:    ()                           => ipcRenderer.invoke('sync:force-upload'),
+    forceDownload:  ()                           => ipcRenderer.invoke('sync:force-download'),
+    onStatusChange: (cb)                         => ipcRenderer.on('sync:status-change', (_, s) => cb(s)),
+    onDataUpdated:  (cb)                         => ipcRenderer.on('sync:data-updated', () => cb()),
   },
 });

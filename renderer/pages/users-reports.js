@@ -169,7 +169,8 @@ async function renderReports() {
     <div class="card">
       <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <span class="card-title">📊 Group Overview</span>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-secondary btn-sm" id="btn-export-group-report">Export Excel</button>
           <select class="form-select" id="rep-group-level-filter" style="width:140px;padding:4px 8px;font-size:12px">
             <option value="">All Levels</option>
             ${levels.map(l=>`<option value="${l.name}">${l.name}</option>`).join('')}
@@ -180,9 +181,23 @@ async function renderReports() {
           </select>
         </div>
       </div>
+      <style>
+        .reports-sparkline-dot {
+          opacity: 0.85;
+          transition: opacity 0.2s, r 0.2s, fill 0.2s, stroke-width 0.2s;
+        }
+        .reports-sparkline:hover .reports-sparkline-dot {
+          opacity: 1;
+        }
+        .reports-sparkline-dot:hover {
+          r: 5.5 !important;
+          fill: var(--purple) !important;
+          stroke-width: 2 !important;
+        }
+      </style>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Group</th><th>Level</th><th>Center</th><th>Members</th><th>Total Sessions</th><th>Total Attendance</th><th>HW Done</th></tr></thead>
+          <thead><tr><th>Group</th><th>Level</th><th>Center</th><th>Members</th><th>Total Sessions</th><th>Total Attendance</th><th>HW Done</th><th>Attendance Trend</th></tr></thead>
           <tbody id="rep-group-overview-tbody"></tbody>
         </table>
       </div>
@@ -210,7 +225,7 @@ async function renderReports() {
   const studentSearch = el('rep-student-search');
   const suggestionsBox = el('rep-student-suggestions');
 
-  studentSearch.addEventListener('input', () => {
+  studentSearch.addEventListener('input', debounce(() => {
     const q = studentSearch.value.trim().toLowerCase();
     if (!q) {
       suggestionsBox.innerHTML = '';
@@ -236,7 +251,7 @@ async function renderReports() {
         <div style="font-size:11px;color:var(--text-secondary)">${s.level||'—'} · ${s.center||'—'} · Barcode: ${s.barcode||'—'}</div>
       </div>`).join('');
     suggestionsBox.classList.remove('hidden');
-  });
+  }));
 
   window.loadStudentReport = async (studentId, studentName) => {
     studentSearch.value = studentName;
@@ -298,13 +313,56 @@ async function renderReports() {
         <td>${gSessions.length}</td>
         <td>${gAtt.length}</td>
         <td><span class="badge ${hwRate>=70?'badge-green':hwRate>=40?'badge-yellow':'badge-red'}">${hwRate}%</span></td>
+        <td>${generateOverviewTrendSparkline(g.id, sessions, attendance)}</td>
       </tr>`;
-    }).join('') || `<tr><td colspan="7" class="table-empty">No groups match filters</td></tr>`;
+    }).join('') || `<tr><td colspan="8" class="table-empty">No groups match filters</td></tr>`;
   };
 
   el('rep-group-level-filter').addEventListener('change', renderGroupOverview);
   el('rep-group-center-filter').addEventListener('change', renderGroupOverview);
+  el('btn-export-group-report').addEventListener('click', () => {
+    const lvl = el('rep-group-level-filter').value;
+    const ctr = el('rep-group-center-filter').value;
+    const filteredGroups = groups.filter(g =>
+      (!lvl || g.level === lvl) &&
+      (!ctr || g.center === ctr)
+    );
+    exportGroupOverviewExcel(filteredGroups, sessions, attendance);
+  });
   renderGroupOverview();
+}
+
+async function exportGroupOverviewExcel(filteredGroups, sessions, attendance) {
+  if (!filteredGroups.length) return toast('No groups to export', 'error');
+  const rows = filteredGroups.map(g => {
+    const gSessions = sessions.filter(s => s.groupId === g.id);
+    const gAtt = attendance.filter(a => gSessions.some(s => s.id === a.sessionId));
+    const hwDone = gAtt.filter(a => a.homeworkStatus === 'done').length;
+    const hwRate = gAtt.length ? Math.round(hwDone/gAtt.length*100) + '%' : '0%';
+    return {
+      groupName: g.name,
+      level: g.level || '',
+      center: g.center || '',
+      members: (g.studentIds || []).length,
+      totalSessions: gSessions.length,
+      totalAttendance: gAtt.length,
+      hwDoneRate: hwRate
+    };
+  });
+
+  const cols = [
+    { key: 'groupName', label: 'Group Name' },
+    { key: 'level', label: 'Level' },
+    { key: 'center', label: 'Center' },
+    { key: 'members', label: 'Members Count' },
+    { key: 'totalSessions', label: 'Total Sessions' },
+    { key: 'totalAttendance', label: 'Total Attendance' },
+    { key: 'hwDoneRate', label: 'HW Done Rate' }
+  ];
+
+  const res = await window.api.export.excel({ sheetName: 'Group Overview', columns: cols, rows, filename: `Group_Overview_Report.xlsx` });
+  if (res?.success) toast('Group report exported successfully', 'success');
+  else if (res && !res.canceled) toast(res.error || 'Export failed', 'error');
 }
 
 function miniStat(label, val, color) {
@@ -312,4 +370,63 @@ function miniStat(label, val, color) {
     <div style="font-size:20px;font-weight:800;color:${color}">${val}</div>
     <div style="font-size:11px;color:var(--text-muted)">${label}</div>
   </div>`;
+}
+
+function generateOverviewTrendSparkline(groupId, sessions, attendance) {
+  const gSessions = sessions
+    .filter(s => s.groupId === groupId)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (!gSessions.length) {
+    return `<span style="color:var(--text-muted);font-size:11px;">No sessions scheduled</span>`;
+  }
+
+  const recentSessions = gSessions.slice(-8); // Show last 8 sessions
+  const data = recentSessions.map(s => {
+    const presentCount = attendance.filter(a => a.sessionId === s.id).length;
+    return {
+      title: s.title,
+      date: s.date,
+      val: presentCount
+    };
+  });
+
+  const width = 130;
+  const height = 35;
+  const padding = 5;
+
+  const maxVal = Math.max(...data.map(d => d.val), 5);
+  const minVal = 0;
+
+  const points = data.map((d, i) => {
+    const x = data.length === 1 
+      ? padding + (width - 2 * padding) / 2
+      : padding + (i / (data.length - 1)) * (width - 2 * padding);
+    const y = height - padding - (d.val / maxVal) * (height - 2 * padding);
+    const tooltip = `${d.title} (${d.date}): ${d.val} present`;
+    return { x, y, val: d.val, tooltip };
+  });
+
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  const areaPath = points.length > 0 
+    ? `${linePath} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`
+    : '';
+
+  return `
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" class="reports-sparkline" style="overflow:visible;display:block;">
+      <defs>
+        <linearGradient id="repSparkGrad_${groupId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.0"/>
+        </linearGradient>
+      </defs>
+      ${areaPath ? `<path d="${areaPath}" fill="url(#repSparkGrad_${groupId})" />` : ''}
+      ${linePath ? `<path d="${linePath}" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />` : ''}
+      ${points.map(p => `
+        <circle cx="${p.x}" cy="${p.y}" r="3" fill="var(--accent)" stroke="var(--bg-card)" stroke-width="1.5" class="reports-sparkline-dot">
+          <title>${p.tooltip}</title>
+        </circle>
+      `).join('')}
+    </svg>
+  `;
 }

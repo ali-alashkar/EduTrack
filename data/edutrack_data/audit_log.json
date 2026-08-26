@@ -1,1 +1,562 @@
-[]
+[
+  {
+    "id": "sync_conflict_1785982122838_6sxj",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "local",
+    "localTs": "2026-08-06T02:06:59.934Z",
+    "remoteTs": "2026-06-04T02:40:17.126Z",
+    "timestamp": "2026-08-06T02:08:42.827Z"
+  },
+  {
+    "id": "sync_conflict_1785982184084_qzln",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-06-04T02:40:17.126Z",
+    "remoteTs": "2026-08-06T02:06:59.934Z",
+    "timestamp": "2026-08-06T02:09:44.051Z"
+  },
+  {
+    "id": "sync_conflict_1785982409729_awhg",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-06T02:06:59.934Z",
+    "remoteTs": "2026-08-06T02:11:04.436Z",
+    "timestamp": "2026-08-06T02:13:29.698Z"
+  },
+  {
+    "id": "sync_conflict_1785982961424_n5ad",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "local",
+    "localTs": "2026-08-06T02:21:22.393Z",
+    "remoteTs": "2026-08-06T02:11:04.436Z",
+    "timestamp": "2026-08-06T02:22:41.368Z"
+  },
+  {
+    "id": "sync_conflict_1785982941911_tqc1",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-06T02:11:04.436Z",
+    "remoteTs": "2026-08-06T02:21:22.393Z",
+    "timestamp": "2026-08-06T02:22:21.859Z"
+  },
+  {
+    "id": "sync_conflict_1785984480007_nhrv",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-06T02:11:04.436Z",
+    "remoteTs": "2026-08-06T02:21:22.393Z",
+    "timestamp": "2026-08-06T02:47:59.969Z"
+  },
+  {
+    "id": "sync_conflict_1785984465081_b4jf",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-06T02:11:04.436Z",
+    "remoteTs": "2026-08-06T02:21:22.393Z",
+    "timestamp": "2026-08-06T02:47:45.032Z"
+  },
+  {
+    "id": "sync_conflict_1785984574258_7nqb",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-06T02:21:22.393Z",
+    "remoteTs": "2026-08-06T02:48:38.719Z",
+    "timestamp": "2026-08-06T02:49:34.222Z"
+  },
+  {
+    "id": "sync_conflict_1786833017907_f70t",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "local",
+    "localTs": "2026-08-15T18:36:29.011Z",
+    "remoteTs": "2026-08-06T02:48:38.719Z",
+    "timestamp": "2026-08-15T22:30:17.874Z"
+  },
+  {
+    "id": "sync_conflict_1786833084098_xkzx",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "local",
+    "localTs": "2026-08-15T18:46:35.610Z",
+    "remoteTs": "2026-08-15T18:36:29.011Z",
+    "timestamp": "2026-08-15T22:31:24.044Z"
+  },
+  {
+    "id": "sync_conflict_1786833062634_gvtz",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-15T18:36:29.011Z",
+    "remoteTs": "2026-08-15T18:46:35.610Z",
+    "timestamp": "2026-08-15T22:31:02.602Z"
+  },
+  {
+    "id": "sync_conflict_1786833280099_dspk",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-15T18:46:35.610Z",
+    "remoteTs": "2026-08-15T22:33:31.236Z",
+    "timestamp": "2026-08-15T22:34:40.023Z"
+  },
+  {
+    "id": "sync_conflict_1786835829225_zyhj",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-06T02:11:04.436Z",
+    "remoteTs": "2026-08-15T22:33:31.236Z",
+    "timestamp": "2026-08-15T23:17:09.184Z"
+  },
+  {
+    "id": "sync_conflict_1786835887748_682g",
+    "action": "sync_conflict_resolved",
+    "dbName": "active_sessions",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-15T23:16:11.989Z",
+    "remoteTs": "2026-08-15T23:17:59.314Z",
+    "timestamp": "2026-08-15T23:18:07.698Z"
+  },
+  {
+    "id": "sync_conflict_1786835887748_1viy",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-06T02:11:04.436Z",
+    "remoteTs": "2026-08-15T22:33:31.236Z",
+    "timestamp": "2026-08-15T23:18:07.699Z"
+  },
+  {
+    "id": "sync_conflict_1786835916301_tuln",
+    "action": "sync_conflict_resolved",
+    "dbName": "active_sessions",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-15T23:17:59.314Z",
+    "remoteTs": "2026-08-15T23:18:25.890Z",
+    "timestamp": "2026-08-15T23:18:36.283Z"
+  },
+  {
+    "id": "sync_conflict_1786836096758_qg5w",
+    "action": "sync_conflict_resolved",
+    "dbName": "levels",
+    "recordId": "lv_af561c7e8a0f_1785269423589",
+    "winner": "remote",
+    "localTs": "2026-07-28T20:10:23.589Z",
+    "remoteTs": "2026-08-15T23:19:38.023Z",
+    "timestamp": "2026-08-15T23:21:36.736Z"
+  },
+  {
+    "id": "sync_conflict_1786836240527_8dkq",
+    "action": "sync_conflict_resolved",
+    "dbName": "groups",
+    "recordId": "g1782831584128",
+    "winner": "remote",
+    "localTs": "2026-06-30T14:59:44.128Z",
+    "remoteTs": "2026-08-15T23:22:38.183Z",
+    "timestamp": "2026-08-15T23:24:00.507Z"
+  },
+  {
+    "id": "sync_conflict_1786836240527_jquc",
+    "action": "sync_conflict_resolved",
+    "dbName": "students",
+    "recordId": "s_c75f74b1a9fc_1785228613846",
+    "winner": "remote",
+    "localTs": "2026-07-28T08:50:13.846Z",
+    "remoteTs": "2026-08-15T23:22:38.182Z",
+    "timestamp": "2026-08-15T23:24:00.507Z"
+  },
+  {
+    "id": "sync_conflict_1786836890927_bp32",
+    "action": "sync_conflict_resolved",
+    "dbName": "levels",
+    "recordId": "lv_af561c7e8a0f_1785269423589",
+    "winner": "remote",
+    "localTs": "2026-07-28T20:10:23.589Z",
+    "remoteTs": "2026-08-15T23:19:38.023Z",
+    "timestamp": "2026-08-15T23:34:50.888Z"
+  },
+  {
+    "id": "sync_conflict_1786836890927_mkhn",
+    "action": "sync_conflict_resolved",
+    "dbName": "groups",
+    "recordId": "g1782831584128",
+    "winner": "remote",
+    "localTs": "2026-06-30T14:59:44.128Z",
+    "remoteTs": "2026-08-15T23:22:38.183Z",
+    "timestamp": "2026-08-15T23:34:50.888Z"
+  },
+  {
+    "id": "sync_conflict_1786836890927_xdsw",
+    "action": "sync_conflict_resolved",
+    "dbName": "students",
+    "recordId": "s_c75f74b1a9fc_1785228613846",
+    "winner": "remote",
+    "localTs": "2026-07-28T08:50:13.846Z",
+    "remoteTs": "2026-08-15T23:22:38.182Z",
+    "timestamp": "2026-08-15T23:34:50.888Z"
+  },
+  {
+    "id": "sync_conflict_1786836890927_5pgt",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-06T02:11:04.436Z",
+    "remoteTs": "2026-08-15T22:33:31.236Z",
+    "timestamp": "2026-08-15T23:34:50.888Z"
+  },
+  {
+    "id": "sync_conflict_1786837028599_rn15",
+    "action": "sync_conflict_resolved",
+    "dbName": "sessions",
+    "recordId": "ss_c75f74b1a9fc_1785943597790",
+    "winner": "remote",
+    "localTs": "2026-08-05T15:26:37.790Z",
+    "remoteTs": "2026-08-15T23:36:30.118Z",
+    "timestamp": "2026-08-15T23:37:08.587Z"
+  },
+  {
+    "id": "sync_conflict_1786837757354_ezox",
+    "action": "sync_conflict_resolved",
+    "dbName": "levels",
+    "recordId": "lv_af561c7e8a0f_1785269423589",
+    "winner": "remote",
+    "localTs": "2026-07-28T20:10:23.589Z",
+    "remoteTs": "2026-08-15T23:19:38.023Z",
+    "timestamp": "2026-08-15T23:49:17.318Z"
+  },
+  {
+    "id": "sync_conflict_1786837757354_ii1o",
+    "action": "sync_conflict_resolved",
+    "dbName": "groups",
+    "recordId": "g1782831584128",
+    "winner": "remote",
+    "localTs": "2026-06-30T14:59:44.128Z",
+    "remoteTs": "2026-08-15T23:22:38.183Z",
+    "timestamp": "2026-08-15T23:49:17.318Z"
+  },
+  {
+    "id": "sync_conflict_1786837757354_a7el",
+    "action": "sync_conflict_resolved",
+    "dbName": "sessions",
+    "recordId": "ss_c75f74b1a9fc_1785943597790",
+    "winner": "remote",
+    "localTs": "2026-08-05T15:26:37.790Z",
+    "remoteTs": "2026-08-15T23:36:30.118Z",
+    "timestamp": "2026-08-15T23:49:17.318Z"
+  },
+  {
+    "id": "sync_conflict_1786837757354_qnyl",
+    "action": "sync_conflict_resolved",
+    "dbName": "students",
+    "recordId": "s_c75f74b1a9fc_1785228613846",
+    "winner": "remote",
+    "localTs": "2026-07-28T08:50:13.846Z",
+    "remoteTs": "2026-08-15T23:22:38.182Z",
+    "timestamp": "2026-08-15T23:49:17.318Z"
+  },
+  {
+    "id": "sync_conflict_1786837757354_z4az",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-06T02:11:04.436Z",
+    "remoteTs": "2026-08-15T22:33:31.236Z",
+    "timestamp": "2026-08-15T23:49:17.318Z"
+  },
+  {
+    "id": "sync_conflict_1786837805212_0bzm",
+    "action": "sync_conflict_resolved",
+    "dbName": "sessions",
+    "recordId": "ss_34a28a29a811_1786837142796",
+    "winner": "local",
+    "localTs": "2026-08-15T23:49:57.527Z",
+    "remoteTs": "2026-08-15T23:39:02.796Z",
+    "timestamp": "2026-08-15T23:50:05.179Z"
+  },
+  {
+    "id": "sync_conflict_1786837809194_2u6w",
+    "action": "sync_conflict_resolved",
+    "dbName": "sessions",
+    "recordId": "ss_34a28a29a811_1786837142796",
+    "winner": "remote",
+    "localTs": "2026-08-15T23:39:02.796Z",
+    "remoteTs": "2026-08-15T23:49:57.527Z",
+    "timestamp": "2026-08-15T23:50:09.135Z"
+  },
+  {
+    "id": "sync_conflict_1786837848968_vskf",
+    "action": "sync_conflict_resolved",
+    "dbName": "attendance",
+    "recordId": "att_c75f74b1a9fc_1786837838284",
+    "winner": "remote",
+    "localTs": "2026-08-15T23:50:38.284Z",
+    "remoteTs": "2026-08-15T23:50:41.596Z",
+    "timestamp": "2026-08-15T23:50:48.905Z"
+  },
+  {
+    "id": "sync_conflict_1786837854696_s4lv",
+    "action": "sync_conflict_resolved",
+    "dbName": "attendance",
+    "recordId": "att_c75f74b1a9fc_1786837838284",
+    "winner": "remote",
+    "localTs": "2026-08-15T23:50:41.596Z",
+    "remoteTs": "2026-08-15T23:50:47.521Z",
+    "timestamp": "2026-08-15T23:50:54.670Z"
+  },
+  {
+    "id": "sync_conflict_1786838935803_hp04",
+    "action": "sync_conflict_resolved",
+    "dbName": "groups",
+    "recordId": "g1782831584128",
+    "winner": "remote",
+    "localTs": "2026-06-30T14:59:44.128Z",
+    "remoteTs": "2026-08-15T23:22:38.183Z",
+    "timestamp": "2026-08-16T00:08:55.775Z"
+  },
+  {
+    "id": "sync_conflict_1786838935803_802e",
+    "action": "sync_conflict_resolved",
+    "dbName": "levels",
+    "recordId": "lv_af561c7e8a0f_1785269423589",
+    "winner": "remote",
+    "localTs": "2026-07-28T20:10:23.589Z",
+    "remoteTs": "2026-08-15T23:19:38.023Z",
+    "timestamp": "2026-08-16T00:08:55.775Z"
+  },
+  {
+    "id": "sync_conflict_1786838935803_d161",
+    "action": "sync_conflict_resolved",
+    "dbName": "sessions",
+    "recordId": "ss_c75f74b1a9fc_1785943597790",
+    "winner": "remote",
+    "localTs": "2026-08-05T15:26:37.790Z",
+    "remoteTs": "2026-08-15T23:36:30.118Z",
+    "timestamp": "2026-08-16T00:08:55.775Z"
+  },
+  {
+    "id": "sync_conflict_1786838935803_buvu",
+    "action": "sync_conflict_resolved",
+    "dbName": "students",
+    "recordId": "s_c75f74b1a9fc_1785228613846",
+    "winner": "remote",
+    "localTs": "2026-07-28T08:50:13.846Z",
+    "remoteTs": "2026-08-15T23:22:38.182Z",
+    "timestamp": "2026-08-16T00:08:55.776Z"
+  },
+  {
+    "id": "sync_conflict_1786838935803_gipu",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-06T02:11:04.436Z",
+    "remoteTs": "2026-08-15T22:33:31.236Z",
+    "timestamp": "2026-08-16T00:08:55.776Z"
+  },
+  {
+    "id": "sync_conflict_1786839286778_j2jd",
+    "action": "sync_conflict_resolved",
+    "dbName": "students",
+    "recordId": "s1",
+    "winner": "remote",
+    "localTs": "2026-06-04T00:00:00.000Z",
+    "remoteTs": "2026-08-16T00:13:53.246Z",
+    "timestamp": "2026-08-16T00:14:46.747Z"
+  },
+  {
+    "id": "sync_conflict_1786839286778_ye3q",
+    "action": "sync_conflict_resolved",
+    "dbName": "groups",
+    "recordId": "g1782831426711",
+    "winner": "remote",
+    "localTs": "2026-06-30T14:57:06.711Z",
+    "remoteTs": "2026-08-16T00:13:53.251Z",
+    "timestamp": "2026-08-16T00:14:46.747Z"
+  },
+  {
+    "id": "al_79b8a2ea3e99_1787322811578",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "local",
+    "localTs": "2026-08-21T14:31:54.250Z",
+    "remoteTs": "2026-08-15T22:33:31.236Z",
+    "timestamp": "2026-08-21T14:33:31.514Z"
+  },
+  {
+    "id": "al_a184e7a4bfad_1787322795456",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-21T14:30:59.145Z",
+    "remoteTs": "2026-08-21T14:31:54.250Z",
+    "timestamp": "2026-08-21T14:33:15.424Z"
+  },
+  {
+    "id": "al_a184e7a4bfad_1787323066676",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-21T14:31:54.250Z",
+    "remoteTs": "2026-08-21T14:37:50.371Z",
+    "timestamp": "2026-08-21T14:37:46.649Z"
+  },
+  {
+    "id": "al_a184e7a4bfad_1787323689000",
+    "action": "sync_conflict_resolved",
+    "dbName": "levels",
+    "recordId": "l3",
+    "winner": "local",
+    "localTs": "2026-08-21T14:47:57.317Z",
+    "remoteTs": "",
+    "timestamp": "2026-08-21T14:48:08.937Z"
+  },
+  {
+    "id": "al_79b8a2ea3e99_1787323746447",
+    "action": "sync_conflict_resolved",
+    "dbName": "levels",
+    "recordId": "l3",
+    "winner": "remote",
+    "localTs": "",
+    "remoteTs": "2026-08-21T14:47:57.317Z",
+    "timestamp": "2026-08-21T14:49:06.332Z"
+  },
+  {
+    "id": "al_79b8a2ea3e99_1787323797182",
+    "action": "sync_conflict_resolved",
+    "dbName": "centers",
+    "recordId": "c1782830764187",
+    "winner": "remote",
+    "localTs": "2026-06-30T14:46:04.187Z",
+    "remoteTs": "2026-08-21T14:48:55.099Z",
+    "timestamp": "2026-08-21T14:49:57.122Z"
+  },
+  {
+    "id": "al_a184e7a4bfad_1787323806642",
+    "action": "sync_conflict_resolved",
+    "dbName": "centers",
+    "recordId": "c1782309706666_1",
+    "winner": "remote",
+    "localTs": "2026-06-24T14:01:46.664Z",
+    "remoteTs": "2026-08-21T14:49:47.625Z",
+    "timestamp": "2026-08-21T14:50:06.620Z"
+  },
+  {
+    "id": "al_a184e7a4bfad_1787323969327",
+    "action": "sync_conflict_resolved",
+    "dbName": "students",
+    "recordId": "s1",
+    "winner": "remote",
+    "localTs": "2026-08-16T00:13:53.246Z",
+    "remoteTs": "2026-08-21T14:53:35.262Z",
+    "timestamp": "2026-08-21T14:52:49.295Z"
+  },
+  {
+    "id": "al_a184e7a4bfad_1787324177083",
+    "action": "sync_conflict_resolved",
+    "dbName": "groups",
+    "recordId": "g1782831334759",
+    "winner": "remote",
+    "localTs": "2026-06-30T14:55:34.759Z",
+    "remoteTs": "2026-08-21T14:54:27.395Z",
+    "timestamp": "2026-08-21T14:56:17.057Z"
+  },
+  {
+    "id": "al_79b8a2ea3e99_1787324887616",
+    "action": "sync_conflict_resolved",
+    "dbName": "attendance",
+    "recordId": "att_a184e7a4bfad_1787324816295",
+    "winner": "remote",
+    "localTs": "2026-08-21T15:06:56.295Z",
+    "remoteTs": "2026-08-21T15:07:00.854Z",
+    "timestamp": "2026-08-21T15:08:07.585Z"
+  },
+  {
+    "id": "al_c75f74b1a9fc_1787326163793",
+    "action": "sync_conflict_resolved",
+    "dbName": "levels",
+    "recordId": "l3",
+    "winner": "remote",
+    "localTs": "",
+    "remoteTs": "2026-08-21T14:47:57.317Z",
+    "timestamp": "2026-08-21T15:29:23.718Z"
+  },
+  {
+    "id": "al_c75f74b1a9fc_1787326163793",
+    "action": "sync_conflict_resolved",
+    "dbName": "centers",
+    "recordId": "c1782309706666_1",
+    "winner": "remote",
+    "localTs": "2026-06-24T14:01:46.664Z",
+    "remoteTs": "2026-08-21T14:49:47.625Z",
+    "timestamp": "2026-08-21T15:29:23.718Z"
+  },
+  {
+    "id": "al_c75f74b1a9fc_1787326163793",
+    "action": "sync_conflict_resolved",
+    "dbName": "centers",
+    "recordId": "c1782830764187",
+    "winner": "remote",
+    "localTs": "2026-06-30T14:46:04.187Z",
+    "remoteTs": "2026-08-21T14:48:55.099Z",
+    "timestamp": "2026-08-21T15:29:23.718Z"
+  },
+  {
+    "id": "al_c75f74b1a9fc_1787326163793",
+    "action": "sync_conflict_resolved",
+    "dbName": "groups",
+    "recordId": "g1782831334759",
+    "winner": "remote",
+    "localTs": "2026-06-30T14:55:34.759Z",
+    "remoteTs": "2026-08-21T14:54:27.395Z",
+    "timestamp": "2026-08-21T15:29:23.718Z"
+  },
+  {
+    "id": "al_c75f74b1a9fc_1787326163793",
+    "action": "sync_conflict_resolved",
+    "dbName": "users",
+    "recordId": "u1",
+    "winner": "remote",
+    "localTs": "2026-08-15T22:33:31.236Z",
+    "remoteTs": "2026-08-21T14:37:50.371Z",
+    "timestamp": "2026-08-21T15:29:23.718Z"
+  },
+  {
+    "id": "al_c75f74b1a9fc_1787326163793",
+    "action": "sync_conflict_resolved",
+    "dbName": "students",
+    "recordId": "s1",
+    "winner": "remote",
+    "localTs": "2026-08-16T00:13:53.246Z",
+    "remoteTs": "2026-08-21T14:54:27.393Z",
+    "timestamp": "2026-08-21T15:29:23.718Z"
+  }
+]

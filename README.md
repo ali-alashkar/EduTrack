@@ -1,255 +1,204 @@
-# EduTrack - Student Registration System
+# EduTrack - Professional Student Registration & Tutoring Center Management
 
-EduTrack is a Windows desktop application for tutoring centers and educational offices. It manages academic levels, centers, students, groups, sessions, attendance, homework follow-up, quiz scores, barcode IDs, reports, user accounts, and WhatsApp parent communication.
+EduTrack is a modern, high-performance Windows desktop application designed for tutoring centers, private educators, and educational offices. It streamlines student registration, attendance scanning, quiz tracking, financial management, parent WhatsApp communications, and multi-device **Google Drive Cloud Synchronization**.
 
-The app is built with Electron and stores customer data locally as JSON files. It is designed for fast front-desk operation: register students, print barcodes, schedule sessions, scan attendance, update homework and quiz results, and keep parents informed through WhatsApp.
+The app is built with Electron and stores customer data locally as JSON files with cloud backup capabilities. It is designed for fast front-desk operation with zero latency.
 
-## Current Feature Set
+---
 
-### Dashboard
+## 🌟 Comprehensive Feature Set
 
-- Shows total students, groups, sessions, centers, levels, and attendance records.
-- Lists upcoming sessions and recent attendance.
-- Shows homework completion rate.
-- Shows session attendance insights, including attended count, discounted students, and same-level siblings.
+### ☁️ Google Drive Cloud Sync
+- **Automatic Two-Way Sync**: Syncs local JSON databases with a compressed snapshot stored on Google Drive.
+- **Startup Sync Check**: Automatically compares timestamps on startup and downloads newer cloud data before the UI opens.
+- **Background Sync**: Continuously checks for local changes every **3 minutes** and uploads new snapshots automatically.
+- **Offline Guard & Auto-Retry**: Skips sync quietly when offline without hanging or crashing, marking status as `📶 Offline` or `⏳ Pending Upload`. Automatically retries when internet reconnects.
+- **Safety Pre-Sync Backups**: Automatically creates local safety recovery points before overwriting local data with cloud data.
+- **Multi-Device Support**: Allows multiple computers and assistants to stay in sync with the same central database.
 
-### Academic Setup
+### 📊 Dashboard & Insights
+- Key metric cards: Total Students, Groups, Active Sessions, Centers, Academic Levels, and Attendance Records.
+- Attendance completion rate, homework completion rate, and financial summaries.
+- Session attendance insights including student attendance status, discounted students, and same-level siblings.
+- Quick action shortcuts for check-in, registration, and payments.
 
-- Manage academic levels such as Grade 10, Grade 11, or Secondary 2.
-- Manage teaching centers with location, contact info, and assigned levels.
-- Use levels and centers as filters throughout students, groups, and reports.
+### 🏫 Academic Setup & Structure
+- Manage academic levels (e.g., Grade 10, Grade 11, Secondary 2).
+- Manage teaching centers with location, contact info, and assigned academic levels.
+- Level and center filters integrated across all modules and reports.
 
-### Student Management
+### 👨‍🎓 Student Management
+- Complete profile creation: Student Name, Barcode ID, Student Phone, Parent Phone, Email, Academic Level, Teaching Center, Notes, and Discount settings.
+- **Smart Phone Duplication Protection**: Detects duplicate phone numbers across student and parent phone fields before saving, with controlled admin overrides.
+- **Group Assignment**: Assign students to single or multiple groups directly from student forms.
+- **Advanced Filtering**: Filter by search query, level, center, siblings, discount status, block status, group status, phone status, email, and notes.
+- **Student Timeline & History**: Comprehensive history of attendance, payments, quiz scores, and block history.
+- **Student Blocking**: Block students with mandatory reason recording, auto-queued WhatsApp notifications to parents, and check-in warning alerts.
 
-- Register and edit students with name, barcode, student phone, parent phone, email, level, center, notes, and discount settings.
-- Detect duplicate phone usage across student and parent phone fields before saving.
-- Allow controlled duplicate approval when needed.
-- Assign students to groups directly from the student form.
-- Filter students by search text, level, center, siblings, same-level siblings, discount status, block status, group status, phone status, email, and notes.
-- View student details, attendance history, group membership, block status, and notes.
-- Block a student with a required reason.
-- Automatically queue a WhatsApp message to the parent when a student is blocked.
-- Show blocked-student warnings during attendance check-in.
+### 💵 Payments & Financial Management (Admin)
+- Track student fee payments, partial payments, and overdue balances.
+- Student balance overview and receipt generation.
+- Per-session payment status tracking (Paid, Unpaid, Exempt).
+- Queue payment reminder notifications via WhatsApp.
 
-### Barcode Generator
+### 💸 Expense Tracking & Profit Summaries (Admin)
+- Record center operational expenses categorized by rent, utilities, staff salaries, materials, etc.
+- Net profit/loss calculation combining session fees, book sales, and operational expenses over customizable date ranges.
 
-- Generate printable student barcodes using random IDs or a specific entered ID.
-- Supports student ID card, sticker, simple barcode, and custom image background templates.
-- Allows custom barcode placement on uploaded background images.
-- Prints generated barcode sheets from the app.
+### 📚 Book Sales Management
+- Track educational book & material sales to students.
+- Record paid/unpaid status for books and generate payment reminders.
 
-### Groups
+### 🏷️ Barcode Card & Sticker Generator
+- Generate printable student barcodes using auto-generated IDs or custom barcoding formats.
+- Pre-built templates: Student ID Cards, Sticker Labels, Simple Barcodes, and Custom Background Uploads.
+- Drag-and-drop barcode placement on custom background templates.
+- Direct printing to standard barcode sticker printers or document printers.
 
-- Create groups by name, level, center, day, time, capacity, and notes.
-- Filter groups by name, level, and center.
-- Add or remove group members.
-- Group membership is used for sessions, reports, and absence notifications.
+### 👥 Group & Session Scheduling
+- **Groups**: Organize by Name, Level, Center, Scheduled Day, Time, Capacity, and Notes.
+- **Sessions**: Schedule sessions with Title, Group, Date, Duration, Fee, Topic, Homework Assignment, Quiz flag, and Max Score.
+- Duplicate sessions or create recurring session schedules in bulk.
 
-### Sessions
+### ⏱️ Attendance & Homework Follow-up
+- Instant barcode scanner check-in or manual search by Name/Phone/Barcode.
+- Duplicate check-in prevention for the same session.
+- Track check-in timestamp, homework status (Pending, Done, Partial, Missed, Excused), and homework notes.
+- Instant display of student history, block warnings, and sibling notes upon check-in.
+- CSV attendance export.
 
-- Schedule sessions with title, group, date, time, duration, session fee, topic, homework assignment, quiz flag, and quiz max score.
-- Filter sessions by title/topic, group, and date status.
-- Open Attendance or Quiz Scores directly from a session row.
-- Session fees are used for dashboard revenue and discount calculations.
+### 📝 Quiz Scores & Academic Performance
+- Record quiz scores linked to sessions where quizzes are enabled.
+- Only checked-in students can receive scores.
+- Score percentage calculation, maximum score settings, and individual notes.
+- Batch WhatsApp score dispatch to parents.
 
-### Attendance and Homework
+### 📈 Reports & Analytics
+- **Session Reports**: Total attendance, homework rates, quiz average, fee collections.
+- **Student Summary**: Cumulative attendance rate, homework compliance, quiz progression.
+- **Group Analytics**: Attendance trends, group member activity.
+- **Financial Reports**: Gross revenue, discount totals, net profit breakdown.
+- **Excel Import & Export**: Bulk import student lists from Excel spreadsheets and export reports to Excel `.xlsx` format.
 
-- Select a session, then check students in by barcode scan or by searching name/phone/barcode.
-- Prevent duplicate attendance for the same student and session.
-- Manually add students to attendance.
-- Track check-in time, homework status, and homework notes.
-- Homework statuses include pending, done, partial, missed, and excused.
-- Show recent student history after check-in.
-- Search the present list.
-- Export attendance as CSV.
-- Queue attendance WhatsApp messages automatically when enabled.
-- Queue homework WhatsApp messages when homework status is changed from pending.
-- Queue absence WhatsApp messages for group students who did not attend.
+### 💬 WhatsApp Integration & Automated Messaging
+- Connects directly via WhatsApp Web (QR code scan).
+- Queued message sending with configurable random delays to prevent account flagging.
+- Automatic phone formatting with configurable country code.
+- Detailed delivery logs (Queued, Sent, Failed, No Phone) with retry/resend options.
+- Dynamic template placeholders (`{student_name}`, `{session_title}`, `{quiz_score}`, `{homework_status}`, etc.).
+- Template rotation to prevent repeating identical messages.
 
-### Quiz Scores
+### 🛡️ Backup & System Recovery Center
+- Manual recovery point creation.
+- Scheduled automatic backups (Daily, Weekly, Monthly) with maximum retention policy.
+- Local Database Export (`.json`) and Import with safety pre-restore backup points.
 
-- Quiz score entry is tied to sessions with quiz enabled.
-- Only attended students can receive quiz scores.
-- Save individual scores or save all entered scores.
-- Supports max score, notes, percentage display, clearing scores, and score search.
-- Queue quiz WhatsApp messages automatically when enabled.
-- Batch-send quiz results for a session.
+### 🔐 Setup Wizard & User Security
+- **Guided Setup Wizard**: First-run configuration for owner name, center name, admin credentials, and default academic setup.
+- **Role-Based Access Control**:
+  - **Admin**: Complete access to all features, financials, user management, and cloud settings.
+  - **Assistant**: Operational access (attendance, registration, quizzes, sessions) with restricted access to financials and user management.
 
-### Reports
+---
 
-- Session report shows total attendance, homework done, partial, missed, quiz scored count, and quiz average.
-- Student report shows attended sessions, homework rate, quiz average, and recent records.
-- Group overview shows members, total sessions, total attendance, and homework done counts.
-- Dashboard calculates gross revenue, discounted revenue, discount totals, and per-session attendance insights.
+## 🛠️ Technology Stack
 
-### WhatsApp Integration
+- **Framework**: Electron 28
+- **Frontend Logic**: Vanilla JavaScript (ES6+), HTML5, CSS3
+- **Local Database**: Synchronous JSON file store via Node.js `fs`
+- **Cloud Sync**: `googleapis` (OAuth 2.0 Desktop App Flow + Google Drive API v3)
+- **WhatsApp Engine**: `whatsapp-web.js`
+- **Barcode & QR**: `JsBarcode`, `qrcode`
+- **Excel Utilities**: `xlsx`
+- **Testing**: `jest`
 
-- Connects through WhatsApp Web using QR login.
-- Stores WhatsApp auth data locally.
-- Sends messages through a queue, one by one.
-- Formats local phone numbers using a configurable country code.
-- Uses randomized delays between queued messages for safer sending.
-- Tracks message status: queued, sent, failed, and no phone.
-- Supports retrying failed messages and resending sent messages with a fresh template.
-- Supports editable template categories for attendance, homework, quiz, attendance plus homework, session summary, absence, and block notifications.
-- Template rotation is used to reduce repeated identical messages.
-- WhatsApp settings control auto-send for attendance, homework, quiz, country code, and delay range.
+---
 
-### User Management
+## 🚀 Getting Started
 
-- Admin and assistant roles are supported.
-- Admins can create users, delete users, and change passwords.
-- Assistants can use operational features but cannot access user management.
+### 1. Prerequisites
+- **Node.js**: v18.0.0 or higher
+- **Windows OS**: Recommended for production builds (Portable & Installer)
 
-## Core Workflow
-
-1. Create levels and centers.
-2. Register students with parent phone numbers and barcodes.
-3. Create groups and assign students.
-4. Schedule sessions for groups, including homework, fee, and optional quiz.
-5. Print barcode cards or stickers.
-6. Select a session and scan attendance.
-7. Update homework status during check-in.
-8. Enter quiz scores for attended students when the session has a quiz.
-9. Use reports and dashboard insights to follow performance.
-10. Use WhatsApp connection, templates, logs, retries, and batch actions to communicate with parents.
-
-## User Roles
-
-| Role | Access |
-|------|--------|
-| Admin | Full access, including user management |
-| Assistant | Operational features except user management |
-
-## Requirements
-
-- Node.js 18 or later
-- Windows for packaged installer/portable builds
-- Google Chrome installed for the current WhatsApp Web automation configuration
-- A WhatsApp account connected by QR code for parent messaging
-
-## Getting Started
-
-Install dependencies:
-
+### 2. Installation
+Clone the repository and install dependencies:
 ```bash
+git clone https://github.com/ali-alashkar/student-reg-system.git
+cd student-reg-system
 npm install
 ```
 
-Run in development:
-
+### 3. Development
+Start the application in development mode:
 ```bash
 npm start
 ```
 
-Run tests:
-
+### 4. Running Tests
+Run Jest test suite:
 ```bash
 npm test
 ```
 
-Run tests in watch mode:
-
-```bash
-npm run test:watch
-```
-
-Build Windows installer and portable executable:
-
+### 5. Packaging & Production Builds
+Build Windows Installer (NSIS) and Portable Executable:
 ```bash
 npm run build
 ```
-
-Build portable executable only:
-
+Build Portable Executable only:
 ```bash
 npm run build:portable
 ```
+Output binaries will be placed in the `dist/` directory.
 
-Build artifacts are written to `dist/`.
+---
 
-## Default Login
-
-On first launch, the app seeds default accounts:
-
-| Username | Password | Role |
-|----------|----------|------|
-| `admin` | `admin123` | Admin |
-| `assistant` | `asst123` | Assistant |
-
-Change or replace these credentials before using the app with real customer data.
-
-## Data Storage
-
-EduTrack stores data locally in an `edutrack_data` folder.
-
-| Environment | Location |
-|-------------|----------|
-| Development | `data/edutrack_data/` |
-| Packaged app | Next to the `.exe` |
-
-| File | Contents |
-|------|----------|
-| `users.json` | User accounts and roles |
-| `levels.json` | Academic levels |
-| `centers.json` | Teaching centers |
-| `students.json` | Student records, discounts, blocks, and barcodes |
-| `groups.json` | Groups and member student IDs |
-| `sessions.json` | Scheduled sessions, fees, homework, and quiz setup |
-| `attendance.json` | Check-in records and homework status |
-| `quiz_scores.json` | Quiz scores linked to sessions and students |
-| `whatsapp_settings.json` | WhatsApp automation settings |
-| `whatsapp_templates.json` | Editable WhatsApp templates |
-| `whatsapp_log.json` | Message queue and delivery history |
-
-Back up `edutrack_data` regularly. A commercial release should include built-in backup and restore before being sold broadly.
-
-## Project Structure
+## 📁 Project Structure
 
 ```text
 student-reg-system/
-|-- main.js                    # Electron main process, storage, IPC handlers
-|-- preload.js                 # Secure renderer API bridge
-|-- whatsapp-service.js         # WhatsApp Web client, queue, phone formatting
-|-- whatsapp-templates.js       # Default templates and placeholder replacement
-|-- package.json
-|-- data/
-|   `-- edutrack_data/          # JSON database in development
-|-- renderer/
-|   |-- index.html              # App shell and navigation
-|   |-- app.js                  # Login, routing, shared UI helpers
-|   |-- style.css               # Global styles
-|   `-- pages/
-|       |-- dashboard.js
-|       |-- levels-centers.js
-|       |-- students.js
-|       |-- groups-sessions.js
-|       |-- attendance.js
-|       |-- quizzes.js
-|       |-- users-reports.js
-|       |-- whatsapp.js
-|       `-- barcodes.js
-`-- tests/
-    |-- main.test.js            # IPC and business logic tests
-    |-- renderer.test.js        # Renderer workflow tests
-    `-- whatsapp.test.js        # Template and phone formatting tests
+├── main.js                    # Electron entry point & app lifecycle
+├── preload.js                 # ContextBridge IPC bridge
+├── main/
+│   ├── cloud-sync.js          # Google Drive sync engine & offline guards
+│   ├── db.js                  # Local JSON DB helper module
+│   ├── backup.js              # Local backup & scheduled task manager
+│   ├── integrity.js           # DB schema validation & migrations
+│   └── ipc/                   # Modular IPC domain handlers
+│       ├── sync.js            # Cloud Sync IPC
+│       ├── auth.js            # User authentication IPC
+│       ├── students.js        # Student management IPC
+│       ├── payments.js        # Financial payments IPC
+│       ├── system.js          # Backup & setup wizard IPC
+│       └── ...                # Additional IPC modules
+├── renderer/
+│   ├── index.html             # Single Page Application container
+│   ├── app.js                 # SPA routing & global state
+│   ├── style.css              # Custom styling & glassmorphism theme
+│   └── pages/                 # UI View Controllers
+│       ├── backup.js          # Backup & Cloud Sync UI page
+│       ├── students.js        # Student list & registration view
+│       ├── attendance.js      # Barcode scanning attendance view
+│       └── ...
+└── whatsapp-service.js        # WhatsApp Web client wrapper
 ```
 
-## Tech Stack
+---
 
-- Electron
-- Vanilla JavaScript
-- Local JSON storage through Node.js `fs`
-- whatsapp-web.js
-- qrcode
-- JsBarcode in the renderer
-- Jest
-- electron-builder
+## 🔒 Default System Credentials
 
-## Commercial Readiness
+On first run without using the setup wizard, default accounts are seeded:
 
-EduTrack already has a strong local workflow for registration, attendance, quizzes, reporting, barcodes, and WhatsApp messaging. Before selling it as a polished product, prioritize backup/restore, installer branding, first-run setup, default credential removal, data migrations, payment tracking, exports, audit logs, and support tooling. The detailed roadmap is in [FUTURE_FEATURES.md](./FUTURE_FEATURES.md).
+| Username | Password | Default Role |
+|----------|----------|--------------|
+| `admin` | `admin123` | Admin |
+| `assistant` | `asst123` | Assistant |
 
-## License
+*Note: Complete the Setup Wizard or change these credentials in Production.*
 
-MIT
+---
+
+## 📄 License
+
+MIT License. Copyright (c) EduTrack.
+

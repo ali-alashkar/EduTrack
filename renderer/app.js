@@ -50,22 +50,28 @@ function navigate(page) {
 }
 
 async function renderPage(page) {
-  switch (page) {
-    case 'dashboard':  await renderDashboard(); break;
-    case 'levels':     await renderLevels();    break;
-    case 'centers':    await renderCenters();   break;
-    case 'students':   await renderStudents();  break;
-    case 'groups':     await renderGroups();    break;
-    case 'sessions':   await renderSessions();  break;
-    case 'attendance': await renderAttendance();break;
-    case 'quizzes':    await renderQuizzes();   break;
-    case 'whatsapp':   await renderWhatsApp();  break;
-    case 'users':      await renderUsers();     break;
-    case 'backup':     await renderBackup();    break;
-    case 'reports':    await renderReports();   break;
-    case 'barcodes':   renderBarcodes();        break;
-    case 'payments':   await renderPayments();  break;
-    case 'import':     await renderImport();    break;
+  try {
+    switch (page) {
+      case 'dashboard':  await renderDashboard(); break;
+      case 'levels':     await renderLevels();    break;
+      case 'centers':    await renderCenters();   break;
+      case 'students':   await renderStudents();  break;
+      case 'groups':     await renderGroups();    break;
+      case 'sessions':   await renderSessions();  break;
+      case 'attendance': await renderAttendance();break;
+      case 'quizzes':    await renderQuizzes();   break;
+      case 'whatsapp':   await renderWhatsApp();  break;
+      case 'users':      await renderUsers();     break;
+      case 'backup':     await renderBackup();    break;
+      case 'reports':    await renderReports();   break;
+      case 'barcodes':   renderBarcodes();        break;
+      case 'payments':   await renderPayments();  break;
+      case 'import':     await renderImport();    break;
+      case 'contact':    await renderContact();   break;
+    }
+  } catch (err) {
+    console.error(`Error rendering page ${page}:`, err);
+    toast(`Failed to load ${page}: ${err.message}`, 'error');
   }
 }
 
@@ -100,14 +106,37 @@ document.getElementById('login-form').addEventListener('submit', async e => {
 
   // Show admin-only nav
   const isAdmin = res.user.role === 'admin';
-  document.getElementById('admin-section').style.display = isAdmin ? '' : 'none';
+  const isStaff = isAdmin || res.user.role === 'assistant';
+  document.getElementById('admin-section').style.display = isStaff ? '' : 'none';
   document.querySelectorAll('.admin-only').forEach(el => {
     el.style.display = isAdmin ? 'flex' : 'none';
+  });
+  // Import & Backup are accessible to assistants too
+  document.querySelectorAll('.staff-visible').forEach(el => {
+    el.style.display = isStaff ? 'flex' : 'none';
   });
 
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-screen').classList.remove('hidden');
   navigate('dashboard');
+
+  // Check for trial status
+  try {
+    const appInfo = await window.api.system.getAppInfo();
+    State.isTrial = appInfo.isTrial;
+    State.trialLimit = appInfo.trialLimit;
+    const trialBadge = document.getElementById('trial-badge');
+    if (appInfo && appInfo.isTrial && trialBadge) {
+      trialBadge.classList.remove('hidden');
+      trialBadge.style.display = 'inline-block';
+      trialBadge.textContent = `Trial (${appInfo.trialLimit} Students)`;
+    } else if (trialBadge) {
+      trialBadge.classList.add('hidden');
+      trialBadge.style.display = 'none';
+    }
+  } catch (err) {
+    console.error('Failed to get trial info:', err);
+  }
 
   // Phase 1: Check for default credentials and show warning banner (admins only)
   if (isAdmin) {
@@ -159,6 +188,13 @@ function formatTime(iso) {
 }
 function el(id) { return document.getElementById(id); }
 function confirmAction(msg) { return window.confirm(msg); }
+function debounce(fn, ms = 150) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
 
 // On Startup, check for data integrity issues, then setup state
 document.addEventListener('DOMContentLoaded', async () => {
@@ -225,6 +261,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (setupErr) {
       console.error('Failed to check setup state:', setupErr);
       // Non-fatal: fall through to normal login
+    }
+
+    // Step 3: Listen for background sync / restore data updates to automatically re-render active page
+    if (window.api?.sync?.onDataUpdated) {
+      window.api.sync.onDataUpdated(() => {
+        if (State.user && State.currentPage) {
+          renderPage(State.currentPage);
+        }
+      });
     }
 
   } catch (err) {

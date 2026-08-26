@@ -346,6 +346,89 @@ Thank you for your understanding.`
 بارك الله فيكم`
     },
   ],
+
+  // ── Student Report (full history analysis sent to parents) ──
+  student_report: [
+    {
+      id: 'rpt_1',
+      text: `السلام عليكم 📊
+تقرير أداء الطالب/ة *{studentName}*
+──────────────────
+📚 المستوى: {level}
+📅 الفترة: {reportPeriod}
+
+✅ نسبة الحضور: *{attendanceRate}*  ({totalSessions} حصة)
+📋 الواجبات: *{hwDoneRate}* إنجاز
+📝 متوسط الاختبارات: *{avgQuizScore}* ({avgQuizPercent}%)
+
+🏅 التقييم العام: *{performanceSummary}*
+──────────────────
+جزاكم الله خيراً على متابعتكم`
+    },
+    {
+      id: 'rpt_2',
+      text: `مرحباً 👋
+إليكم ملخص أداء *{studentName}* — {level}
+📅 {reportPeriod}
+
+━━━━━━━━━━━━━━━━━━
+🎯 الحضور: *{attendanceRate}* من أصل {totalSessions} حصة
+📝 الواجب المنزلي: *{hwDoneRate}* مكتمل
+🏆 الاختبارات: *{avgQuizPercent}%* متوسط
+
+التقييم: *{performanceSummary}*
+━━━━━━━━━━━━━━━━━━
+شكراً لمتابعتكم الكريمة`
+    },
+    {
+      id: 'rpt_3',
+      text: `تحية طيبة 📈
+تقرير متابعة *{studentName}*
+المستوى: {level} | {reportPeriod}
+
+─────────────────
+الحضور ✅: *{attendanceRate}* ({totalSessions} حصة مسجلة)
+الواجبات 📋: *{hwDoneRate}* نسبة الإنجاز
+الاختبارات 📊: *{avgQuizScore}* متوسط الدرجات
+
+التقييم الإجمالي: *{performanceSummary}*
+─────────────────
+مع تحياتنا`
+    },
+    {
+      id: 'rpt_4',
+      text: `أهلاً وسهلاً 🌟
+نقدم لكم تقرير أداء ابنكم/ابنتكم
+الطالب/ة: *{studentName}* — {level}
+الفترة: {reportPeriod}
+
+📌 ملخص الأداء:
+• الحضور: *{attendanceRate}* ({totalSessions} حصة)
+• إنجاز الواجبات: *{hwDoneRate}*
+• متوسط نتائج الكويز: *{avgQuizPercent}%*
+
+🏅 المستوى العام: *{performanceSummary}*
+
+نشكر تعاونكم ومتابعتكم`
+    },
+    {
+      id: 'rpt_5',
+      text: `السلام عليكم ورحمة الله 📋
+ملف متابعة الطالب/ة *{studentName}*
+──────────────────
+المستوى: {level}
+الفترة المُقيَّمة: {reportPeriod}
+
+📊 إحصائيات الأداء:
+🔹 نسبة الحضور: *{attendanceRate}* ({totalSessions} حصة)
+🔹 الواجبات المُنجزة: *{hwDoneRate}*
+🔹 متوسط درجات الاختبارات: *{avgQuizScore}* — *{avgQuizPercent}%*
+
+📌 التقييم العام: *{performanceSummary}*
+──────────────────
+بارك الله فيكم وفي أبنائكم`
+    },
+  ],
 };
 
 // ── Homework status translation map ──
@@ -401,7 +484,16 @@ function getRandomTemplate(category, data = {}, customTemplates = null) {
     .replace(/\{quizPercent\}/g, data.quizPercent ?? '')
     .replace(/\{time_line\}/g, timeLine)
     .replace(/\{hw_line\}/g, hwLine)
-    .replace(/\{quiz_line\}/g, quizLine);
+    .replace(/\{quiz_line\}/g, quizLine)
+    // ── student_report placeholders ──
+    .replace(/\{level\}/g, data.level || '')
+    .replace(/\{reportPeriod\}/g, data.reportPeriod || 'all time')
+    .replace(/\{totalSessions\}/g, data.totalSessions ?? '')
+    .replace(/\{attendanceRate\}/g, data.attendanceRate || '')
+    .replace(/\{hwDoneRate\}/g, data.hwDoneRate || '')
+    .replace(/\{avgQuizScore\}/g, data.avgQuizScore || '')
+    .replace(/\{avgQuizPercent\}/g, data.avgQuizPercent || '')
+    .replace(/\{performanceSummary\}/g, data.performanceSummary || '');
 
   // Clean up empty lines from missing optional fields
   text = text.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
