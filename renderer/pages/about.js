@@ -69,8 +69,14 @@ async function renderContact() {
           </div>
         </div>
         <p class="contact-bio">${info.bio}</p>
-        <div class="contact-app-meta">
+        <div class="contact-app-meta" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <span class="badge badge-accent">${appInfo.name} v${appInfo.version}</span>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="window.checkForUpdatesManual()" style="font-size:12px;padding:4px 10px;border-radius:20px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            Check for Updates
+          </button>
         </div>
         ${appInfo.isTrial ? `
           <div class="trial-upgrade-banner" style="margin-top:16px; padding:14px; background:rgba(239,68,68,0.05); border:1px solid var(--red); border-radius:var(--radius-md);">

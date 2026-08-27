@@ -189,3 +189,4 @@ require('./main/ipc/whatsapp')();
 require('./main/ipc/system')();
 require('./main/ipc/sync')();
 require('./main/ipc/backup')();
+require('./main/ipc/updater')();

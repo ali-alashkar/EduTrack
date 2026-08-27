@@ -209,4 +209,9 @@ contextBridge.exposeInMainWorld('api', {
     onStatusChange: (cb)                         => ipcRenderer.on('sync:status-change', (_, s) => cb(s)),
     onDataUpdated:  (cb)                         => ipcRenderer.on('sync:data-updated', () => cb()),
   },
+  // In-App Updates
+  updates: {
+    checkForUpdates: ()                          => ipcRenderer.invoke('updates:check'),
+    openDownload:    (url)                       => ipcRenderer.invoke('updates:open-download', url),
+  },
 });
