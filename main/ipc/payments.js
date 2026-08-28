@@ -12,7 +12,7 @@ function buildStudentBalance(studentId) {
   const student = readDB('students').find(s => s.id === studentId);
   if (!student) return { success: false, message: 'Student not found' };
 
-  const attendance = readDB('attendance').filter(a => a.studentId === studentId);
+  const attendance = readDB('attendance').filter(a => a.studentId === studentId && a.status !== 'absent');
   const sessions = readDB('sessions');
   const sessionMap = Object.fromEntries(sessions.map(s => [s.id, s]));
   const groups = readDB('groups');
@@ -159,6 +159,7 @@ function registerPaymentHandlers() {
     const paymentsByStudent = new Map();
 
     for (const att of attendance) {
+      if (att.status === 'absent') continue;
       const student = studentMap[att.studentId];
       const session = sessionMap[att.sessionId];
       if (!student || !session) continue;

@@ -104,7 +104,7 @@ function roundMoney(amount) {
 }
 
 function calcSessionRevenue(session, attendance, studentMap) {
-  const sessionAtt = attendance.filter(a => a.sessionId === session.id);
+  const sessionAtt = attendance.filter(a => a.sessionId === session.id && a.status !== 'absent');
   const fee = Number(session.sessionFee) || 0;
   let revenue = 0;
   let gross = 0;

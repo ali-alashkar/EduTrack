@@ -53,7 +53,21 @@ function registerSessionHandlers() {
 
     const attendance = readDB('attendance');
     const existing = attendance.find(a => a.sessionId === sessionId && a.studentId === student.id);
-    if (existing) return { success: false, message: 'Student already checked in', student };
+    if (existing) {
+      if (existing.status === 'absent') {
+        const updatedAt = new Date().toISOString();
+        const updatedRecord = {
+          ...existing,
+          status: 'present',
+          checkInTime: updatedAt,
+          notes: existing.notes === 'Marked absent' ? '' : existing.notes,
+          updatedAt
+        };
+        writeDB('attendance', attendance.map(a => a.id === existing.id ? updatedRecord : a));
+        return { success: true, record: updatedRecord, student, blockWarning: studentBlockWarning(student) };
+      }
+      return { success: false, message: 'Student already checked in', student };
+    }
 
     const record = {
       id: makeId('att'),
@@ -61,6 +75,7 @@ function registerSessionHandlers() {
       studentId: student.id,
       studentName: student.name,
       barcode: student.barcode,
+      status: 'present',
       checkInTime: new Date().toISOString(),
       homeworkStatus: 'pending',
       homeworkNote: '',
@@ -83,12 +98,27 @@ function registerSessionHandlers() {
 
     const attendance = readDB('attendance');
     const existing = attendance.find(a => a.sessionId === sessionId && a.studentId === studentId);
-    if (existing) return { success: false, message: 'Already added' };
+    if (existing) {
+      if (existing.status === 'absent') {
+        const updatedAt = new Date().toISOString();
+        const updatedRecord = {
+          ...existing,
+          status: 'present',
+          checkInTime: updatedAt,
+          notes: existing.notes === 'Marked absent' ? '' : existing.notes,
+          updatedAt
+        };
+        writeDB('attendance', attendance.map(a => a.id === existing.id ? updatedRecord : a));
+        return { success: true, record: updatedRecord, student, blockWarning: studentBlockWarning(student) };
+      }
+      return { success: false, message: 'Already added' };
+    }
     const record = {
       id: makeId('att'),
       sessionId, studentId,
       studentName: student.name,
       barcode: student.barcode || '',
+      status: 'present',
       checkInTime: new Date().toISOString(),
       homeworkStatus: 'pending',
       homeworkNote: '',
@@ -96,6 +126,49 @@ function registerSessionHandlers() {
     };
     writeDB('attendance', [...attendance, record]);
     return { success: true, record, student, blockWarning: studentBlockWarning(student) };
+  });
+
+  ipcMain.handle('attendance:mark-group-absent', (_, { sessionId }) => {
+    const session = readDB('sessions').find(s => s.id === sessionId);
+    if (!session) return { success: false, message: 'Session not found' };
+    if (!session.groupId) return { success: false, message: 'This session has no group assigned' };
+
+    const group = readDB('groups').find(g => g.id === session.groupId);
+    if (!group || !group.studentIds || !group.studentIds.length) {
+      return { success: false, message: 'No students found in the session group' };
+    }
+
+    const attendance = readDB('attendance');
+    const sessionAtt = attendance.filter(a => a.sessionId === sessionId);
+    const existingStudentIds = new Set(sessionAtt.map(a => a.studentId));
+    const students = readDB('students');
+
+    const absentStudentIds = group.studentIds.filter(id => !existingStudentIds.has(id));
+    if (!absentStudentIds.length) {
+      return { success: true, count: 0, message: 'All group students already have attendance records' };
+    }
+
+    const now = new Date().toISOString();
+    const newRecords = absentStudentIds.map(studentId => {
+      const student = students.find(s => s.id === studentId);
+      return {
+        id: makeId('att'),
+        sessionId,
+        studentId,
+        studentName: student?.name || 'Unknown Student',
+        barcode: student?.barcode || '',
+        status: 'absent',
+        checkInTime: null,
+        homeworkStatus: 'pending',
+        homeworkNote: '',
+        notes: 'Marked absent',
+        createdAt: now,
+        updatedAt: now
+      };
+    });
+
+    writeDB('attendance', [...attendance, ...newRecords]);
+    return { success: true, count: newRecords.length, records: newRecords };
   });
 
   ipcMain.handle('attendance:remove', (_, id) => {
@@ -117,7 +190,7 @@ function registerSessionHandlers() {
     const session = readDB('sessions').find(s => s.id === sessionId);
     if (!session) return { success: false, message: 'Session not found' };
 
-    const attended = readDB('attendance').some(a => a.sessionId === sessionId && a.studentId === studentId);
+    const attended = readDB('attendance').some(a => a.sessionId === sessionId && a.studentId === studentId && a.status !== 'absent');
     if (!attended) return { success: false, message: 'Student did not attend this session' };
 
     const max = Number(maxScore ?? session.quizMaxScore ?? 100);

@@ -1,6 +1,6 @@
 {
   "name": "edutrack",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "description": "EduTrack — Professional Student Registration & Session Management for Tutoring Centers",
   "main": "main.js",
   "scripts": {

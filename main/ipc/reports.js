@@ -21,16 +21,26 @@ function registerReportHandlers() {
     return att.map(a => {
       const session = sessions.find(s => s.id === a.sessionId);
       const quiz = quizzes.find(q => q.sessionId === a.sessionId);
-      return { ...a, sessionTitle: session?.title, sessionDate: session?.date, quizScore: quiz?.score, quizMaxScore: quiz?.maxScore };
+      return {
+        ...a,
+        status: a.status || 'present',
+        sessionTitle: session?.title,
+        sessionDate: session?.date,
+        quizScore: quiz?.score,
+        quizMaxScore: quiz?.maxScore
+      };
     });
   });
 
   ipcMain.handle('reports:session-summary', (_, sessionId) => {
     const att = readDB('attendance').filter(a => a.sessionId === sessionId);
-    const total = att.length;
-    const homeworkDone = att.filter(a => a.homeworkStatus === 'done').length;
-    const homeworkMissed = att.filter(a => a.homeworkStatus === 'missed').length;
-    const homeworkPartial = att.filter(a => a.homeworkStatus === 'partial').length;
+    const present = att.filter(a => a.status !== 'absent');
+    const absent = att.filter(a => a.status === 'absent');
+    const total = present.length;
+    const totalAbsent = absent.length;
+    const homeworkDone = present.filter(a => a.homeworkStatus === 'done').length;
+    const homeworkMissed = present.filter(a => a.homeworkStatus === 'missed').length;
+    const homeworkPartial = present.filter(a => a.homeworkStatus === 'partial').length;
     const quizScores = readDB('quiz_scores').filter(q => q.sessionId === sessionId);
     const quizScored = quizScores.length;
     const quizAverage = quizScored
@@ -39,7 +49,7 @@ function registerReportHandlers() {
           return sum + ((Number(q.score) || 0) / max) * 100;
         }, 0) / quizScored)
       : 0;
-    return { total, homeworkDone, homeworkMissed, homeworkPartial, records: att, quizScored, quizAverage, quizScores };
+    return { total, totalAbsent, homeworkDone, homeworkMissed, homeworkPartial, records: att, quizScored, quizAverage, quizScores };
   });
 
   ipcMain.handle('reports:dashboard', () => {
@@ -48,11 +58,12 @@ function registerReportHandlers() {
     const sessions = readDB('sessions');
     const sessionMap = Object.fromEntries(sessions.map(s => [s.id, s]));
     const attendance = readDB('attendance');
+    const presentAttendance = attendance.filter(a => a.status !== 'absent');
 
     let totalRevenue = 0;
     let totalGross = 0;
 
-    for (const att of attendance) {
+    for (const att of presentAttendance) {
       const student = studentMap[att.studentId];
       const session = sessionMap[att.sessionId];
       if (!student || !session) continue;
@@ -73,7 +84,7 @@ function registerReportHandlers() {
       sessions: sessions.length,
       centers: readDB('centers').length,
       levels: readDB('levels').length,
-      totalAttendance: attendance.length,
+      totalAttendance: presentAttendance.length,
       totalRevenue: roundMoney(totalRevenue),
       totalGross: roundMoney(totalGross),
       totalDiscount: roundMoney(totalGross - totalRevenue),

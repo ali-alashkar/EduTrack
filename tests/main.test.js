@@ -836,6 +836,69 @@ describe('ATTENDANCE – scan, manual-add, update, remove', () => {
     call('attendance:remove', 'att1');
     expect(read('attendance')).toHaveLength(0);
   });
+
+  test('attendance:mark-group-absent – marks remaining group students as absent', () => {
+    seed('students', [
+      { id: 's1', name: 'Alice', barcode: 'BC001' },
+      { id: 's2', name: 'Bob', barcode: 'BC002' },
+      { id: 's3', name: 'Carol', barcode: 'BC003' },
+    ]);
+    seed('groups', [
+      { id: 'g1', name: 'Group 1', studentIds: ['s1', 's2', 's3'] },
+    ]);
+    seed('sessions', [
+      { id: 'ss1', title: 'Session 1', groupId: 'g1', date: '2024-03-01' },
+    ]);
+    seed('attendance', [
+      { id: 'att1', sessionId: 'ss1', studentId: 's1', status: 'present' },
+    ]);
+
+    const res = call('attendance:mark-group-absent', { sessionId: 'ss1' });
+    expect(res.success).toBe(true);
+    expect(res.count).toBe(2);
+
+    const atts = read('attendance');
+    expect(atts).toHaveLength(3);
+    const absentRecords = atts.filter(a => a.status === 'absent');
+    expect(absentRecords).toHaveLength(2);
+    expect(absentRecords.map(a => a.studentId).sort()).toEqual(['s2', 's3']);
+  });
+
+  test('attendance:scan – converts previously absent student to present', () => {
+    seed('students', [
+      { id: 's1', name: 'Alice', barcode: 'BC001' },
+      { id: 's2', name: 'Bob', barcode: 'BC002' },
+    ]);
+    seed('attendance', [
+      { id: 'att2', sessionId: 'ss1', studentId: 's2', status: 'absent', checkInTime: null, notes: 'Marked absent' },
+    ]);
+
+    const res = call('attendance:scan', { sessionId: 'ss1', barcode: 'BC002' });
+    expect(res.success).toBe(true);
+    expect(res.record.status).toBe('present');
+    expect(res.record.checkInTime).toBeTruthy();
+
+    const att = read('attendance').find(a => a.id === 'att2');
+    expect(att.status).toBe('present');
+    expect(att.checkInTime).toBeTruthy();
+  });
+
+  test('attendance:manual-add – converts previously absent student to present', () => {
+    seed('students', [
+      { id: 's1', name: 'Alice', barcode: 'BC001' },
+      { id: 's2', name: 'Bob', barcode: 'BC002' },
+    ]);
+    seed('attendance', [
+      { id: 'att2', sessionId: 'ss1', studentId: 's2', status: 'absent', checkInTime: null, notes: 'Marked absent' },
+    ]);
+
+    const res = call('attendance:manual-add', { sessionId: 'ss1', studentId: 's2' });
+    expect(res.success).toBe(true);
+    expect(res.record.status).toBe('present');
+
+    const att = read('attendance').find(a => a.id === 'att2');
+    expect(att.status).toBe('present');
+  });
 });
 
 // ── 9. QUIZ SCORES ───────────────────────────────────────────

@@ -90,6 +90,7 @@ global.window = {
       list: jest.fn(),
       bySession: jest.fn(),
       manualAdd: jest.fn(),
+      markGroupAbsent: jest.fn(),
       update: jest.fn(),
       scan: jest.fn(),
     },
@@ -588,6 +589,34 @@ describe('EduTrack Renderer – Search & Filtration Scenarios', () => {
       html = el('att-tbody').innerHTML;
       expect(html).not.toContain('Alice Johnson');
       expect(html).toContain('Bob Smith');
+    });
+
+    test('✓ Table displays Absent status badge and handles marking student present', async () => {
+      global.currentSessionId = 'ss1';
+      global.attendanceRecords = [
+        { id: 'att1', studentId: 's1', studentName: 'Alice Johnson', barcode: 'BC001', status: 'present', checkInTime: '2026-06-05T10:00:00Z', homeworkStatus: 'done' },
+        { id: 'att2', studentId: 's2', studentName: 'Bob Smith', barcode: 'BC002', status: 'absent', checkInTime: null, homeworkStatus: 'pending' },
+      ];
+
+      el('att-search').value = '';
+      renderAttTableFiltered();
+
+      const html = el('att-tbody').innerHTML;
+      expect(html).toContain('✓ Present');
+      expect(html).toContain('✕ Absent');
+      expect(html).toContain('Check-in Student');
+      expect(el('att-count').textContent).toContain('1 Present');
+      expect(el('att-count').textContent).toContain('1 Absent');
+
+      // Test markStudentPresent
+      window.api.attendance.update.mockResolvedValue({ success: true });
+      await window.markStudentPresent('att2');
+
+      expect(window.api.attendance.update).toHaveBeenCalledWith(expect.objectContaining({
+        id: 'att2',
+        status: 'present'
+      }));
+      expect(global.attendanceRecords.find(r => r.id === 'att2').status).toBe('present');
     });
   });
 

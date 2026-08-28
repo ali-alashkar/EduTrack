@@ -410,8 +410,16 @@ function registerStudentHandlers() {
     if (!student) return { success: false, message: 'Student not found' };
     const sessionMap = Object.fromEntries(readDB('sessions').map(s => [s.id, s]));
     const events = [];
-    for (const a of readDB('attendance').filter(a => a.studentId === studentId))
-      events.push({ type: 'attendance', date: a.checkInTime, title: `Attended: ${sessionMap[a.sessionId]?.title || 'Unknown session'}`, detail: `Homework: ${a.homeworkStatus || 'pending'}${a.homeworkNote ? ' — ' + a.homeworkNote : ''}`, sessionId: a.sessionId });
+    for (const a of readDB('attendance').filter(a => a.studentId === studentId)) {
+      const isAbsent = a.status === 'absent';
+      events.push({
+        type: isAbsent ? 'absence' : 'attendance',
+        date: a.checkInTime || a.createdAt || sessionMap[a.sessionId]?.date,
+        title: isAbsent ? `Absent: ${sessionMap[a.sessionId]?.title || 'Unknown session'}` : `Attended: ${sessionMap[a.sessionId]?.title || 'Unknown session'}`,
+        detail: isAbsent ? 'Marked absent' : `Homework: ${a.homeworkStatus || 'pending'}${a.homeworkNote ? ' — ' + a.homeworkNote : ''}`,
+        sessionId: a.sessionId
+      });
+    }
     for (const q of readDB('quiz_scores').filter(q => q.studentId === studentId))
       events.push({ type: 'quiz', date: q.recordedAt, title: `Quiz: ${sessionMap[q.sessionId]?.title || 'Unknown session'}`, detail: `Score: ${q.score}/${q.maxScore}${q.notes ? ' — ' + q.notes : ''}`, sessionId: q.sessionId });
     for (const p of readDB('payments').filter(p => p.studentId === studentId))

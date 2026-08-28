@@ -75,6 +75,7 @@ function registerWhatsAppHandlers() {
     const session = readDB('sessions').find(s => s.id === sessionId);
     if (!student || !session) return { success: false, error: 'Student or session not found' };
     const attendance = readDB('attendance').find(a => a.sessionId === sessionId && a.studentId === studentId);
+    if (!attendance || attendance.status === 'absent') return { success: false, error: 'Student is not marked as present' };
 
     // Deduplication: check if we already sent attendance for this student+session
     const log = readDB('whatsapp_log');
@@ -183,6 +184,7 @@ function registerWhatsAppHandlers() {
     let skipped = 0;
 
     for (const att of attendance) {
+      if (att.status === 'absent') continue;
       const student = students.find(s => s.id === att.studentId);
       if (!student) { skipped++; continue; }
 
@@ -248,7 +250,7 @@ function registerWhatsAppHandlers() {
 
     const students = readDB('students');
     const attendance = readDB('attendance').filter(a => a.sessionId === sessionId);
-    const attendedIds = new Set(attendance.map(a => a.studentId));
+    const attendedIds = new Set(attendance.filter(a => a.status !== 'absent').map(a => a.studentId));
     const log = readDB('whatsapp_log');
 
     let queued = 0;
@@ -465,10 +467,11 @@ function registerWhatsAppHandlers() {
     const quizzes    = readDB('quiz_scores').filter(q => q.studentId === studentId);
 
     // Attendance stats
-    const totalSessions = attendance.length;
+    const presentAttendance = attendance.filter(a => a.status !== 'absent');
+    const totalSessions = presentAttendance.length;
 
     // Homework stats
-    const hwRecords  = attendance.filter(a => a.homeworkStatus && a.homeworkStatus !== 'pending');
+    const hwRecords  = presentAttendance.filter(a => a.homeworkStatus && a.homeworkStatus !== 'pending');
     const hwDone     = hwRecords.filter(a => a.homeworkStatus === 'done').length;
     const hwDoneRate = hwRecords.length > 0
       ? `${Math.round((hwDone / hwRecords.length) * 100)}%`
@@ -587,10 +590,11 @@ function registerWhatsAppHandlers() {
     const quizzes    = readDB('quiz_scores').filter(q => q.studentId === studentId);
 
     // Attendance stats
-    const totalSessions = attendance.length;
+    const presentAttendance = attendance.filter(a => a.status !== 'absent');
+    const totalSessions = presentAttendance.length;
 
     // Homework stats
-    const hwRecords  = attendance.filter(a => a.homeworkStatus && a.homeworkStatus !== 'pending');
+    const hwRecords  = presentAttendance.filter(a => a.homeworkStatus && a.homeworkStatus !== 'pending');
     const hwDone     = hwRecords.filter(a => a.homeworkStatus === 'done').length;
     const hwDoneRate = hwRecords.length > 0
       ? `${Math.round((hwDone / hwRecords.length) * 100)}%`

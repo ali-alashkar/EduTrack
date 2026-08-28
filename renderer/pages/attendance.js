@@ -60,6 +60,7 @@ async function renderAttendance() {
               <input id="att-search" type="text" placeholder="Search present list…" style="font-size:12px;padding:4px 0" />
             </div>
             <button class="btn btn-secondary btn-sm" id="btn-manual-add">+ Manual Add</button>
+            <button class="btn btn-secondary btn-sm" id="btn-mark-absence" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)" title="Mark all unattended group students as absent">🚫 Mark Absent</button>
             <button class="btn btn-secondary btn-sm" id="btn-assign-att-group" style="background:rgba(99,102,241,0.1);color:var(--accent);border-color:rgba(99,102,241,0.25)">👥 Assign to Group</button>
             <button class="btn btn-secondary btn-sm" id="btn-wa-send-all" style="background:rgba(37,211,102,0.1);color:#25D366;border-color:rgba(37,211,102,0.25)">📱 Send All WhatsApp</button>
             <button class="btn btn-secondary btn-sm" id="btn-wa-send-absence" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">📵 Send Absence</button>
@@ -69,7 +70,7 @@ async function renderAttendance() {
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>#</th><th>Student</th><th>Barcode</th><th>Check-in</th><th>Homework</th><th>Note</th><th>📱 WA</th><th>Actions</th></tr>
+              <tr><th>#</th><th>Student</th><th>Barcode</th><th>Status</th><th>Check-in</th><th>Homework</th><th>Note</th><th>📱 WA</th><th>Actions</th></tr>
             </thead>
             <tbody id="att-tbody"></tbody>
           </table>
@@ -283,6 +284,7 @@ async function selectSessionForAttendance(sessionId) {
   };
 
   el('btn-manual-add').onclick = () => manualAttAdd();
+  el('btn-mark-absence').onclick = () => markGroupAbsent();
   el('btn-assign-att-group').onclick = () => assignAttendedToGroup();
   el('btn-wa-send-all').onclick = () => batchSendWhatsAppAttendance();
   el('btn-wa-send-absence').onclick = () => batchSendAbsenceNotifications();
@@ -323,18 +325,27 @@ function renderAttTableFiltered() {
     !q || r.studentName.toLowerCase().includes(q) || (r.barcode||'').toLowerCase().includes(q)
   );
 
-  el('att-count').textContent = `Attendance (${attendanceRecords.length}${q ? ` · ${filtered.length} matching` : ''})`;
+  const presentCount = attendanceRecords.filter(r => r.status !== 'absent').length;
+  const absentCount = attendanceRecords.filter(r => r.status === 'absent').length;
+  el('att-count').textContent = `Attendance (${attendanceRecords.length} · ${presentCount} Present${absentCount > 0 ? ` · ${absentCount} Absent` : ''}${q ? ` · ${filtered.length} matching` : ''})`;
 
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="table-empty">${q ? 'No matching records found.' : 'No attendance recorded yet. Start scanning!'}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="table-empty">${q ? 'No matching records found.' : 'No attendance recorded yet. Start scanning!'}</td></tr>`;
     return;
   }
-  tbody.innerHTML = filtered.map((r, i) => `
-    <tr>
+  tbody.innerHTML = filtered.map((r, i) => {
+    const isAbsent = r.status === 'absent';
+    return `
+    <tr style="${isAbsent ? 'background:rgba(239,68,68,0.03)' : ''}">
       <td style="color:var(--text-muted)">${i+1}</td>
       <td style="font-weight:600">${r.studentName}</td>
       <td><code style="color:var(--accent);font-size:12px">${r.barcode||'—'}</code></td>
-      <td style="color:var(--text-secondary);font-size:12px">${formatTime(r.checkInTime)}</td>
+      <td>
+        <span class="badge ${isAbsent ? 'badge-red' : 'badge-green'}" style="font-size:11px;font-weight:600">
+          ${isAbsent ? '✕ Absent' : '✓ Present'}
+        </span>
+      </td>
+      <td style="color:var(--text-secondary);font-size:12px">${isAbsent ? '<span style="color:var(--text-muted)">—</span>' : formatTime(r.checkInTime)}</td>
       <td>
         <select class="form-select" style="width:110px;padding:4px 8px;font-size:12px" onchange="updateHwStatus('${r.id}',this.value)">
           ${['pending','done','partial','missed','excused'].map(s=>`<option value="${s}" ${r.homeworkStatus===s?'selected':''}>${s}</option>`).join('')}
@@ -347,11 +358,15 @@ function renderAttTableFiltered() {
       <td><span id="wa-att-status-${r.studentId}" class="wa-msg-indicator wa-msg-queued">⏳</span></td>
       <td>
         <div style="display:flex;gap:4px">
-          <button class="btn btn-secondary btn-sm" onclick="correctAttendance('${r.id}')" title="Correct Check-in">Correct</button>
+          ${isAbsent
+            ? `<button class="btn btn-success btn-sm" onclick="markStudentPresent('${r.id}')" title="Check-in Student">✓ Present</button>`
+            : `<button class="btn btn-secondary btn-sm" onclick="correctAttendance('${r.id}')" title="Correct Check-in">Correct</button>`
+          }
           <button class="btn btn-danger btn-sm" onclick="removeAttRecord('${r.id}')" title="Remove">✕</button>
         </div>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 async function updateHwStatus(id, status) {
@@ -379,6 +394,72 @@ async function removeAttRecord(id) {
   await window.api.attendance.remove(id);
   toast('Record removed', 'success');
   await loadAttTable();
+}
+
+window.markStudentPresent = async (id) => {
+  const record = attendanceRecords.find(r => r.id === id);
+  if (!record) return;
+  const now = new Date().toISOString();
+  await window.api.attendance.update({
+    id,
+    status: 'present',
+    checkInTime: now,
+    notes: record.notes === 'Marked absent' ? '' : (record.notes || '')
+  });
+  record.status = 'present';
+  record.checkInTime = now;
+  if (record.notes === 'Marked absent') record.notes = '';
+  toast(`${record.studentName} marked as present!`, 'success');
+  renderAttTableFiltered();
+  if (record.studentId && currentSessionId) {
+    autoSendWhatsAppAttendance(record.studentId, currentSessionId);
+  }
+};
+
+async function markGroupAbsent() {
+  if (!currentSessionId) {
+    toast('Please select a session first', 'error');
+    return;
+  }
+  const [sessions, groups, students] = await Promise.all([
+    window.api.sessions.list(),
+    window.api.groups.list(),
+    window.api.students.list()
+  ]);
+  const session = sessions.find(s => s.id === currentSessionId);
+  if (!session) { toast('Session not found', 'error'); return; }
+  if (!session.groupId) {
+    toast('This session has no group assigned. Please assign a group to the session first.', 'error');
+    return;
+  }
+  const group = groups.find(g => g.id === session.groupId);
+  if (!group || !group.studentIds || !group.studentIds.length) {
+    toast('The assigned group has no students.', 'error');
+    return;
+  }
+
+  const existingStudentIds = new Set(attendanceRecords.map(r => r.studentId));
+  const missingStudents = group.studentIds
+    .map(id => students.find(s => s.id === id))
+    .filter(s => s && !existingStudentIds.has(s.id));
+
+  if (!missingStudents.length) {
+    toast('All students in this group already have attendance records.', 'info');
+    return;
+  }
+
+  const namesPreview = missingStudents.slice(0, 6).map(s => s.name).join(', ') + (missingStudents.length > 6 ? ` and ${missingStudents.length - 6} more` : '');
+  if (!confirmAction(`Mark ${missingStudents.length} student(s) from group "${group.name}" as absent?\n\n${namesPreview}`)) {
+    return;
+  }
+
+  const res = await window.api.attendance.markGroupAbsent({ sessionId: currentSessionId });
+  if (res.success) {
+    toast(`Marked ${res.count} student(s) as absent`, 'success');
+    await loadAttTable();
+  } else {
+    toast(res.message || 'Failed to mark absence', 'error');
+  }
 }
 
 async function manualAttAdd() {
@@ -546,8 +627,9 @@ async function batchSendWhatsAppAttendance() {
     toast('WhatsApp is not connected. Go to WhatsApp page to connect.', 'error');
     return;
   }
-  if (!attendanceRecords.length) {
-    toast('No attendance records to send', 'error');
+  const presentRecords = attendanceRecords.filter(r => r.status !== 'absent');
+  if (!presentRecords.length) {
+    toast('No present attendance records to send', 'error');
     return;
   }
 
@@ -585,7 +667,7 @@ async function batchSendAbsenceNotifications() {
     return;
   }
 
-  const attendedIds = new Set(attendance.map(a => a.studentId));
+  const attendedIds = new Set(attendance.filter(a => a.status !== 'absent').map(a => a.studentId));
   const absentStudents = group.studentIds
     .map(id => students.find(s => s.id === id))
     .filter(s => s && !attendedIds.has(s.id));
@@ -744,7 +826,8 @@ async function exportAttCSV() {
   const rows = attendanceRecords.map(r => ({
     studentName: r.studentName,
     barcode: r.barcode || '',
-    checkInTime: r.checkInTime ? new Date(r.checkInTime).toLocaleString() : '',
+    status: r.status === 'absent' ? 'Absent' : 'Present',
+    checkInTime: r.checkInTime ? new Date(r.checkInTime).toLocaleString() : (r.status === 'absent' ? 'Absent' : ''),
     homeworkStatus: r.homeworkStatus || 'pending',
     homeworkNote: r.homeworkNote || '',
     notes: r.notes || '',
@@ -752,6 +835,7 @@ async function exportAttCSV() {
   const cols = [
     { key: 'studentName', label: 'Student Name' },
     { key: 'barcode', label: 'Barcode' },
+    { key: 'status', label: 'Status' },
     { key: 'checkInTime', label: 'Check-in Time' },
     { key: 'homeworkStatus', label: 'Homework Status' },
     { key: 'homeworkNote', label: 'Homework Note' },
@@ -779,7 +863,7 @@ async function assignAttendedToGroup() {
   ]);
 
   const session = sessions.find(s => s.id === currentSessionId);
-  const studentIds = attendanceRecords.map(r => r.studentId).filter(Boolean);
+  const studentIds = attendanceRecords.filter(r => r.status !== 'absent').map(r => r.studentId).filter(Boolean);
 
   if (!studentIds.length) {
     toast('No present students found to assign', 'error');

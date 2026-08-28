@@ -81,6 +81,7 @@ contextBridge.exposeInMainWorld('api', {
     scan: (data) => ipcRenderer.invoke('attendance:scan', data),
     update: (data) => ipcRenderer.invoke('attendance:update', data),
     manualAdd: (data) => ipcRenderer.invoke('attendance:manual-add', data),
+    markGroupAbsent: (data) => ipcRenderer.invoke('attendance:mark-group-absent', data),
     remove: (id) => ipcRenderer.invoke('attendance:remove', id),
     transfer: (data) => ipcRenderer.invoke('attendance:transfer', data),
     reassignStudent: (data) => ipcRenderer.invoke('attendance:reassign-student', data),
